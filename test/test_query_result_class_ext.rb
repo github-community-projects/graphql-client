@@ -48,6 +48,25 @@ class TestQueryResultClassExt < MiniTest::Test
     assert_equal "Josh", user.name
   end
 
+  def test_aliased_field_query_result_class
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query {
+        users {
+          relayID: id
+          fullName: name
+        }
+      }
+    GRAPHQL
+
+    assert query = document.definitions.first
+    assert users_field = query.selections.first
+    assert user_klass = users_field.query_result_class
+
+    assert user = user_klass.new({"relayID" => 1, "fullName" => "Joshua Peek"})
+    assert_equal 1, user.relay_id
+    assert_equal "Joshua Peek", user.full_name
+  end
+
   def test_empty_field_query_result_class
     document = GraphQL.parse(<<-'GRAPHQL')
       query {
@@ -126,5 +145,29 @@ class TestQueryResultClassExt < MiniTest::Test
     assert user_klass = user_fragment.query_result_class
 
     assert user_klass.new({})
+  end
+
+  def test_spread_fragment_query_result_class
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query {
+        user {
+          ...Viewer
+        }
+      }
+
+      fragment Viewer on User {
+        id
+        name
+      }
+    GRAPHQL
+
+    assert query = document.definitions.first
+    assert fragment = document.definitions.last
+    assert user_field = query.selections.first
+    assert user_klass = user_field.query_result_class(fragments: {:Viewer => fragment})
+
+    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    assert_equal 1, user.id
+    assert_equal "Josh", user.name
   end
 end
