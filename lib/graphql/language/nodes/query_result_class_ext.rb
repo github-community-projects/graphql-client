@@ -10,7 +10,6 @@ module GraphQL
         #
         # Returns subclass of QueryResult or nil.
         def query_result_class(**kargs)
-          return nil unless self.selections.any?
           GraphQL::QueryResult.define(fields: selections_query_result_classes(**kargs))
         end
 
@@ -33,6 +32,14 @@ module GraphQL
       end
 
       class Field < AbstractNode
+        def query_result_class(**kargs)
+          if self.selections.any?
+            super
+          else
+            nil
+          end
+        end
+
         def selection_query_result_classes(**kargs)
           name = self.alias || self.name
           { name => query_result_class(**kargs) }
