@@ -2,7 +2,7 @@ require "graphql"
 require "graphql/language/nodes/deep_freeze_ext"
 require "minitest/autorun"
 
-class DeepFreezeExt < MiniTest::Test
+class TestDeepFreezeExt < MiniTest::Test
   def test_deep_freeze
     document = GraphQL.parse(<<-'GRAPHQL')
       query FooQuery {
