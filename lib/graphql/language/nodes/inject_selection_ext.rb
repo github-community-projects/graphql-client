@@ -34,21 +34,6 @@ module GraphQL
         end
       end
 
-      class OperationDefinition < AbstractNode
-        def inject_selection(*selections)
-          other = self.dup
-          other.selections = self.selections.map do |selection|
-            case selection
-            when GraphQL::Language::Nodes::Selections
-              selection.inject_selection(*selections)
-            else
-              selection
-            end
-          end
-          other
-        end
-      end
-
       class Field < AbstractNode
         def inject_selection(*selections)
           self.selections.any? ? super : self

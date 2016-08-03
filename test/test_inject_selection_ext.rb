@@ -24,6 +24,7 @@ class TestInjectSelectionExt < MiniTest::Test
 
     expected = <<-'GRAPHQL'
       query FooQuery {
+        __typename
         node(id: "4") {
           __typename
           id
