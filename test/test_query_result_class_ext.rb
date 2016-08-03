@@ -29,6 +29,20 @@ class TestQueryResultClassExt < MiniTest::Test
     assert query_klass.new({})
   end
 
+  def test_shadowed_query_query_result_class
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query FooQuery {
+        version
+      }
+    GRAPHQL
+
+    assert query = document.definitions.first
+    assert query_klass = query.query_result_class(shadow: Set.new(query.selections))
+
+    assert data = query_klass.new({"version" => 42})
+    refute data.respond_to?(:version)
+  end
+
   def test_field_query_result_class
     document = GraphQL.parse(<<-'GRAPHQL')
       query {
@@ -129,6 +143,28 @@ class TestQueryResultClassExt < MiniTest::Test
     assert_equal "Josh", user.name
   end
 
+  def test_shadowed_inline_fragment_query_result_class
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query {
+        user {
+          ... on User {
+            id
+            name
+          }
+        }
+      }
+    GRAPHQL
+
+    assert query = document.definitions.first
+    assert user_field = query.selections.first
+    assert user_fragment = user_field.selections.first
+    assert user_klass = user_field.query_result_class(shadow: Set.new([user_fragment]))
+
+    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    refute user.respond_to?(:id)
+    refute user.respond_to?(:name)
+  end
+
   def test_empty_inline_fragment_query_result_class
     document = GraphQL.parse(<<-'GRAPHQL')
       query {
@@ -169,5 +205,34 @@ class TestQueryResultClassExt < MiniTest::Test
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     assert_equal 1, user.id
     assert_equal "Josh", user.name
+  end
+
+  def test_shadowed_spread_fragment_query_result_class
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query {
+        user {
+          ...Viewer
+        }
+      }
+
+      fragment Viewer on User {
+        id
+        name
+      }
+    GRAPHQL
+
+    assert query = document.definitions.first
+    assert fragment = document.definitions.last
+    assert user_field = query.selections.first
+
+    assert user_klass = user_field.query_result_class(shadow: Set.new(user_field.selections))
+    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    refute user.respond_to?(:id)
+    refute user.respond_to?(:name)
+
+    assert user_klass = user_field.query_result_class(fragments: {:Viewer => fragment}, shadow: Set.new([fragment]))
+    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    refute user.respond_to?(:id)
+    refute user.respond_to?(:name)
   end
 end
