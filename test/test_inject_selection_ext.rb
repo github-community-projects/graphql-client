@@ -28,6 +28,7 @@ class TestInjectSelectionExt < MiniTest::Test
           __typename
           id
           ... on User {
+            __typename
             name
             friends {
               __typename

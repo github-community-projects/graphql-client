@@ -7,8 +7,13 @@ module GraphQL
       module Selections
         def inject_selection(*selections)
           other = self.dup
-          other.selections = self.selections.map do |selection|
-            selection.inject_selection(*selections)
+          other.selections = selections + self.selections.map do |selection|
+            case selection
+            when GraphQL::Language::Nodes::Selections
+              selection.inject_selection(*selections)
+            else
+              selection
+            end
           end
           other
         end
@@ -29,22 +34,24 @@ module GraphQL
         end
       end
 
+      class OperationDefinition < AbstractNode
+        def inject_selection(*selections)
+          other = self.dup
+          other.selections = self.selections.map do |selection|
+            case selection
+            when GraphQL::Language::Nodes::Selections
+              selection.inject_selection(*selections)
+            else
+              selection
+            end
+          end
+          other
+        end
+      end
+
       class Field < AbstractNode
         def inject_selection(*selections)
-          if self.selections.any?
-            other = self.dup
-            other.selections = selections + self.selections.map do |selection|
-              case selection
-              when GraphQL::Language::Nodes::Selections
-                selection.inject_selection(*selections)
-              else
-                selection
-              end
-            end
-            other
-          else
-            self
-          end
+          self.selections.any? ? super : self
         end
       end
     end
