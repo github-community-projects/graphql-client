@@ -19,7 +19,12 @@ module GraphQL
           # Returns a Hash[String => (QueryResult|nil)].
           def selections_query_result_classes(**kargs)
             self.selections.inject({}) do |h, selection|
-              h.merge!(selection.selection_query_result_classes(**kargs))
+              case selection
+              when Selection
+                h.merge!(selection.selection_query_result_classes(**kargs))
+              else
+                raise TypeError, "expected selection to be of type Selection, but was #{selection.class}"
+              end
             end
           end
       end
@@ -27,7 +32,7 @@ module GraphQL
       # Internal: Common concerns between Nodes that may be in a "selections" collection.
       module Selection
         def selection_query_result_classes(**kargs)
-          raise NotImplementedError
+          raise NotImplementedError, "Selection subtype (#{self.class}) did not implement `selection_query_result_classes'"
         end
       end
 
