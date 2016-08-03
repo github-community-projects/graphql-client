@@ -14,14 +14,15 @@ module GraphQL
           GraphQL::QueryResult.define(fields: selections_query_result_classes(**kargs))
         end
 
-        # Internal: Gather QueryResult classes for each selection.
-        #
-        # Returns a Hash[String => (QueryResult|nil)].
-        def selections_query_result_classes(**kargs)
-          self.selections.inject({}) do |h, selection|
-            h.merge!(selection.selection_query_result_classes(**kargs))
+        private
+          # Internal: Gather QueryResult classes for each selection.
+          #
+          # Returns a Hash[String => (QueryResult|nil)].
+          def selections_query_result_classes(**kargs)
+            self.selections.inject({}) do |h, selection|
+              h.merge!(selection.selection_query_result_classes(**kargs))
+            end
           end
-        end
       end
 
       # Internal: Common concerns between Nodes that may be in a "selections" collection.
