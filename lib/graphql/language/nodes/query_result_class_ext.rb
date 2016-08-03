@@ -1,10 +1,10 @@
 require "graphql"
+require "graphql/language/nodes/selection_ext"
 require "graphql/query_result"
 
 module GraphQL
   module Language
     module Nodes
-      # Internal: Common concerns between Nodes that have a "selections" collection.
       module Selections
         # Public: Get GraphQL::QueryResult class for result of query.
         #
@@ -33,22 +33,13 @@ module GraphQL
       end
 
       class Field < AbstractNode
-        include Selection
-        include Selections
-
         def selection_query_result_classes(**kargs)
           name = self.alias || self.name
           { name => query_result_class(**kargs) }
         end
       end
 
-      class FragmentDefinition < AbstractNode
-        include Selections
-      end
-
       class FragmentSpread < AbstractNode
-        include Selection
-
         def selection_query_result_classes(fragments: {}, **kargs)
           unless fragment = fragments[name.to_sym]
             raise ArgumentError, "missing fragment '#{name}'"
@@ -58,9 +49,6 @@ module GraphQL
       end
 
       class InlineFragment < AbstractNode
-        include Selection
-        include Selections
-
         def selection_query_result_classes(**kargs)
           if kargs[:shadow].include?(self)
             {}
@@ -68,10 +56,6 @@ module GraphQL
             selections_query_result_classes(**kargs)
           end
         end
-      end
-
-      class OperationDefinition < AbstractNode
-        include Selections
       end
     end
   end
