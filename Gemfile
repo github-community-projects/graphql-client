@@ -1,3 +1,5 @@
 source "https://rubygems.org"
 
-gem "graphql", "0.17.2"
+gem "graphql"
+gem "minitest"
+gem "rake"
