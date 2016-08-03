@@ -14,6 +14,10 @@ module GraphQL
           GraphQL::QueryResult.define(fields: selections_query_result_classes(**kargs))
         end
 
+        def selection_query_result_classes(**kargs)
+          selections_query_result_classes(**kargs)
+        end
+
         # Internal: Gather QueryResult classes for each selection.
         #
         # Returns a Hash[String => (QueryResult|nil)].
@@ -48,12 +52,6 @@ module GraphQL
         def selection_query_result_classes(**kargs)
           name = self.alias || self.name
           { name => query_result_class(**kargs) }
-        end
-      end
-
-      class FragmentDefinition < AbstractNode
-        def selection_query_result_classes(**kargs)
-          selections_query_result_classes(**kargs)
         end
       end
 

@@ -136,8 +136,13 @@ class TestQueryResultClassExt < MiniTest::Test
     assert query = document.definitions.first
     assert user_field = query.selections.first
     assert user_fragment = user_field.selections.first
-    assert user_klass = user_fragment.query_result_class
 
+    assert user_klass = user_field.query_result_class
+    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    assert_equal 1, user.id
+    assert_equal "Josh", user.name
+
+    assert user_klass = user_fragment.query_result_class
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     assert_equal 1, user.id
     assert_equal "Josh", user.name
