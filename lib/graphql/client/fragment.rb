@@ -23,7 +23,7 @@ module GraphQL
         end
 
         fragment = new(node.deep_freeze, fragments.values).freeze
-        fragment.validate!(schema: nil) if schema
+        fragment.validate!(schema: schema) if schema
         fragment
       end
 
