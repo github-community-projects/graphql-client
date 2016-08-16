@@ -28,13 +28,13 @@ module GraphQL
           case definition
           when GraphQL::Language::Nodes::OperationDefinition
             query = GraphQL::Client::Query.new(definition.deep_freeze, fragments.values).freeze
-            query.validate!(schema: schema) if schema
+            query.node.validate!(schema: schema) if schema
             doc[name] = query
 
           when GraphQL::Language::Nodes::FragmentDefinition
             definition = GraphQL::Language::Nodes::InlineFragment.new(type: definition.type, directives: definition.directives, selections: definition.selections)
             fragment = GraphQL::Client::Fragment.new(definition.deep_freeze, fragments.values).freeze
-            fragment.validate!(schema: schema) if schema
+            fragment.node.validate!(schema: schema) if schema
             doc[name] = fragment
           end
 

@@ -2,6 +2,7 @@ require "active_support/inflector"
 require "graphql"
 require "graphql/client/error"
 require "graphql/language/nodes/query_result_class_ext"
+require "graphql/language/nodes/validate_ext"
 
 module GraphQL
   module Client
@@ -31,21 +32,6 @@ module GraphQL
 
       def new(*args)
         type.new(*args)
-      end
-
-      def validate!(schema:)
-        validator = GraphQL::StaticValidation::Validator.new(
-          schema: schema,
-          rules: GraphQL::StaticValidation::ALL_RULES - [GraphQL::StaticValidation::FragmentsAreUsed]
-        )
-
-        query = GraphQL::Query.new(schema, document: document)
-
-        validator.validate(query).fetch(:errors).each do |error|
-          raise GraphQL::Client::Error, error["message"]
-        end
-
-        nil
       end
     end
   end

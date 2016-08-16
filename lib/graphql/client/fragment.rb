@@ -23,13 +23,8 @@ module GraphQL
         end
 
         fragment = new(node.deep_freeze, fragments.values).freeze
-        fragment.validate!(schema: schema) if schema
+        fragment.node.validate!(schema: schema) if schema
         fragment
-      end
-
-      def document
-        fragment = GraphQL::Language::Nodes::FragmentDefinition.new(name: "foo", type: node.type, directives: node.directives, selections: node.selections)
-        GraphQL::Language::Nodes::Document.new(definitions: [fragment])
       end
     end
   end

@@ -21,12 +21,8 @@ module GraphQL
         end
 
         query = new(node.deep_freeze, fragments.values).freeze
-        query.validate!(schema: schema) if schema
+        query.node.validate!(schema: schema) if schema
         query
-      end
-
-      def document
-        GraphQL::Language::Nodes::Document.new(definitions: [node])
       end
     end
   end
