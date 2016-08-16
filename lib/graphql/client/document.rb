@@ -17,7 +17,7 @@ module GraphQL
         document = document.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
 
         document.definitions.each do |definition|
-          fragments[definition.name.to_sym] = definition if definition.is_a?(FragmentDefinition)
+          fragments[definition.name.to_sym] = definition if definition.is_a?(GraphQL::Language::Nodes::FragmentDefinition)
         end
 
         document = document.replace_fragment_spread(fragments)
@@ -26,13 +26,13 @@ module GraphQL
           name = definition.name.to_sym
 
           case definition
-          when OperationDefinition
+          when GraphQL::Language::Nodes::OperationDefinition
             query = GraphQL::Client::Query.new(definition.deep_freeze, fragments.values).freeze
             query.validate!(schema: schema) if schema
             doc[name] = query
 
-          when FragmentDefinition
-            definition = InlineFragment.new(type: definition.type, directives: definition.directives, selections: definition.selections)
+          when GraphQL::Language::Nodes::FragmentDefinition
+            definition = GraphQL::Language::Nodes::InlineFragment.new(type: definition.type, directives: definition.directives, selections: definition.selections)
             fragment = GraphQL::Client::Fragment.new(definition.deep_freeze, fragments.values).freeze
             fragment.validate!(schema: schema) if schema
             doc[name] = fragment
