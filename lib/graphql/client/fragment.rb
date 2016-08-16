@@ -17,7 +17,7 @@ module GraphQL
           doc = doc.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
           doc = doc.replace_fragment_spread(fragments)
           fragment = doc.definitions.first
-          node = InlineFragment.new(type: fragment.type, directives: fragment.directives, selections: fragment.selections)
+          node = GraphQL::Language::Nodes::InlineFragment.new(type: fragment.type, directives: fragment.directives, selections: fragment.selections)
         else
           raise ArgumentError, "expected string to be a fragment:\n#{str}"
         end
