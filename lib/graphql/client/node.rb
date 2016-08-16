@@ -1,4 +1,5 @@
 require "graphql"
+require "graphql/client/error"
 
 module GraphQL
   module Client
@@ -28,7 +29,7 @@ module GraphQL
         query = GraphQL::Query.new(schema, document: document)
 
         validator.validate(query).fetch(:errors).each do |error|
-          raise error["message"]
+          raise GraphQL::Client::Error, error["message"]
         end
 
         nil
