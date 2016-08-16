@@ -9,7 +9,7 @@ module GraphQL
           other = self.dup
           other.selections = selections + self.selections.map do |selection|
             case selection
-            when GraphQL::Language::Nodes::Selections
+            when Selections
               selection.inject_selection(*selections)
             else
               selection
@@ -24,7 +24,7 @@ module GraphQL
           other = self.dup
           other.definitions = self.definitions.map do |definition|
             case definition
-            when GraphQL::Language::Nodes::Selections
+            when Selections
               definition.inject_selection(*args)
             else
               definition

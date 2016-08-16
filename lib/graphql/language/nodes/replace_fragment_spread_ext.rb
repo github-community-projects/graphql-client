@@ -11,11 +11,11 @@ module GraphQL
             case selection
             when FragmentSpread
               if fragment = fragments[selection.name.to_sym]
-                GraphQL::Language::Nodes::InlineFragment.new(type: fragment.type, directives: fragment.directives, selections: fragment.selections)
+                InlineFragment.new(type: fragment.type, directives: fragment.directives, selections: fragment.selections)
               else
                 selection
               end
-            when GraphQL::Language::Nodes::Selections
+            when Selections
               selection.replace_fragment_spread(fragments)
             else
               selection
@@ -30,7 +30,7 @@ module GraphQL
           other = self.dup
           other.definitions = self.definitions.map do |definition|
             case definition
-            when GraphQL::Language::Nodes::Selections
+            when Selections
               definition.replace_fragment_spread(fragments)
             else
               definition
