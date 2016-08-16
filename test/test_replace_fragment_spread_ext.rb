@@ -84,6 +84,7 @@ class TestReplaceFragmentSpreadExt < MiniTest::Test
           ... MissingFragment
         }
       }
+
       fragment UserFragment on User {
         name
         friends {
