@@ -38,4 +38,16 @@ class TestQueryResult < MiniTest::Test
     assert_equal true, person.name?
     assert_equal false, person.company?
   end
+
+  def test_no_method_error
+    person_klass = GraphQL::QueryResult.define(fields: {"fullName" => nil})
+    person = person_klass.new({"fullName" => "Joshua Peek"})
+
+    begin
+      person.name
+      flunk
+    rescue NoMethodError => e
+      assert_equal "undefined method `name' for #<GraphQL::QueryResult fullName=\"Joshua Peek\">", e.to_s
+    end
+  end
 end

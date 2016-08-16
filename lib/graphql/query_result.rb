@@ -84,7 +84,11 @@ module GraphQL
 
     def inspect
       ivars = (self.class.fields.keys - [:__typename]).map { |sym| "#{sym}=#{instance_variable_get("@#{sym}").inspect}" }
-      "#<GraphQL::QueryResult #{@__typename} #{ivars.join(" ")}>"
+      buf = "#<GraphQL::QueryResult"
+      buf << " " << @__typename if @__typename
+      buf << " " << ivars.join(" ") if ivars.any?
+      buf << ">"
+      buf
     end
 
     def method_missing(*args)
