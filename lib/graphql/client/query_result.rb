@@ -60,7 +60,7 @@ module GraphQL
         case obj
         when Hash
           new(obj)
-        when GraphQL::QueryResult
+        when QueryResult
           cast(obj.to_h)
         when Array
           obj.map { |e| cast(e) }
