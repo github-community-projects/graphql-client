@@ -1,4 +1,5 @@
 require "graphql"
+require "graphql/client/node"
 
 module GraphQL
   module Client
