@@ -1,6 +1,6 @@
 require "graphql"
 require "graphql/language/nodes/selection_ext"
-require "graphql/query_result"
+require "graphql/client/query_result"
 require "set"
 
 module GraphQL
@@ -11,7 +11,7 @@ module GraphQL
         #
         # Returns subclass of QueryResult or nil.
         def query_result_class(**kargs)
-          GraphQL::QueryResult.define(fields: selections_query_result_classes(**kargs))
+          GraphQL::Client::QueryResult.define(fields: selections_query_result_classes(**kargs))
         end
 
         def selection_query_result_classes(**kargs)
