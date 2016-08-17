@@ -10,7 +10,7 @@ require "graphql/language/nodes/validate_ext"
 module GraphQL
   module Client
     class Document < Node
-      def self.parse(str, schema: nil)
+      def self.parse(str, schema: GraphQL::Client.schema)
         str = str.strip
         str, fragments = scan_interpolated_fragments(str)
 
