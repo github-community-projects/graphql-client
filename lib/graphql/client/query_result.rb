@@ -28,6 +28,16 @@ module GraphQL
                 #{field_alias} ? true : false
               end
             RUBY
+
+            if field == "edges"
+              class_eval <<-RUBY, __FILE__, __LINE__
+                def each_node
+                  return enum_for(:each_node) unless block_given?
+                  edges.each { |edge| yield edge.node }
+                  self
+                end
+              RUBY
+            end
           end
 
           assigns = fields.map do |field, type|

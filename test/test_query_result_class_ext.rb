@@ -240,4 +240,53 @@ class TestQueryResultClassExt < MiniTest::Test
     refute user.respond_to?(:id)
     refute user.respond_to?(:name)
   end
+
+  def test_relay_connection_enumerator
+    query = GraphQL.parse(<<-'GRAPHQL').definitions.first
+      query MoreRebelShipsQuery {
+        rebels {
+          name,
+          ships(first: 2) {
+            edges {
+              cursor
+              node {
+                name
+              }
+            }
+          }
+        }
+      }
+    GRAPHQL
+
+    assert query_klass = query.query_result_class
+    data = query_klass.new({
+      "rebels" => {
+        "name" => "Alliance to Restore the Republic",
+        "ships" => {
+          "edges" => [
+            {
+              "cursor" => "YXJyYXljb25uZWN0aW9uOjA=",
+              "node" => {
+                "name" => "X-Wing"
+              }
+            },
+            {
+              "cursor" => "YXJyYXljb25uZWN0aW9uOjE=",
+              "node" => {
+                "name" => "Y-Wing"
+              }
+            }
+          ]
+        }
+      }
+    })
+
+    assert_equal "Alliance to Restore the Republic", data.rebels.name
+    assert_equal 2, data.rebels.ships.edges.length
+    assert_equal "X-Wing", data.rebels.ships.edges[0].node.name
+    assert_equal "Y-Wing", data.rebels.ships.edges[1].node.name
+
+    assert_equal ["X-Wing", "Y-Wing"],
+      data.rebels.ships.each_node.map { |ship| ship.name }
+  end
 end
