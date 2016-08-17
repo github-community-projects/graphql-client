@@ -1,8 +1,9 @@
 require "graphql"
 require "graphql/client/node"
+require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/nodes/inject_selection_ext"
 require "graphql/language/nodes/replace_fragment_spread_ext"
-require "graphql/language/nodes/deep_freeze_ext"
+require "graphql/language/nodes/validate_ext"
 
 module GraphQL
   module Client

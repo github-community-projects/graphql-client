@@ -1,7 +1,6 @@
 require "active_support/inflector"
 require "graphql"
 require "graphql/language/nodes/query_result_class_ext"
-require "graphql/language/nodes/validate_ext"
 
 module GraphQL
   module Client
