@@ -50,4 +50,22 @@ class TestQueryResult < MiniTest::Test
       assert_equal "undefined method `name' for #<GraphQL::Client::QueryResult fullName=\"Joshua Peek\">", e.to_s
     end
   end
+
+  def test_merge_classes
+    person1_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "company" => nil })
+    person2_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "login" => nil })
+    person3_klass = person1_klass | person2_klass
+    assert_equal [:name, :company, :login], person3_klass.fields.keys
+  end
+
+  def test_merge_nested_classes
+    person1_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "company" => nil })
+    person2_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "login" => nil })
+
+    root1_klass = GraphQL::Client::QueryResult.define(fields: { "viewer" => person1_klass })
+    root2_klass = GraphQL::Client::QueryResult.define(fields: { "viewer" => person2_klass })
+    root3_klass = root1_klass | root2_klass
+
+    assert_equal [:name, :company, :login], root3_klass.fields[:viewer].fields.keys
+  end
 end

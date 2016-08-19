@@ -93,6 +93,38 @@ class TestQueryResultClassExt < MiniTest::Test
     refute version_field.query_result_class
   end
 
+  def test_merge_nested_query_result_class
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query {
+        users {
+          id
+          name
+
+          issues {
+            count
+            assignedCount
+          }
+
+          issues {
+            count
+            authoredCount
+          }
+        }
+      }
+    GRAPHQL
+
+    assert query = document.definitions.first
+    assert users_field = query.selections.first
+    assert user_klass = users_field.query_result_class
+
+    assert user = user_klass.new({"id" => 1, "name" => "Josh", "issues" => { "count" => 3, "assignedCount" => 2, "authoredCount" => 1 } })
+    assert_equal 1, user.id
+    assert_equal "Josh", user.name
+    assert_equal 3, user.issues.count
+    assert_equal 2, user.issues.assigned_count
+    assert_equal 1, user.issues.authored_count
+  end
+
   def test_fragment_definition_query_result_class
     document = GraphQL.parse(<<-'GRAPHQL')
       fragment Viewer on User {

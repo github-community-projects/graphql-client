@@ -90,6 +90,18 @@ module GraphQL
         end
       end
 
+      def self.|(other)
+        new_fields = self.fields.dup
+        other.fields.each do |name, value|
+          if new_fields[name]
+            new_fields[name] |= value
+          else
+            new_fields[name] = value
+          end
+        end
+        define(fields: new_fields)
+      end
+
       attr_reader :data
       alias_method :to_h, :data
 

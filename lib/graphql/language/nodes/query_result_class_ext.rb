@@ -25,11 +25,12 @@ module GraphQL
           self.selections.inject({}) do |h, selection|
             case selection
             when Selection
-              if shadow.include?(selection)
-                h
-              else
-                h.merge!(selection.selection_query_result_classes(shadow: shadow, **kargs))
+              if !shadow.include?(selection)
+                selection.selection_query_result_classes(shadow: shadow, **kargs).each do |name, klass|
+                  h[name] ? h[name] |= klass : h[name] = klass
+                end
               end
+              h
             else
               raise TypeError, "expected selection to be of type Selection, but was #{selection.class}"
             end
