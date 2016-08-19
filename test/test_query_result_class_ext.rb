@@ -170,6 +170,31 @@ class TestQueryResultClassExt < MiniTest::Test
     refute user.respond_to?(:name)
   end
 
+  def test_shadowed_inline_fragment_with_overlapping_fields_query_result_class
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query {
+        user {
+          id
+          login
+          ... on User {
+            id
+            name
+          }
+        }
+      }
+    GRAPHQL
+
+    assert query = document.definitions.first
+    assert user_field = query.selections.first
+    assert user_fragment = user_field.selections[2]
+    assert user_klass = user_field.query_result_class(shadow: Set.new([user_fragment]))
+
+    assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
+    assert_equal 1, user.id
+    assert_equal "josh", user.login
+    refute user.respond_to?(:name)
+  end
+
   def test_empty_inline_fragment_query_result_class
     document = GraphQL.parse(<<-'GRAPHQL')
       query {

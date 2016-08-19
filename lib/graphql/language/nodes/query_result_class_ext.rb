@@ -26,7 +26,7 @@ module GraphQL
             case selection
             when Selection
               if shadow.include?(selection)
-                {}
+                h
               else
                 h.merge!(selection.selection_query_result_classes(shadow: shadow, **kargs))
               end
