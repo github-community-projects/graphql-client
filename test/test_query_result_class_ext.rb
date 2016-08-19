@@ -266,6 +266,39 @@ class TestQueryResultClassExt < MiniTest::Test
     refute user.respond_to?(:name)
   end
 
+  def test_shadowed_spread_fragment_overlapping_fields_query_result_class
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query {
+        user {
+          id
+          ...Viewer
+          login
+        }
+      }
+
+      fragment Viewer on User {
+        id
+        name
+      }
+    GRAPHQL
+
+    assert query = document.definitions.first
+    assert fragment = document.definitions.last
+    assert user_field = query.selections.first
+
+    assert user_klass = user_field.query_result_class(shadow: Set.new([user_field.selections[1]]))
+    assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
+    assert_equal 1, user.id
+    assert_equal "josh", user.login
+    refute user.respond_to?(:name)
+
+    assert user_klass = user_field.query_result_class(fragments: {:Viewer => fragment}, shadow: Set.new([fragment]))
+    assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
+    assert_equal 1, user.id
+    assert_equal "josh", user.login
+    refute user.respond_to?(:name)
+  end
+
   def test_relay_connection_enumerator
     query = GraphQL.parse(<<-'GRAPHQL').definitions.first
       query MoreRebelShipsQuery {
