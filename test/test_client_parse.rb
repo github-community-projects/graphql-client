@@ -4,18 +4,18 @@ require "minitest/autorun"
 
 class TestClientParse < MiniTest::Test
   def test_parse_fragment
-    fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on User {
         login
       }
     GRAPHQL
 
-    assert_equal "User", fragment.node.type
-    assert_equal "login", fragment.node.selections[1].name
+    assert_equal "User", fragment.source_node.type
+    assert_equal "login", fragment.source_node.selections[1].name
   end
 
   def test_parse_query
-    query = GraphQL::Client::Query.parse(<<-'GRAPHQL')
+    query = GraphQL::Client.parse_query(<<-'GRAPHQL')
       query UserQuery {
         viewer {
           login
@@ -23,14 +23,14 @@ class TestClientParse < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal "query", query.node.operation_type
-    assert_equal "UserQuery", query.node.name
-    assert_equal "viewer", query.node.selections[1].name
-    assert_equal "login", query.node.selections[1].selections[1].name
+    assert_equal "query", query.source_node.operation_type
+    assert_equal "UserQuery", query.source_node.name
+    assert_equal "viewer", query.source_node.selections[1].name
+    assert_equal "login", query.source_node.selections[1].selections[1].name
   end
 
   def test_parse_document
-    document = GraphQL::Client::Document.parse(<<-'GRAPHQL')
+    document = GraphQL::Client.parse_document(<<-'GRAPHQL')
       query UserQuery {
         viewer {
           ...UserFragment
@@ -46,14 +46,14 @@ class TestClientParse < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal "viewer", document[:UserQuery].node.selections[1].name
-    assert_equal "login", document[:UserFragment].node.selections[1].name
-    assert_equal "name", document[:RepositoryFragment].node.selections[1].name
+    assert_equal "viewer", document[:UserQuery].source_node.selections[1].name
+    assert_equal "login", document[:UserFragment].source_node.selections[1].name
+    assert_equal "name", document[:RepositoryFragment].source_node.selections[1].name
   end
 
   def test_parse_query_wrong_type
     assert_raises ArgumentError do
-      GraphQL::Client::Query.parse(<<-'GRAPHQL')
+      GraphQL::Client.parse_query(<<-'GRAPHQL')
         fragment on User {
           login
         }
@@ -63,7 +63,7 @@ class TestClientParse < MiniTest::Test
 
   def test_parse_fragment_wrong_type
     assert_raises ArgumentError do
-      GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+      GraphQL::Client.parse_fragment(<<-'GRAPHQL')
         query UserQuery {
           viewer {
             login
@@ -74,7 +74,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_fragment_query_result_with_one_field
-    fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on User {
         login
       }
@@ -85,7 +85,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_fragment_query_result_with_multiple_field
-    fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on User {
         id
         login
@@ -98,7 +98,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_fragment_query_result_case_aliases
-    fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on User {
         login_url
         profileName
@@ -113,7 +113,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_fragment_field_alias
-    fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on User {
         name: profileName
       }
@@ -124,7 +124,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_fragment_query_result_with_nested_fields
-    fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on User {
         id
         repositories {
@@ -155,7 +155,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_query_result_with_nested_fields
-    query = GraphQL::Client::Query.parse(<<-'GRAPHQL')
+    query = GraphQL::Client.parse_query(<<-'GRAPHQL')
       query UserQuery {
         id
         repositories {
@@ -187,7 +187,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_query_result_with_inline_fragments
-    query = GraphQL::Client::Query.parse(<<-'GRAPHQL')
+    query = GraphQL::Client.parse_query(<<-'GRAPHQL')
       query UserQuery {
         id
         repositories {
@@ -222,7 +222,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_nested_inline_fragments_on_same_node
-    fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on Node {
         id,
         ... on User {
@@ -249,14 +249,18 @@ class TestClientParse < MiniTest::Test
     assert_equal "secret", user.password
   end
 
-  TestUserFragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+  TestUserFragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
     fragment on User {
       login
     }
   GRAPHQL
 
+  def test_assigned_constant_name
+    assert_equal "TestClientParse::TestUserFragment", TestUserFragment.name
+  end
+
   def test_fragment_spread_constant
-    repo_fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    repo_fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on Repository {
         name
         owner {
@@ -281,7 +285,7 @@ class TestClientParse < MiniTest::Test
   end
 
   def test_invalid_fragment_cast
-    repo_fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+    repo_fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on Repository {
         name
         owner {

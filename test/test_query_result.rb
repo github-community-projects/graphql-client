@@ -51,6 +51,19 @@ class TestQueryResult < MiniTest::Test
     end
   end
 
+  Person = GraphQL::Client::QueryResult.define(fields: {"fullName" => nil})
+
+  def test_no_method_error_constant
+    person = Person.new({"fullName" => "Joshua Peek"})
+
+    begin
+      person.name
+      flunk
+    rescue NoMethodError => e
+      assert_equal "undefined method `name' for #<TestQueryResult::Person fullName=\"Joshua Peek\">", e.to_s
+    end
+  end
+
   def test_merge_classes
     person1_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "company" => nil })
     person2_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "login" => nil })

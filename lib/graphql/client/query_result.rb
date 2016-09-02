@@ -67,8 +67,12 @@ module GraphQL
         end
       end
 
+      def self.name
+        super || GraphQL::Client::QueryResult.name
+      end
+
       def self.inspect
-        "#<GraphQL::Client::QueryResult fields=#{@fields.keys.inspect}>"
+        "#<#{self.name} fields=#{@fields.keys.inspect}>"
       end
 
       def self.cast(obj)
@@ -119,7 +123,7 @@ module GraphQL
 
       def inspect
         ivars = (self.class.fields.keys - [:__typename]).map { |sym| "#{sym}=#{instance_variable_get("@#{sym}").inspect}" }
-        buf = "#<GraphQL::Client::QueryResult"
+        buf = "#<#{self.class.name}"
         buf << " " << @__typename if @__typename
         buf << " " << ivars.join(" ") if ivars.any?
         buf << ">"
