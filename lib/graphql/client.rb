@@ -38,23 +38,16 @@ module GraphQL
       end
 
       document = document.replace_fragment_spread(fragments)
+      document.validate!(schema: schema) if schema
 
       document.definitions.inject({}) do |doc, definition|
         name = definition.name.to_sym
-
         case definition
         when GraphQL::Language::Nodes::OperationDefinition
-          query = definition.deep_freeze.query_result_class(shadow: fragments.values)
-          query.node.validate!(schema: schema) if schema
-          doc[name] = query
-
+          doc[name] = definition.deep_freeze.query_result_class(shadow: fragments.values)
         when GraphQL::Language::Nodes::FragmentDefinition
-          definition = definition.to_inline_fragment
-          fragment = definition.deep_freeze.query_result_class(shadow: fragments.values)
-          fragment.node.validate!(schema: schema) if schema
-          doc[name] = fragment
+          doc[name] = definition.to_inline_fragment.deep_freeze.query_result_class(shadow: fragments.values)
         end
-
         doc
       end
     end
