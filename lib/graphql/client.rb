@@ -1,7 +1,6 @@
 require "active_support/inflector"
 require "graphql"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/nodes/fragment_ext"
 require "graphql/language/nodes/inject_selection_ext"
 require "graphql/language/nodes/query_result_class_ext"
 require "graphql/language/nodes/replace_fragment_spread_ext"
@@ -32,24 +31,21 @@ module GraphQL
 
       document = GraphQL.parse(str)
       document = document.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
+      document.deep_freeze
 
       document.definitions.each do |definition|
         fragments[definition.name.to_sym] = definition if definition.is_a?(GraphQL::Language::Nodes::FragmentDefinition)
       end
 
       document = document.replace_fragment_spread(fragments)
+      document.deep_freeze
       document.validate!(schema: schema) if schema
 
-      document.definitions.inject({}) do |doc, definition|
-        name = definition.name.to_sym
-        case definition
-        when GraphQL::Language::Nodes::OperationDefinition
-          doc[name] = definition.deep_freeze.query_result_class(shadow: fragments.values)
-        when GraphQL::Language::Nodes::FragmentDefinition
-          doc[name] = definition.to_inline_fragment.deep_freeze.query_result_class(shadow: fragments.values)
-        end
-        doc
+      defs = {}
+      document.definitions.each do |definition|
+        defs[definition.name.to_sym] = definition.query_result_class(shadow: fragments.values)
       end
+      defs
     end
 
     def self.parse_query(str, **kargs)
