@@ -46,42 +46,19 @@ module GraphQL
       end
     end
 
-    def self.parse_query(str, schema: GraphQL::Client.schema)
-      str = str.strip
-      str, fragments = scan_interpolated_fragments(str)
-
-      if str.start_with?("query")
-        doc = GraphQL.parse(str)
-        doc = doc.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
-        doc = doc.replace_fragment_spread(fragments)
-        node = doc.definitions.first
-      else
+    def self.parse_query(str, **kargs)
+      unless str.strip.start_with?("query")
         raise ArgumentError, "expected string to be a query:\n#{str}"
       end
-
-      query = node.deep_freeze.query_result_class(shadow: fragments.values)
-      query.node.validate!(schema: schema) if schema
-      query
+      parse_document(str, **kargs).values.first
     end
 
-    def self.parse_fragment(str, schema: GraphQL::Client.schema)
-      str = str.strip
-      str, fragments = scan_interpolated_fragments(str)
-
-      if str.start_with?("fragment")
-        str = str.sub(/^fragment on /, "fragment __anonymous__ on ")
-        doc = GraphQL.parse(str)
-        doc = doc.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
-        doc = doc.replace_fragment_spread(fragments)
-        fragment = doc.definitions.first
-        node = fragment.to_inline_fragment
-      else
+    def self.parse_fragment(str, **kargs)
+      unless str.strip.start_with?("fragment")
         raise ArgumentError, "expected string to be a fragment:\n#{str}"
       end
-
-      fragment = node.deep_freeze.query_result_class(shadow: fragments.values)
-      fragment.node.validate!(schema: schema) if schema
-      fragment
+      str = str.strip.sub(/^fragment on /, "fragment __anonymous__ on ")
+      parse_document(str, **kargs).values.first
     end
 
     def self.scan_interpolated_fragments(str)
