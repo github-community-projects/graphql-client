@@ -12,6 +12,7 @@ class TestQueryResultClassExt < MiniTest::Test
 
     assert query = document.definitions.first
     assert query_klass = query.query_result_class
+    assert_equal query, query_klass.source_node
 
     assert data = query_klass.new({"version" => 42})
     assert_equal 42, data.version
@@ -25,6 +26,7 @@ class TestQueryResultClassExt < MiniTest::Test
 
     assert query = document.definitions.first
     assert query_klass = query.query_result_class
+    assert_equal query, query_klass.source_node
 
     assert query_klass.new({})
   end
@@ -38,6 +40,7 @@ class TestQueryResultClassExt < MiniTest::Test
 
     assert query = document.definitions.first
     assert query_klass = query.query_result_class(shadow: Set.new(query.selections))
+    assert_equal query, query_klass.source_node
 
     assert data = query_klass.new({"version" => 42})
     refute data.respond_to?(:version)
@@ -56,6 +59,7 @@ class TestQueryResultClassExt < MiniTest::Test
     assert query = document.definitions.first
     assert users_field = query.selections.first
     assert user_klass = users_field.query_result_class
+    assert_equal users_field, user_klass.source_node
 
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     assert_equal 1, user.id
@@ -75,6 +79,7 @@ class TestQueryResultClassExt < MiniTest::Test
     assert query = document.definitions.first
     assert users_field = query.selections.first
     assert user_klass = users_field.query_result_class
+    assert_equal users_field, user_klass.source_node
 
     assert user = user_klass.new({"relayID" => 1, "fullName" => "Joshua Peek"})
     assert_equal 1, user.relay_id
@@ -116,6 +121,7 @@ class TestQueryResultClassExt < MiniTest::Test
     assert query = document.definitions.first
     assert users_field = query.selections.first
     assert user_klass = users_field.query_result_class
+    assert_equal users_field, user_klass.source_node
 
     assert user = user_klass.new({"id" => 1, "name" => "Josh", "issues" => { "count" => 3, "assignedCount" => 2, "authoredCount" => 1 } })
     assert_equal 1, user.id
@@ -135,6 +141,7 @@ class TestQueryResultClassExt < MiniTest::Test
 
     assert viewer_fragment = document.definitions.first
     assert viewer_klass = viewer_fragment.query_result_class
+    assert_equal viewer_fragment, viewer_klass.source_node
 
     assert viewer = viewer_klass.new({"id" => 1, "name" => "Josh"})
     assert_equal 1, viewer.id
@@ -149,6 +156,7 @@ class TestQueryResultClassExt < MiniTest::Test
 
     assert viewer_fragment = document.definitions.first
     assert viewer_klass = viewer_fragment.query_result_class
+    assert_equal viewer_fragment, viewer_klass.source_node
 
     assert viewer_klass.new({})
   end
@@ -170,11 +178,13 @@ class TestQueryResultClassExt < MiniTest::Test
     assert user_fragment = user_field.selections.first
 
     assert user_klass = user_field.query_result_class
+    assert_equal user_field, user_klass.source_node
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     assert_equal 1, user.id
     assert_equal "Josh", user.name
 
     assert user_klass = user_fragment.query_result_class
+    assert_equal user_fragment, user_klass.source_node
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     assert_equal 1, user.id
     assert_equal "Josh", user.name
@@ -196,6 +206,7 @@ class TestQueryResultClassExt < MiniTest::Test
     assert user_field = query.selections.first
     assert user_fragment = user_field.selections.first
     assert user_klass = user_field.query_result_class(shadow: Set.new([user_fragment]))
+    assert_equal user_field, user_klass.source_node
 
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     refute user.respond_to?(:id)
@@ -220,6 +231,7 @@ class TestQueryResultClassExt < MiniTest::Test
     assert user_field = query.selections.first
     assert user_fragment = user_field.selections[2]
     assert user_klass = user_field.query_result_class(shadow: Set.new([user_fragment]))
+    assert_equal user_field, user_klass.source_node
 
     assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
     assert_equal 1, user.id
@@ -241,6 +253,7 @@ class TestQueryResultClassExt < MiniTest::Test
     assert user_field = query.selections.first
     assert user_fragment = user_field.selections.first
     assert user_klass = user_fragment.query_result_class
+    assert_equal user_fragment, user_klass.source_node
 
     assert user_klass.new({})
   end
@@ -263,6 +276,7 @@ class TestQueryResultClassExt < MiniTest::Test
     assert fragment = document.definitions.last
     assert user_field = query.selections.first
     assert user_klass = user_field.query_result_class(fragments: {:Viewer => fragment})
+    assert_equal user_field, user_klass.source_node
 
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     assert_equal 1, user.id
@@ -288,11 +302,13 @@ class TestQueryResultClassExt < MiniTest::Test
     assert user_field = query.selections.first
 
     assert user_klass = user_field.query_result_class(shadow: Set.new(user_field.selections))
+    assert_equal user_field, user_klass.source_node
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     refute user.respond_to?(:id)
     refute user.respond_to?(:name)
 
     assert user_klass = user_field.query_result_class(fragments: {:Viewer => fragment}, shadow: Set.new([fragment]))
+    assert_equal user_field, user_klass.source_node
     assert user = user_klass.new({"id" => 1, "name" => "Josh"})
     refute user.respond_to?(:id)
     refute user.respond_to?(:name)
@@ -319,16 +335,64 @@ class TestQueryResultClassExt < MiniTest::Test
     assert user_field = query.selections.first
 
     assert user_klass = user_field.query_result_class(shadow: Set.new([user_field.selections[1]]))
+    assert_equal user_field, user_klass.source_node
     assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
     assert_equal 1, user.id
     assert_equal "josh", user.login
     refute user.respond_to?(:name)
 
     assert user_klass = user_field.query_result_class(fragments: {:Viewer => fragment}, shadow: Set.new([fragment]))
+    assert_equal user_field, user_klass.source_node
     assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
     assert_equal 1, user.id
     assert_equal "josh", user.login
     refute user.respond_to?(:name)
+  end
+
+  def test_query_result_class_inline_fragment_casting
+    document = GraphQL.parse(<<-'GRAPHQL')
+      fragment Foo on Node {
+        __typename
+        id
+
+        ... on User {
+          fullName
+        }
+      }
+
+      fragment Bar on Node {
+        ... on Company {
+          name
+        }
+      }
+    GRAPHQL
+
+    assert node_fragment = document.definitions.first
+    assert node_klass = node_fragment.query_result_class
+    assert_equal node_fragment, node_klass.source_node
+
+    assert user_fragment = document.definitions[0].selections[2]
+    assert_equal "User", user_fragment.type
+
+    assert company_fragment = document.definitions[1].selections[0]
+    assert_equal "Company", company_fragment.type
+
+    assert node_user = node_klass.new({
+      "__typename" => "User",
+      "id" => 1,
+      "fullName" => "Joshua Peek"
+    })
+    assert_equal 1, node_user.id
+    assert_equal "Joshua Peek", node_user.full_name
+
+    assert user = user_fragment.query_result_class.cast(node_user)
+    assert_equal "Joshua Peek", user.full_name
+    refute user.respond_to?(:id)
+    refute user.respond_to?(:name)
+
+    assert_raises TypeError do
+      company_fragment.query_result_class.cast(node_user)
+    end
   end
 
   def test_relay_connection_enumerator

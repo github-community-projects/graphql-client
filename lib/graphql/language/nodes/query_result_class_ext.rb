@@ -11,7 +11,7 @@ module GraphQL
         #
         # Returns subclass of QueryResult or nil.
         def query_result_class(**kargs)
-          GraphQL::Client::QueryResult.define(fields: selections_query_result_classes(**kargs))
+          GraphQL::Client::QueryResult.define(source_node: self, fields: selections_query_result_classes(**kargs))
         end
 
         def selection_query_result_classes(**kargs)

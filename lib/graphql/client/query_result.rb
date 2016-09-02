@@ -4,12 +4,17 @@ require "active_support/inflector"
 module GraphQL
   module Client
     class QueryResult
+      def self.source_node
+        @source_node
+      end
+
       def self.fields
         @fields
       end
 
-      def self.define(fields: {})
+      def self.define(source_node: nil, fields: {})
         Class.new(self) do
+          @source_node = source_node
           @fields = {}
 
           fields.each do |field, type|
@@ -71,6 +76,12 @@ module GraphQL
         when Hash
           new(obj)
         when QueryResult
+          unless obj.class.source_node.selections.include?(self.source_node)
+            message = "couldn't cast #{obj.inspect} to #{self.inspect}\n\n"
+            suggestion = "\n  ...#{name || "YourFragment"} # SUGGESTION"
+            message << GraphQL::Language::Generation.generate(obj.class.source_node).sub(/\n}$/, "#{suggestion}\n}")
+            raise TypeError, message
+          end
           cast(obj.to_h)
         when Array
           obj.map { |e| cast(e) }
@@ -99,7 +110,8 @@ module GraphQL
             new_fields[name] = value
           end
         end
-        define(fields: new_fields)
+        # TODO: Picking first source node seems error prone
+        define(source_node: self.source_node, fields: new_fields)
       end
 
       attr_reader :data

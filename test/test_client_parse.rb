@@ -279,4 +279,30 @@ class TestClientParse < MiniTest::Test
     owner = TestUserFragment.new(repo.owner)
     assert_equal "josh", owner.login
   end
+
+  def test_invalid_fragment_cast
+    repo_fragment = GraphQL::Client::Fragment.parse(<<-'GRAPHQL')
+      fragment on Repository {
+        name
+        owner {
+          login
+        }
+      }
+    GRAPHQL
+
+    repo = repo_fragment.new({
+      "__typename" => "Repository",
+      "name" => "rails",
+      "owner" => {
+        "__typename" => "User",
+        "login" => "josh"
+      }
+    })
+    assert_equal "rails", repo.name
+    assert_equal "josh", repo.owner.login
+
+    assert_raises TypeError do
+      TestUserFragment.new(repo.owner)
+    end
+  end
 end
