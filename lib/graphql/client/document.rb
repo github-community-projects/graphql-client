@@ -3,6 +3,7 @@ require "graphql/client/fragment"
 require "graphql/client/node"
 require "graphql/client/query"
 require "graphql/language/nodes/deep_freeze_ext"
+require "graphql/language/nodes/fragment_ext"
 require "graphql/language/nodes/inject_selection_ext"
 require "graphql/language/nodes/replace_fragment_spread_ext"
 require "graphql/language/nodes/validate_ext"
@@ -33,7 +34,7 @@ module GraphQL
             doc[name] = query
 
           when GraphQL::Language::Nodes::FragmentDefinition
-            definition = GraphQL::Language::Nodes::InlineFragment.new(type: definition.type, directives: definition.directives, selections: definition.selections)
+            definition = definition.to_inline_fragment
             fragment = GraphQL::Client::Fragment.new(definition.deep_freeze, fragments.values).freeze
             fragment.node.validate!(schema: schema) if schema
             doc[name] = fragment

@@ -1,4 +1,5 @@
 require "graphql"
+require "graphql/language/nodes/fragment_ext"
 require "graphql/language/nodes/selection_ext"
 
 module GraphQL
@@ -11,7 +12,7 @@ module GraphQL
             case selection
             when FragmentSpread
               if fragment = fragments[selection.name.to_sym]
-                InlineFragment.new(type: fragment.type, directives: fragment.directives, selections: fragment.selections)
+                fragment.to_inline_fragment
               else
                 selection
               end

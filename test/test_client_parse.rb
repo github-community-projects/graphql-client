@@ -274,6 +274,7 @@ class TestClientParse < MiniTest::Test
       }
     })
     assert_equal "rails", repo.name
+    refute repo.owner.respond_to?(:login)
 
     owner = TestUserFragment.new(repo.owner)
     assert_equal "josh", owner.login
