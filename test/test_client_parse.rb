@@ -29,10 +29,10 @@ class TestClientParse < MiniTest::Test
     assert_equal "viewer", viewer.name
 
     assert spread = viewer.selections[0]
-    assert_equal "__fragment2__", spread.name # TODO: Improve fragment name
+    assert_equal "TestClientParse__TestUserFragment", spread.name
 
     assert fragment = document.definitions[1]
-    assert_equal "__fragment2__", fragment.name # TODO: Improve fragment name
+    assert_equal "TestClientParse__TestUserFragment", fragment.name
     assert_equal "User", fragment.type
   end
 

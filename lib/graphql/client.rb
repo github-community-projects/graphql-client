@@ -75,12 +75,12 @@ module GraphQL
     end
 
     def self.scan_interpolated_fragments(str)
-      fragments, index = {}, 1
+      fragments = {}
       str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) { |m|
-        index += 1
-        name = "__fragment#{index}__"
-        fragments[name.to_sym] = ActiveSupport::Inflector.constantize($1).source_node
-        "...#{name}"
+        const_name = $1
+        fragment_name = const_name.gsub(/::/, "__")
+        fragments[fragment_name.to_sym] = ActiveSupport::Inflector.constantize(const_name).source_node
+        "...#{fragment_name}"
       }
       return str, fragments
     end
