@@ -1,5 +1,6 @@
 require "graphql"
 require "graphql/language/nodes/selection_ext"
+require "set"
 
 module GraphQL
   module Language
@@ -7,7 +8,13 @@ module GraphQL
       module Selections
         def inject_selection(*selections)
           other = self.dup
-          other.selections = selections + self.selections.map do |selection|
+
+          names = Set.new(self.selections.map { |s| s.respond_to?(:name) ? s.name : nil }.compact)
+          selections_to_prepend = selections.reject do |selection|
+            names.include?(selection.name)
+          end
+
+          other.selections = selections_to_prepend + self.selections.map do |selection|
             case selection
             when Selections
               selection.inject_selection(*selections)

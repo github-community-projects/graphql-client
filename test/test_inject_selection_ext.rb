@@ -8,6 +8,7 @@ class TestInjectSelectionExt < MiniTest::Test
     document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
       query FooQuery {
         node(id: "4") {
+          __typename
           id
           ... on User {
             name
