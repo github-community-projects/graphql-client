@@ -3,6 +3,39 @@ require "graphql/client"
 require "minitest/autorun"
 
 class TestClientParse < MiniTest::Test
+  TestUserFragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
+    fragment on User {
+      login
+    }
+  GRAPHQL
+
+  def test_assigned_constant_name
+    assert_equal "TestClientParse::TestUserFragment", TestUserFragment.name
+  end
+
+  def test_parse_external_fragment
+    document = GraphQL::Client.parse(<<-'GRAPHQL')
+      query {
+        viewer {
+          ...TestClientParse::TestUserFragment
+        }
+      }
+    GRAPHQL
+
+    assert query = document.definitions[0]
+    assert_equal "query", query.operation_type
+
+    assert viewer = query.selections[0]
+    assert_equal "viewer", viewer.name
+
+    assert spread = viewer.selections[0]
+    assert_equal "__fragment2__", spread.name # TODO: Improve fragment name
+
+    assert fragment = document.definitions[1]
+    assert_equal "__fragment2__", fragment.name # TODO: Improve fragment name
+    assert_equal "User", fragment.type
+  end
+
   def test_parse_fragment
     fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on User {
@@ -247,16 +280,6 @@ class TestClientParse < MiniTest::Test
     assert_equal "1", user.id
     assert_equal "josh", user.login
     assert_equal "secret", user.password
-  end
-
-  TestUserFragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
-    fragment on User {
-      login
-    }
-  GRAPHQL
-
-  def test_assigned_constant_name
-    assert_equal "TestClientParse::TestUserFragment", TestUserFragment.name
   end
 
   def test_fragment_spread_constant
