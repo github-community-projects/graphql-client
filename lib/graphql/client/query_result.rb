@@ -2,7 +2,7 @@ require "graphql"
 require "active_support/inflector"
 
 module GraphQL
-  module Client
+  class Client
     class QueryResult
       def self.source_node
         @source_node

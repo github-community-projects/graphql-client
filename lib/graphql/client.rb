@@ -1,13 +1,14 @@
 require "active_support/inflector"
 require "graphql"
 require "graphql/language/nodes/deep_freeze_ext"
+require "graphql/language/nodes/document_definition_slice_ext"
 require "graphql/language/nodes/inject_selection_ext"
 require "graphql/language/nodes/query_result_class_ext"
 require "graphql/language/nodes/replace_fragment_spread_ext"
 require "graphql/language/nodes/validate_ext"
 
 module GraphQL
-  module Client
+  class Client
     class << self
       attr_accessor :schema
     end
@@ -72,6 +73,89 @@ module GraphQL
         "...#{fragment_name}"
       }
       return str, fragments
+    end
+
+    attr_reader :schema
+
+    def initialize(schema:)
+      @schema = schema
+      @definitions = []
+    end
+
+    module Definition
+      def client
+        @client
+      end
+
+      def source
+        @source
+      end
+
+      def node
+        return @node if defined? @node
+
+        src = self.source.strip
+        src = src.sub(/fragment on /, "fragment __anonymous__ on ")
+
+        src = src.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)(\.([a-zA-Z0-9_]+))?/) { |m|
+          const_name, fragment_name = $1, $4
+          nodes = ActiveSupport::Inflector.constantize(const_name).node
+
+          name = fragment_name ?
+            nodes.find { |n| n.name.end_with?(fragment_name) }.name :
+            nodes.first.name
+
+          "...#{name}"
+        }
+
+        doc = GraphQL.parse(src)
+
+        aliases = {}
+
+        doc.definitions.each do |definition|
+          definition.name = nil if definition.name == "__anonymous__"
+          definition.name = aliases[definition.name] = (self.name.split("::") << definition.name).compact.join("__")
+        end
+
+        visitor = GraphQL::Language::Visitor.new(doc)
+        visitor[GraphQL::Language::Nodes::FragmentSpread] << -> (node, parent) {
+          node.name = aliases.fetch(node.name, node.name)
+        }
+        visitor.visit
+
+        @node = doc.definitions.map(&:deep_freeze)
+      end
+
+      def operation_name
+        if op = node.find { |d| d.is_a?(GraphQL::Language::Nodes::OperationDefinition) }
+          op.name
+        else
+          nil
+        end
+      end
+
+      def document
+        client.document.definition_slice(operation_name).deep_freeze
+      end
+    end
+
+    def parse(str)
+      client = self
+      definition = Class.new do
+        extend Definition
+        @client = client
+        @source = str
+      end
+      @definitions << definition
+      definition
+    end
+
+    def document
+      GraphQL::Language::Nodes::Document.new(definitions: @definitions.flat_map(&:node)).deep_freeze
+    end
+
+    def validate!
+      document.validate!(schema: @schema)
     end
   end
 end
