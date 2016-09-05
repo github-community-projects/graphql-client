@@ -5,7 +5,7 @@ require "set"
 module GraphQL
   class Client
     class QueryResult
-      # Public: Get QueryResult class for result of query.
+      # Internal: Get QueryResult class for result of query.
       #
       # Returns subclass of QueryResult or nil.
       def self.wrap(node)
@@ -28,15 +28,8 @@ module GraphQL
         define(source_node: node, fields: fields)
       end
 
-      def self.source_node
-        @source_node
-      end
-
-      def self.fields
-        @fields
-      end
-
-      def self.define(source_node: nil, fields: {})
+      # Internal
+      def self.define(source_node:, fields: {})
         Class.new(self) do
           @source_node = source_node
           @fields = {}
@@ -89,6 +82,14 @@ module GraphQL
             end
           RUBY
         end
+      end
+
+      def self.source_node
+        @source_node
+      end
+
+      def self.fields
+        @fields
       end
 
       def self.name

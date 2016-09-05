@@ -4,11 +4,13 @@ require "minitest/autorun"
 
 class TestQueryResult < MiniTest::Test
   def test_define_simple_query_result
-    fields = {
-      "name" => nil,
-      "company" => nil
-    }
-    person_klass = GraphQL::Client::QueryResult.define(fields: fields)
+    fragment = GraphQL.parse(<<-'GRAPHQL').definitions.first
+      fragment PersonFragment on Person {
+        name
+        company
+      }
+    GRAPHQL
+    person_klass = GraphQL::Client::QueryResult.wrap(fragment)
 
     person = person_klass.new({"name" => "Josh", "company" => "GitHub"})
     assert_equal "Josh", person.name
@@ -16,11 +18,13 @@ class TestQueryResult < MiniTest::Test
   end
 
   def test_snakecase_field_aliases
-    fields = {
-      "firstName" => nil,
-      "lastName" => nil
-    }
-    person_klass = GraphQL::Client::QueryResult.define(fields: fields)
+    fragment = GraphQL.parse(<<-'GRAPHQL').definitions.first
+      fragment PersonFragment on Person {
+        firstName
+        lastName
+      }
+    GRAPHQL
+    person_klass = GraphQL::Client::QueryResult.wrap(fragment)
 
     person = person_klass.new({"firstName" => "Joshua", "lastName" => "Peek"})
     assert_equal "Joshua", person.first_name
@@ -28,11 +32,13 @@ class TestQueryResult < MiniTest::Test
   end
 
   def test_predicate_aliases
-    fields = {
-      "name" => nil,
-      "company" => nil
-    }
-    person_klass = GraphQL::Client::QueryResult.define(fields: fields)
+    fragment = GraphQL.parse(<<-'GRAPHQL').definitions.first
+      fragment PersonFragment on Person {
+        name
+        company
+      }
+    GRAPHQL
+    person_klass = GraphQL::Client::QueryResult.wrap(fragment)
 
     person = person_klass.new({"name" => "Josh", "company" => nil})
     assert_equal true, person.name?
@@ -40,7 +46,12 @@ class TestQueryResult < MiniTest::Test
   end
 
   def test_no_method_error
-    person_klass = GraphQL::Client::QueryResult.define(fields: {"fullName" => nil})
+    fragment = GraphQL.parse(<<-'GRAPHQL').definitions.first
+      fragment PersonFragment on Person {
+        fullName
+      }
+    GRAPHQL
+    person_klass = GraphQL::Client::QueryResult.wrap(fragment)
     person = person_klass.new({"fullName" => "Joshua Peek"})
 
     begin
@@ -51,7 +62,11 @@ class TestQueryResult < MiniTest::Test
     end
   end
 
-  Person = GraphQL::Client::QueryResult.define(fields: {"fullName" => nil})
+  Person = GraphQL::Client::QueryResult.wrap(GraphQL.parse(<<-'GRAPHQL').definitions.first)
+    fragment PersonFragment on Person {
+      fullName
+    }
+  GRAPHQL
 
   def test_no_method_error_constant
     person = Person.new({"fullName" => "Joshua Peek"})
@@ -65,18 +80,43 @@ class TestQueryResult < MiniTest::Test
   end
 
   def test_merge_classes
-    person1_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "company" => nil })
-    person2_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "login" => nil })
+    fragments = GraphQL.parse(<<-'GRAPHQL').definitions
+      fragment foo on Person {
+        name
+        company
+      }
+
+      fragment bar on Person {
+        name
+        login
+      }
+    GRAPHQL
+
+    person1_klass = GraphQL::Client::QueryResult.wrap(fragments[0])
+    person2_klass = GraphQL::Client::QueryResult.wrap(fragments[1])
     person3_klass = person1_klass | person2_klass
     assert_equal [:name, :company, :login], person3_klass.fields.keys
   end
 
   def test_merge_nested_classes
-    person1_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "company" => nil })
-    person2_klass = GraphQL::Client::QueryResult.define(fields: { "name" => nil, "login" => nil })
+    fragments = GraphQL.parse(<<-'GRAPHQL').definitions
+      fragment query1 on Query {
+        viewer {
+          name
+          company
+        }
+      }
 
-    root1_klass = GraphQL::Client::QueryResult.define(fields: { "viewer" => person1_klass })
-    root2_klass = GraphQL::Client::QueryResult.define(fields: { "viewer" => person2_klass })
+      fragment query2 on Query {
+        viewer {
+          name
+          login
+        }
+      }
+    GRAPHQL
+
+    root1_klass = GraphQL::Client::QueryResult.wrap(fragments[0])
+    root2_klass = GraphQL::Client::QueryResult.wrap(fragments[1])
     root3_klass = root1_klass | root2_klass
 
     assert_equal [:name, :company, :login], root3_klass.fields[:viewer].fields.keys
