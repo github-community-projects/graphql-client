@@ -22,6 +22,7 @@ module GraphQL
         end
 
         document = document.replace_fragment_spread(fragments)
+        document = document.replace_fragment_spread(fragments) # XXX: Multiple pass
 
         document.definitions.inject({}) do |doc, definition|
           name = definition.name.to_sym

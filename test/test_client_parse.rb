@@ -278,4 +278,34 @@ class TestClientParse < MiniTest::Test
     owner = TestUserFragment.new(repo.owner)
     assert_equal "josh", owner.login
   end
+
+  def test_nested_fragment_spread_constant
+    doc = GraphQL::Client::Document.parse(<<-'GRAPHQL')
+      fragment RepositoryFragment on Repository {
+        name
+        owner {
+          ...TestClientParse::TestUserFragment
+        }
+      }
+
+      query RepositoryQuery($id: ID!) {
+        node(id: $id) {
+          ...RepositoryFragment
+        }
+      }
+    GRAPHQL
+
+    repo = doc[:RepositoryFragment].new({
+      "__typename" => "Repository",
+      "name" => "rails",
+      "owner" => {
+        "__typename" => "User",
+        "login" => "josh"
+      }
+    })
+    assert_equal "rails", repo.name
+
+    owner = TestUserFragment.new(repo.owner)
+    assert_equal "josh", owner.login
+  end
 end
