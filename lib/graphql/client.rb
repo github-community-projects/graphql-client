@@ -58,6 +58,9 @@ module GraphQL
         }
         visitor.visit
 
+        # TODO: Make this __typename injection optional
+        doc = doc.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
+
         @node = doc.definitions.map(&:deep_freeze)
       end
 

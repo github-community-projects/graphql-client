@@ -44,7 +44,9 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       query TestClient__Temp__UserQuery {
+        __typename
         viewer {
+          __typename
           id
           firstName
           lastName
@@ -56,7 +58,9 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
       query TestClient__Temp__UserQuery {
+        __typename
         viewer {
+          __typename
           id
           firstName
           lastName
@@ -80,7 +84,9 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       query TestClient__Temp__UserQuery {
+        __typename
         viewer {
+          __typename
           id
           firstName
           lastName
@@ -92,7 +98,9 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
       query TestClient__Temp__UserQuery {
+        __typename
         viewer {
+          __typename
           id
           firstName
           lastName
@@ -116,7 +124,9 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       query TestClient__Temp__UserDocument__getUser {
+        __typename
         viewer {
+          __typename
           id
           firstName
           lastName
@@ -128,7 +138,9 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument.document.to_query_string)
       query TestClient__Temp__UserDocument__getUser {
+        __typename
         viewer {
+          __typename
           id
           firstName
           lastName
@@ -152,8 +164,11 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       mutation TestClient__Temp__LikeMutation {
+        __typename
         likeStory(storyID: 12345) {
+          __typename
           story {
+            __typename
             likeCount
           }
         }
@@ -164,8 +179,11 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::LikeMutation.document.to_query_string)
       mutation TestClient__Temp__LikeMutation {
+        __typename
         likeStory(storyID: 12345) {
+          __typename
           story {
+            __typename
             likeCount
           }
         }
@@ -176,8 +194,11 @@ class TestClient < MiniTest::Test
   def test_client_parse_mutation_document
     Temp.const_set :LikeDocument, @client.parse(<<-'GRAPHQL')
       mutation likeStory {
+        __typename
         likeStory(storyID: 12345) {
+          __typename
           story {
+            __typename
             likeCount
           }
         }
@@ -186,8 +207,11 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       mutation TestClient__Temp__LikeDocument__likeStory {
+        __typename
         likeStory(storyID: 12345) {
+          __typename
           story {
+            __typename
             likeCount
           }
         }
@@ -198,8 +222,11 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::LikeDocument.document.to_query_string)
       mutation TestClient__Temp__LikeDocument__likeStory {
+        __typename
         likeStory(storyID: 12345) {
+          __typename
           story {
+            __typename
             likeCount
           }
         }
@@ -218,6 +245,7 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       fragment TestClient__Temp__UserFragment on User {
+        __typename
         id
         firstName
         lastName
@@ -252,6 +280,7 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       fragment TestClient__Temp__UserDocument__userProfile on User {
+        __typename
         id
         firstName
         lastName
@@ -287,23 +316,29 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       query TestClient__Temp__UserDocument__withNestedFragments {
+        __typename
         user(id: 4) {
+          __typename
           friends(first: 10) {
+            __typename
             ... TestClient__Temp__UserDocument__friendFields
           }
           mutualFriends(first: 10) {
+            __typename
             ... TestClient__Temp__UserDocument__friendFields
           }
         }
       }
 
       fragment TestClient__Temp__UserDocument__friendFields on User {
+        __typename
         id
         name
         ... TestClient__Temp__UserDocument__standardProfilePic
       }
 
       fragment TestClient__Temp__UserDocument__standardProfilePic on User {
+        __typename
         profilePic(size: 50)
       }
     GRAPHQL
@@ -312,23 +347,29 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument.document.to_query_string)
       query TestClient__Temp__UserDocument__withNestedFragments {
+        __typename
         user(id: 4) {
+          __typename
           friends(first: 10) {
+            __typename
             ... TestClient__Temp__UserDocument__friendFields
           }
           mutualFriends(first: 10) {
+            __typename
             ... TestClient__Temp__UserDocument__friendFields
           }
         }
       }
 
       fragment TestClient__Temp__UserDocument__friendFields on User {
+        __typename
         id
         name
         ... TestClient__Temp__UserDocument__standardProfilePic
       }
 
       fragment TestClient__Temp__UserDocument__standardProfilePic on User {
+        __typename
         profilePic(size: 50)
       }
     GRAPHQL
@@ -364,21 +405,27 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       fragment TestClient__Temp__ProfilePictureFragment on User {
+        __typename
         profilePic(size: 50)
       }
 
       fragment TestClient__Temp__FriendFragment on User {
+        __typename
         id
         name
         ... TestClient__Temp__ProfilePictureFragment
       }
 
       query TestClient__Temp__UserQuery {
+        __typename
         user(id: 4) {
+          __typename
           friends(first: 10) {
+            __typename
             ... TestClient__Temp__FriendFragment
           }
           mutualFriends(first: 10) {
+            __typename
             ... TestClient__Temp__FriendFragment
           }
         }
@@ -391,21 +438,27 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
       query TestClient__Temp__UserQuery {
+        __typename
         user(id: 4) {
+          __typename
           friends(first: 10) {
+            __typename
             ... TestClient__Temp__FriendFragment
           }
           mutualFriends(first: 10) {
+            __typename
             ... TestClient__Temp__FriendFragment
           }
         }
       }
 
       fragment TestClient__Temp__ProfilePictureFragment on User {
+        __typename
         profilePic(size: 50)
       }
 
       fragment TestClient__Temp__FriendFragment on User {
+        __typename
         id
         name
         ... TestClient__Temp__ProfilePictureFragment
@@ -441,21 +494,27 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       fragment TestClient__Temp__ProfileFragments__profilePic on User {
+        __typename
         profilePic(size: 50)
       }
 
       fragment TestClient__Temp__ProfileFragments__friendFields on User {
+        __typename
         id
         name
         ... TestClient__Temp__ProfileFragments__profilePic
       }
 
       query TestClient__Temp__UserQuery {
+        __typename
         user(id: 4) {
+          __typename
           friends(first: 10) {
+            __typename
             ... TestClient__Temp__ProfileFragments__friendFields
           }
           mutualFriends(first: 10) {
+            __typename
             ... TestClient__Temp__ProfileFragments__friendFields
           }
         }
@@ -467,21 +526,27 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
       query TestClient__Temp__UserQuery {
+        __typename
         user(id: 4) {
+          __typename
           friends(first: 10) {
+            __typename
             ... TestClient__Temp__ProfileFragments__friendFields
           }
           mutualFriends(first: 10) {
+            __typename
             ... TestClient__Temp__ProfileFragments__friendFields
           }
         }
       }
 
       fragment TestClient__Temp__ProfileFragments__profilePic on User {
+        __typename
         profilePic(size: 50)
       }
 
       fragment TestClient__Temp__ProfileFragments__friendFields on User {
+        __typename
         id
         name
         ... TestClient__Temp__ProfileFragments__profilePic
@@ -519,21 +584,28 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       fragment TestClient__Temp__FriendFragment on User {
+        __typename
         id
         name
       }
 
       query TestClient__Temp__FriendsQuery {
+        __typename
         user(id: 4) {
+          __typename
           friends(first: 10) {
+            __typename
             ... TestClient__Temp__FriendFragment
           }
         }
       }
 
       query TestClient__Temp__MutualFriendsQuery {
+        __typename
         user(id: 4) {
+          __typename
           mutualFriends(first: 10) {
+            __typename
             ... TestClient__Temp__FriendFragment
           }
         }
@@ -546,14 +618,18 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::FriendsQuery.document.to_query_string)
       query TestClient__Temp__FriendsQuery {
+        __typename
         user(id: 4) {
+          __typename
           friends(first: 10) {
+            __typename
             ... TestClient__Temp__FriendFragment
           }
         }
       }
 
       fragment TestClient__Temp__FriendFragment on User {
+        __typename
         id
         name
       }
@@ -561,14 +637,18 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.document.to_query_string)
       query TestClient__Temp__MutualFriendsQuery {
+        __typename
         user(id: 4) {
+          __typename
           mutualFriends(first: 10) {
+            __typename
             ... TestClient__Temp__FriendFragment
           }
         }
       }
 
       fragment TestClient__Temp__FriendFragment on User {
+        __typename
         id
         name
       }
