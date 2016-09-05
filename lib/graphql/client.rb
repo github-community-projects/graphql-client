@@ -1,6 +1,5 @@
 require "active_support/inflector"
 require "graphql"
-require "graphql/client/const_proxy"
 require "graphql/client/query_result"
 require "graphql/language/mutator"
 require "graphql/language/nodes/deep_freeze_ext"
@@ -17,14 +16,14 @@ module GraphQL
     def initialize(schema:)
       @schema = schema
       @definitions = []
+      @definition_count = 0
     end
 
     class Definition
-      def initialize(name:, client:, source:)
-        @name = name
+      def initialize(client:, nodes:, query_result:)
         @client = client
-        @_nodes = @client._parse(@name, source)
-        @query_result = GraphQL::Client::QueryResult.wrap(@_nodes.first, name: name)
+        @_nodes = nodes
+        @query_result = query_result
       end
 
       attr_reader :_nodes
@@ -47,12 +46,14 @@ module GraphQL
     end
 
     def parse(str)
-      definition = ConstProxy.new { |name| Definition.new(client: self, name: name, source: str) }
+      nodes = _parse(str)
+      query_result = GraphQL::Client::QueryResult.wrap(nodes.first)
+      definition = Definition.new(client: self, nodes: nodes, query_result: query_result)
       @definitions << definition
       definition
     end
 
-    def _parse(name, str)
+    def _parse(str)
       str = str.strip
 
       str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)(\.([a-zA-Z0-9_]+))?/) { |m|
@@ -72,7 +73,9 @@ module GraphQL
 
       aliases = {}
       doc.definitions.each do |definition|
-        aliases[definition.name] = (name.split("::") << definition.name).compact.join("__")
+        # XXX: Use constant name
+        @definition_count += 1
+        aliases[definition.name] = (["D#{@definition_count}"] << definition.name).compact.join("__")
       end
       mutator.rename_definitions(aliases)
 
