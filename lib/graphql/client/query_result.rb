@@ -80,10 +80,9 @@ module GraphQL
         when Hash
           new(obj)
         when QueryResult
-          selections = obj.class.source_node.selections.map { |s|
-            s.is_a?(GraphQL::Language::Nodes::InlinedFragmentDefinition) ? s.original_definition : s # XXX
-          }
-          unless selections.include?(self.source_node)
+          spreads = Set.new(obj.class.source_node.selections.select { |s| s.is_a?(GraphQL::Language::Nodes::FragmentSpread) }.map(&:name))
+
+          if !spreads.include?(self.source_node.name)
             message = "couldn't cast #{obj.inspect} to #{self.inspect}\n\n"
             suggestion = "\n  ...#{name || "YourFragment"} # SUGGESTION"
             message << GraphQL::Language::Generation.generate(obj.class.source_node).sub(/\n}$/, "#{suggestion}\n}")

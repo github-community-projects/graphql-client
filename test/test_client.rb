@@ -190,6 +190,11 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal nil, Temp::UserFragment.operation_name
+
+    user = Temp::UserFragment.new({"id" => 1, "firstName" => "Joshua", "lastName" => "Peek"})
+    assert_equal 1, user.id
+    assert_equal "Joshua", user.first_name
+    assert_equal "Peek", user.last_name
   end
 
   def test_client_parse_fragment_document
@@ -524,5 +529,179 @@ class TestClient < MiniTest::Test
         name
       }
     GRAPHQL
+  end
+
+  def test_client_parse_fragment_query_result_aliases
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        login_url
+        profileName
+        name: profileName
+        isCool
+      }
+    GRAPHQL
+
+    user = Temp::UserFragment.new({"__typename" => "User", "login_url" => "/login", "profileName" => "Josh", "name" => "Josh", "isCool" => true})
+    assert_equal "/login", user.login_url
+    assert_equal "Josh", user.profile_name
+    assert_equal "Josh", user.name
+    assert user.is_cool?
+  end
+
+  def test_client_parse_fragment_query_result_with_nested_fields
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        id
+        repositories {
+          name
+          watchers {
+            login
+          }
+        }
+      }
+    GRAPHQL
+
+    user = Temp::UserFragment.new({
+      "id" => "1",
+      "repositories" => [
+        {
+          "name" => "github",
+          "watchers" => {
+            "login" => "josh"
+          }
+        }
+      ]
+    })
+
+    assert_equal "1", user.id
+    assert_kind_of Array, user.repositories
+    assert_equal "github", user.repositories[0].name
+    assert_equal "josh", user.repositories[0].watchers.login
+  end
+
+  def test_client_parse_fragment_query_result_with_inline_fragments
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        id
+        repositories {
+          ... on Repository {
+            name
+            watchers {
+              ... on User {
+                login
+              }
+            }
+          }
+        }
+      }
+    GRAPHQL
+
+    user = Temp::UserFragment.new({
+      "id" => "1",
+      "repositories" => [
+        {
+          "name" => "github",
+          "watchers" => {
+            "login" => "josh"
+          }
+        }
+      ]
+    })
+
+    assert_equal "1", user.id
+    assert_kind_of Array, user.repositories
+    assert_equal "github", user.repositories[0].name
+    assert_equal "josh", user.repositories[0].watchers.login
+  end
+
+  def test_client_parse_nested_inline_fragments_on_same_node
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Node {
+        id
+        ... on User {
+          login
+          ... on AdminUser {
+            password
+          }
+        }
+        ... on Organization {
+          name
+        }
+      }
+    GRAPHQL
+
+    user = Temp::UserFragment.new({
+      "__typename" => "User",
+      "id" => "1",
+      "login" => "josh",
+      "password" => "secret"
+    })
+
+    assert_equal "1", user.id
+    assert_equal "josh", user.login
+    assert_equal "secret", user.password
+  end
+
+  def test_client_parse_fragment_spread_constant
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        login
+      }
+    GRAPHQL
+
+    Temp.const_set :RepositoryFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Repository {
+        name
+        owner {
+          ...TestClient::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    repo = Temp::RepositoryFragment.new({
+      "__typename" => "Repository",
+      "name" => "rails",
+      "owner" => {
+        "__typename" => "User",
+        "login" => "josh"
+      }
+    })
+    assert_equal "rails", repo.name
+    refute repo.owner.respond_to?(:login)
+
+    owner = Temp::UserFragment.new(repo.owner)
+    assert_equal "josh", owner.login
+  end
+
+  def test_client_parse_invalid_fragment_cast
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        login
+      }
+    GRAPHQL
+
+    Temp.const_set :RepositoryFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Repository {
+        name
+        owner {
+          login
+        }
+      }
+    GRAPHQL
+
+    repo = Temp::RepositoryFragment.new({
+      "__typename" => "Repository",
+      "name" => "rails",
+      "owner" => {
+        "__typename" => "User",
+        "login" => "josh"
+      }
+    })
+    assert_equal "rails", repo.name
+    assert_equal "josh", repo.owner.login
+
+    assert_raises TypeError do
+      Temp::UserFragment.new(repo.owner)
+    end
   end
 end

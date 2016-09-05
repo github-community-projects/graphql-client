@@ -9,59 +9,6 @@ require "graphql/language/nodes/validate_ext"
 
 module GraphQL
   class Client
-    class << self
-      attr_accessor :schema
-    end
-
-    def self.parse_document(str, schema: GraphQL::Client.schema)
-      str = str.strip
-      str, fragments = scan_interpolated_fragments(str)
-
-      document = GraphQL.parse(str)
-      document = document.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
-      document.deep_freeze
-
-      document.definitions.each do |definition|
-        fragments[definition.name.to_sym] = definition if definition.is_a?(GraphQL::Language::Nodes::FragmentDefinition)
-      end
-
-      document = document.replace_fragment_spread(fragments)
-      document.deep_freeze
-      document.validate!(schema: schema) if schema
-
-      defs = {}
-      document.definitions.each do |definition|
-        defs[definition.name.to_sym] = definition.query_result_class(shadow: fragments.values)
-      end
-      defs
-    end
-
-    def self.parse_query(str, **kargs)
-      unless str.strip.start_with?("query")
-        raise ArgumentError, "expected string to be a query:\n#{str}"
-      end
-      parse_document(str, **kargs).values.first
-    end
-
-    def self.parse_fragment(str, **kargs)
-      unless str.strip.start_with?("fragment")
-        raise ArgumentError, "expected string to be a fragment:\n#{str}"
-      end
-      str = str.strip.sub(/^fragment on /, "fragment __anonymous__ on ")
-      parse_document(str, **kargs).values.first
-    end
-
-    def self.scan_interpolated_fragments(str)
-      fragments = {}
-      str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) { |m|
-        const_name = $1
-        fragment_name = const_name.gsub(/::/, "__")
-        fragments[fragment_name.to_sym] = ActiveSupport::Inflector.constantize(const_name).source_node
-        "...#{fragment_name}"
-      }
-      return str, fragments
-    end
-
     attr_reader :schema
 
     def initialize(schema:)
@@ -124,11 +71,16 @@ module GraphQL
       def document
         client.document.definition_slice(operation_name).deep_freeze
       end
+
+      def new(*args)
+        fragments = client.fragments
+        node.first.query_result_class(fragments: fragments, shadow: Set.new(fragments.values)).new(*args)
+      end
     end
 
     def parse(str)
       client = self
-      definition = Class.new do
+      definition = Module.new do
         extend Definition
         @client = client
         @source = str
@@ -139,6 +91,14 @@ module GraphQL
 
     def document
       GraphQL::Language::Nodes::Document.new(definitions: @definitions.flat_map(&:node)).deep_freeze
+    end
+
+    def fragments
+      Hash[document.definitions.select { |definition|
+        definition.is_a?(GraphQL::Language::Nodes::FragmentDefinition)
+      }.map { |fragment|
+        [fragment.name.to_sym, fragment]
+      }]
     end
 
     def validate!
