@@ -5,6 +5,7 @@ require "graphql/client/query_result"
 require "graphql/language/mutator"
 require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/operation_slice"
+require "graphql/relay/parser"
 
 module GraphQL
   class Client
@@ -53,7 +54,6 @@ module GraphQL
 
     def _parse(name, str)
       str = str.strip
-      str = str.sub(/fragment on /, "fragment __anonymous__ on ")
 
       str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)(\.([a-zA-Z0-9_]+))?/) { |m|
         const_name, fragment_name = $1, $4
@@ -66,13 +66,12 @@ module GraphQL
         "...#{fragment_name}"
       }
 
-      doc = GraphQL.parse(str)
+      doc = GraphQL::Relay::Parser.parse(str)
 
       mutator = GraphQL::Language::Mutator.new(doc)
 
       aliases = {}
       doc.definitions.each do |definition|
-        definition.name = nil if definition.name == "__anonymous__"
         aliases[definition.name] = (name.split("::") << definition.name).compact.join("__")
       end
       mutator.rename_definitions(aliases)
