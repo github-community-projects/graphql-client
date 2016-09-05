@@ -479,54 +479,6 @@ class TestQueryResult < MiniTest::Test
     refute user.respond_to?(:name)
   end
 
-  def test_query_result_class_inline_fragment_casting
-    skip
-
-    document = GraphQL.parse(<<-'GRAPHQL')
-      fragment Foo on Node {
-        __typename
-        id
-
-        ... on User {
-          fullName
-        }
-      }
-
-      fragment Bar on Node {
-        ... on Company {
-          name
-        }
-      }
-    GRAPHQL
-
-    assert node_fragment = document.definitions.first
-    assert node_klass = GraphQL::Client::QueryResult.wrap(node_fragment)
-    assert_equal node_fragment, node_klass.source_node
-
-    assert user_fragment = document.definitions[0].selections[2]
-    assert_equal "User", user_fragment.type
-
-    assert company_fragment = document.definitions[1].selections[0]
-    assert_equal "Company", company_fragment.type
-
-    assert node_user = node_klass.new({
-      "__typename" => "User",
-      "id" => 1,
-      "fullName" => "Joshua Peek"
-    })
-    assert_equal 1, node_user.id
-    assert_equal "Joshua Peek", node_user.full_name
-
-    assert user = GraphQL::Client::QueryResult.wrap(user_fragment).cast(node_user)
-    assert_equal "Joshua Peek", user.full_name
-    refute user.respond_to?(:id)
-    refute user.respond_to?(:name)
-
-    assert_raises TypeError do
-      GraphQL::Client::QueryResult.wrap(company_fragment).cast(node_user)
-    end
-  end
-
   def test_relay_connection_enumerator
     query = GraphQL.parse(<<-'GRAPHQL').definitions.first
       query MoreRebelShipsQuery {
