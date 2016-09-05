@@ -8,7 +8,7 @@ module GraphQL
       # Internal: Get QueryResult class for result of query.
       #
       # Returns subclass of QueryResult or nil.
-      def self.wrap(node)
+      def self.wrap(node, name: nil)
         fields = {}
 
         node.selections.each do |selection|
@@ -16,21 +16,22 @@ module GraphQL
           when Language::Nodes::FragmentSpread
           when Language::Nodes::Field
             field_name = selection.alias || selection.name
-            field_klass = selection.selections.any? ? wrap(selection) : nil
+            field_klass = selection.selections.any? ? wrap(selection, name: "#{name}.#{field_name}") : nil
             fields[field_name] ? fields[field_name] |= field_klass : fields[field_name] = field_klass
           when Language::Nodes::InlineFragment
-            wrap(selection).fields.each do |name, klass|
-              fields[name.to_s] ? fields[name.to_s] |= klass : fields[name.to_s] = klass
+            wrap(selection, name: name).fields.each do |fragment_name, klass|
+              fields[fragment_name.to_s] ? fields[fragment_name.to_s] |= klass : fields[fragment_name.to_s] = klass
             end
           end
         end
 
-        define(source_node: node, fields: fields)
+        define(name: name, source_node: node, fields: fields)
       end
 
       # Internal
-      def self.define(source_node:, fields: {})
+      def self.define(name:, source_node:, fields: {})
         Class.new(self) do
+          @name = name
           @source_node = source_node
           @fields = {}
 
@@ -93,7 +94,7 @@ module GraphQL
       end
 
       def self.name
-        super || GraphQL::Client::QueryResult.name
+        @name || super || GraphQL::Client::QueryResult.name
       end
 
       def self.inspect
@@ -142,7 +143,7 @@ module GraphQL
           end
         end
         # TODO: Picking first source node seems error prone
-        define(source_node: self.source_node, fields: new_fields)
+        define(name: self.name, source_node: self.source_node, fields: new_fields)
       end
 
       attr_reader :data

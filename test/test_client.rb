@@ -259,6 +259,9 @@ class TestClient < MiniTest::Test
     assert_equal "Joshua", user.first_name
     assert_equal "Peek", user.last_name
 
+    assert_equal "TestClient::Temp::UserFragment", Temp::UserFragment.name
+    assert_equal "TestClient::Temp::UserFragment", user.class.name
+
     assert_raises GraphQL::Client::ValidationError do
       begin
         @client.validate!
@@ -823,6 +826,10 @@ class TestClient < MiniTest::Test
     })
     assert_equal "rails", repo.name
     assert_equal "josh", repo.owner.login
+
+    assert_equal "TestClient::Temp::RepositoryFragment", Temp::RepositoryFragment.name
+    assert_equal "TestClient::Temp::RepositoryFragment", repo.class.name
+    assert_equal "TestClient::Temp::RepositoryFragment.owner", repo.owner.class.name
 
     assert_raises TypeError do
       Temp::UserFragment.new(repo.owner)
