@@ -1,11 +1,11 @@
 require "graphql"
+require "graphql/language/mutator"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/nodes/inject_selection_ext"
 require "minitest/autorun"
 
-class TestInjectSelectionExt < MiniTest::Test
-  def test_has_selections
-    document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
+class TestMutator < MiniTest::Test
+  def test_preprend_selections
+    document = GraphQL.parse(<<-'GRAPHQL')
       query FooQuery {
         node(id: "4") {
           __typename
@@ -20,8 +20,8 @@ class TestInjectSelectionExt < MiniTest::Test
       }
     GRAPHQL
 
-    new_document = document.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
-    refute new_document.frozen?
+    mutator = GraphQL::Language::Mutator.new(document)
+    mutator.prepend_selection(GraphQL::Language::Nodes::Field.new(name: "__typename").deep_freeze)
 
     expected = <<-'GRAPHQL'
       query FooQuery {
@@ -40,6 +40,6 @@ class TestInjectSelectionExt < MiniTest::Test
         }
       }
     GRAPHQL
-    assert_equal expected.gsub(/^      /, "").chomp, new_document.to_query_string
+    assert_equal expected.gsub(/^      /, "").chomp, document.to_query_string
   end
 end

@@ -1,7 +1,7 @@
 require "active_support/inflector"
 require "graphql"
+require "graphql/language/mutator"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/nodes/inject_selection_ext"
 require "graphql/language/nodes/query_result_class_ext"
 require "graphql/language/operation_slice"
 
@@ -59,7 +59,8 @@ module GraphQL
         visitor.visit
 
         # TODO: Make this __typename injection optional
-        doc = doc.inject_selection(GraphQL::Language::Nodes::Field.new(name: "__typename"))
+        mutator = GraphQL::Language::Mutator.new(doc)
+        mutator.prepend_selection(GraphQL::Language::Nodes::Field.new(name: "__typename").deep_freeze)
 
         @node = doc.definitions.map(&:deep_freeze)
       end
