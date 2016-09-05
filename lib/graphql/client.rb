@@ -1,8 +1,8 @@
 require "active_support/inflector"
 require "graphql"
+require "graphql/client/query_result"
 require "graphql/language/mutator"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/nodes/query_result_class_ext"
 require "graphql/language/operation_slice"
 
 module GraphQL
@@ -78,8 +78,7 @@ module GraphQL
       end
 
       def new(*args)
-        fragments = client.fragments
-        node.first.query_result_class(fragments: fragments, shadow: Set.new(fragments.values)).new(*args)
+        GraphQL::Client::QueryResult.wrap(node.first).new(*args)
       end
     end
 
@@ -96,14 +95,6 @@ module GraphQL
 
     def document
       GraphQL::Language::Nodes::Document.new(definitions: @definitions.flat_map(&:node)).deep_freeze
-    end
-
-    def fragments
-      Hash[document.definitions.select { |definition|
-        definition.is_a?(GraphQL::Language::Nodes::FragmentDefinition)
-      }.map { |fragment|
-        [fragment.name.to_sym, fragment]
-      }]
     end
 
     def validate!

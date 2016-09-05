@@ -1,9 +1,33 @@
-require "graphql"
 require "active_support/inflector"
+require "graphql"
+require "set"
 
 module GraphQL
   class Client
     class QueryResult
+      # Public: Get QueryResult class for result of query.
+      #
+      # Returns subclass of QueryResult or nil.
+      def self.wrap(node)
+        fields = {}
+
+        node.selections.each do |selection|
+          case selection
+          when Language::Nodes::FragmentSpread
+          when Language::Nodes::Field
+            field_name = selection.alias || selection.name
+            field_klass = selection.selections.any? ? wrap(selection) : nil
+            fields[field_name] ? fields[field_name] |= field_klass : fields[field_name] = field_klass
+          when Language::Nodes::InlineFragment
+            wrap(selection).fields.each do |name, klass|
+              fields[name.to_s] ? fields[name.to_s] |= klass : fields[name.to_s] = klass
+            end
+          end
+        end
+
+        define(source_node: node, fields: fields)
+      end
+
       def self.source_node
         @source_node
       end
