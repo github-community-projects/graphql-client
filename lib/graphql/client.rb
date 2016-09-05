@@ -1,5 +1,6 @@
 require "active_support/inflector"
 require "graphql"
+require "graphql/client/const_proxy"
 require "graphql/client/query_result"
 require "graphql/language/mutator"
 require "graphql/language/nodes/deep_freeze_ext"
@@ -17,19 +18,17 @@ module GraphQL
       @definitions = []
     end
 
-    module Definition
-      def client
-        @client
-      end
-
-      def source
-        @source
+    class Definition
+      def initialize(name:, client:, source:)
+        @name = name
+        @client = client
+        @source = source
       end
 
       def node
         return @node if defined? @node
 
-        src = self.source.strip
+        src = @source.strip
         src = src.sub(/fragment on /, "fragment __anonymous__ on ")
 
         src = src.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)(\.([a-zA-Z0-9_]+))?/) { |m|
@@ -49,7 +48,7 @@ module GraphQL
 
         doc.definitions.each do |definition|
           definition.name = nil if definition.name == "__anonymous__"
-          definition.name = aliases[definition.name] = (self.name.split("::") << definition.name).compact.join("__")
+          definition.name = aliases[definition.name] = (@name.split("::") << definition.name).compact.join("__")
         end
 
         visitor = GraphQL::Language::Visitor.new(doc)
@@ -74,7 +73,7 @@ module GraphQL
       end
 
       def document
-        Language::OperationSlice.slice(client.document, operation_name).deep_freeze
+        Language::OperationSlice.slice(@client.document, operation_name).deep_freeze
       end
 
       def new(*args)
@@ -83,12 +82,7 @@ module GraphQL
     end
 
     def parse(str)
-      client = self
-      definition = Module.new do
-        extend Definition
-        @client = client
-        @source = str
-      end
+      definition = ConstProxy.new { |name| Definition.new(client: self, name: name, source: str) }
       @definitions << definition
       definition
     end
