@@ -1,9 +1,9 @@
 require "active_support/inflector"
 require "graphql"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/nodes/document_definition_slice_ext"
 require "graphql/language/nodes/inject_selection_ext"
 require "graphql/language/nodes/query_result_class_ext"
+require "graphql/language/operation_slice"
 
 module GraphQL
   class Client
@@ -73,7 +73,7 @@ module GraphQL
       end
 
       def document
-        client.document.definition_slice(operation_name).deep_freeze
+        Language::OperationSlice.slice(client.document, operation_name).deep_freeze
       end
 
       def new(*args)

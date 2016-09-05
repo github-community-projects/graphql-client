@@ -1,9 +1,9 @@
 require "graphql"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/nodes/document_definition_slice_ext"
+require "graphql/language/operation_slice"
 require "minitest/autorun"
 
-class TestDocumentDefinitionSliceExt < MiniTest::Test
+class TestOperationSlice < MiniTest::Test
   def test_slice_simple_query_operation
     document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
       query FooQuery {
@@ -13,7 +13,7 @@ class TestDocumentDefinitionSliceExt < MiniTest::Test
       }
     GRAPHQL
 
-    new_document = document.definition_slice("FooQuery")
+    new_document = GraphQL::Language::OperationSlice.slice(document, "FooQuery")
 
     expected = <<-'GRAPHQL'
       query FooQuery {
@@ -34,30 +34,13 @@ class TestDocumentDefinitionSliceExt < MiniTest::Test
       }
     GRAPHQL
 
-    new_document = document.definition_slice("FooMutation")
+    new_document = GraphQL::Language::OperationSlice.slice(document, "FooMutation")
 
     expected = <<-'GRAPHQL'
       mutation FooMutation {
         incr {
           count
         }
-      }
-    GRAPHQL
-    assert_equal expected.gsub(/^      /, "").chomp, new_document.to_query_string
-  end
-
-  def test_slice_simple_fragment_definition
-    document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
-      fragment FooFragment on Node {
-        id
-      }
-    GRAPHQL
-
-    new_document = document.definition_slice("FooFragment")
-
-    expected = <<-'GRAPHQL'
-      fragment FooFragment on Node {
-        id
       }
     GRAPHQL
     assert_equal expected.gsub(/^      /, "").chomp, new_document.to_query_string
@@ -80,7 +63,7 @@ class TestDocumentDefinitionSliceExt < MiniTest::Test
       }
     GRAPHQL
 
-    new_document = document.definition_slice("FooQuery")
+    new_document = GraphQL::Language::OperationSlice.slice(document, "FooQuery")
 
     expected = <<-'GRAPHQL'
       query FooQuery {
