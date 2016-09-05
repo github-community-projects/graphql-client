@@ -68,21 +68,16 @@ module GraphQL
 
       doc = GraphQL.parse(str)
 
-      aliases = {}
+      mutator = GraphQL::Language::Mutator.new(doc)
 
+      aliases = {}
       doc.definitions.each do |definition|
         definition.name = nil if definition.name == "__anonymous__"
-        definition.name = aliases[definition.name] = (name.split("::") << definition.name).compact.join("__")
+        aliases[definition.name] = (name.split("::") << definition.name).compact.join("__")
       end
-
-      visitor = GraphQL::Language::Visitor.new(doc)
-      visitor[GraphQL::Language::Nodes::FragmentSpread] << -> (node, parent) {
-        node.name = aliases.fetch(node.name, node.name)
-      }
-      visitor.visit
+      mutator.rename_definitions(aliases)
 
       # TODO: Make this __typename injection optional
-      mutator = GraphQL::Language::Mutator.new(doc)
       mutator.prepend_selection(GraphQL::Language::Nodes::Field.new(name: "__typename").deep_freeze)
 
       doc.definitions.map(&:deep_freeze)
