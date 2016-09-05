@@ -42,7 +42,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
       query D1 {
         __typename
         viewer {
@@ -54,17 +54,8 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
-      query D1 {
-        __typename
-        viewer {
-          __typename
-          id
-          firstName
-          lastName
-        }
-      }
-    GRAPHQL
+    assert_equal(query_string, @client.document.to_query_string)
+    assert_equal(query_string, Temp::UserQuery.document.to_query_string)
 
     @client.validate!
   end
@@ -80,7 +71,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
       query D1 {
         __typename
         viewer {
@@ -92,17 +83,8 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
-      query D1 {
-        __typename
-        viewer {
-          __typename
-          id
-          firstName
-          lastName
-        }
-      }
-    GRAPHQL
+    assert_equal(query_string, @client.document.to_query_string)
+    assert_equal(query_string, Temp::UserQuery.document.to_query_string)
 
     @client.validate!
   end
@@ -118,7 +100,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
       query D1__getUser {
         __typename
         viewer {
@@ -130,17 +112,8 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument.document.to_query_string)
-      query D1__getUser {
-        __typename
-        viewer {
-          __typename
-          id
-          firstName
-          lastName
-        }
-      }
-    GRAPHQL
+    assert_equal(query_string, @client.document.to_query_string)
+    assert_equal(query_string, Temp::UserDocument.document.to_query_string)
 
     @client.validate!
   end
@@ -156,7 +129,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
       mutation D1 {
         __typename
         likeStory(storyID: 12345) {
@@ -169,18 +142,8 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::LikeMutation.document.to_query_string)
-      mutation D1 {
-        __typename
-        likeStory(storyID: 12345) {
-          __typename
-          story {
-            __typename
-            likeCount
-          }
-        }
-      }
-    GRAPHQL
+    assert_equal(query_string, @client.document.to_query_string)
+    assert_equal(query_string, Temp::LikeMutation.document.to_query_string)
   end
 
   def test_client_parse_mutation_document
@@ -197,7 +160,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
       mutation D1__likeStory {
         __typename
         likeStory(storyID: 12345) {
@@ -210,18 +173,8 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::LikeDocument.document.to_query_string)
-      mutation D1__likeStory {
-        __typename
-        likeStory(storyID: 12345) {
-          __typename
-          story {
-            __typename
-            likeCount
-          }
-        }
-      }
-    GRAPHQL
+    assert_equal(query_string, @client.document.to_query_string)
+    assert_equal(query_string, Temp::LikeDocument.document.to_query_string)
   end
 
   def test_client_parse_anonymous_fragment
