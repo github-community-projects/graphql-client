@@ -25,7 +25,7 @@ module GraphQL
           self.selections.inject({}) do |h, selection|
             case selection
             when Selection
-              if !(shadow.include?(selection) || (self.is_a?(InlinedFragmentDefinition) && shadow.include?(self.original_definition))) # XXX
+              if !shadow.include?(selection)
                 selection.selection_query_result_classes(shadow: shadow, **kargs).each do |name, klass|
                   h[name] ? h[name] |= klass : h[name] = klass
                 end

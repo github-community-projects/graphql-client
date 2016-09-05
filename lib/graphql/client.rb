@@ -4,7 +4,6 @@ require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/nodes/document_definition_slice_ext"
 require "graphql/language/nodes/inject_selection_ext"
 require "graphql/language/nodes/query_result_class_ext"
-require "graphql/language/nodes/replace_fragment_spread_ext"
 
 module GraphQL
   class Client
