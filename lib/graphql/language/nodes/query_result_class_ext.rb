@@ -1,5 +1,4 @@
 require "graphql"
-require "graphql/language/nodes/selection_ext"
 require "graphql/client/query_result"
 require "set"
 
@@ -24,7 +23,7 @@ module GraphQL
         def selections_query_result_classes(shadow: Set.new, **kargs)
           self.selections.inject({}) do |h, selection|
             case selection
-            when Selection
+            when Field, FragmentSpread, InlineFragment
               if !shadow.include?(selection)
                 selection.selection_query_result_classes(shadow: shadow, **kargs).each do |name, klass|
                   h[name] ? h[name] |= klass : h[name] = klass
@@ -39,6 +38,8 @@ module GraphQL
       end
 
       class Field < AbstractNode
+        include Selections
+
         # Public: Get GraphQL::QueryResult class for result of query.
         #
         # Returns subclass of QueryResult or nil.
@@ -56,6 +57,10 @@ module GraphQL
         end
       end
 
+      class FragmentDefinition < AbstractNode
+        include Selections
+      end
+
       class FragmentSpread < AbstractNode
         def selection_query_result_classes(fragments: {}, shadow: Set.new, **kargs)
           unless fragment = fragments[name.to_sym]
@@ -64,6 +69,14 @@ module GraphQL
           return {} if shadow.include?(fragment)
           fragment.selection_query_result_classes(fragments: fragments, shadow: shadow, **kargs)
         end
+      end
+
+      class InlineFragment < AbstractNode
+        include Selections
+      end
+
+      class OperationDefinition < AbstractNode
+        include Selections
       end
     end
   end
