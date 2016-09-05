@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "graphql-client"
-  s.version = "0.0.5"
+  s.version = "0.0.7"
   s.summary = "???"
   s.license = "MIT"
 
