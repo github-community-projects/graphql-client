@@ -1,4 +1,5 @@
 require "graphql"
+require "set"
 
 module GraphQL
   module Language
