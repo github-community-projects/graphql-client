@@ -4,8 +4,19 @@ require "json"
 require "minitest/autorun"
 
 class TestClient < MiniTest::Test
-  json = File.read(File.expand_path("../swapi-schema.json", __FILE__))
-  Schema = GraphQL::Schema::Loader.load(JSON.parse(json))
+  UserType = GraphQL::ObjectType.define do
+    name "User"
+    field :id, !types.ID
+    field :firstName, !types.String
+    field :lastName, !types.String
+  end
+
+  QueryType = GraphQL::ObjectType.define do
+    name "Query"
+    field :viewer, UserType
+  end
+
+  Schema = GraphQL::Schema.new(query: QueryType)
 
   module Temp
   end
@@ -23,17 +34,21 @@ class TestClient < MiniTest::Test
   def test_client_parse_anonymous_operation
     Temp.const_set :UserQuery, @client.parse(<<-'GRAPHQL')
       {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       query TestClient__Temp__UserQuery {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
 
@@ -41,27 +56,35 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
       query TestClient__Temp__UserQuery {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
+
+    @client.validate!
   end
 
   def test_client_parse_anonymous_query
     Temp.const_set :UserQuery, @client.parse(<<-'GRAPHQL')
       query {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       query TestClient__Temp__UserQuery {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
 
@@ -69,27 +92,35 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
       query TestClient__Temp__UserQuery {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
+
+    @client.validate!
   end
 
   def test_client_parse_query_document
     Temp.const_set :UserDocument, @client.parse(<<-'GRAPHQL')
       query getUser {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
       query TestClient__Temp__UserDocument__getUser {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
 
@@ -97,11 +128,15 @@ class TestClient < MiniTest::Test
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument.document.to_query_string)
       query TestClient__Temp__UserDocument__getUser {
-        id
-        firstName
-        lastName
+        viewer {
+          id
+          firstName
+          lastName
+        }
       }
     GRAPHQL
+
+    @client.validate!
   end
 
   def test_client_parse_anonymous_mutation
@@ -195,6 +230,15 @@ class TestClient < MiniTest::Test
     assert_equal 1, user.id
     assert_equal "Joshua", user.first_name
     assert_equal "Peek", user.last_name
+
+    assert_raises GraphQL::Client::ValidationError do
+      begin
+        @client.validate!
+      rescue GraphQL::Client::ValidationError => e
+        assert_equal "Fragment TestClient__Temp__UserFragment was defined, but not used", e.message
+        raise e
+      end
+    end
   end
 
   def test_client_parse_fragment_document

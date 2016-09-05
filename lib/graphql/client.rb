@@ -5,10 +5,12 @@ require "graphql/language/nodes/document_definition_slice_ext"
 require "graphql/language/nodes/inject_selection_ext"
 require "graphql/language/nodes/query_result_class_ext"
 require "graphql/language/nodes/replace_fragment_spread_ext"
-require "graphql/language/nodes/validate_ext"
 
 module GraphQL
   class Client
+    class Error < StandardError; end
+    class ValidationError < Error; end
+
     attr_reader :schema
 
     def initialize(schema:)
@@ -102,7 +104,14 @@ module GraphQL
     end
 
     def validate!
-      document.validate!(schema: @schema)
+      validator = StaticValidation::Validator.new(schema: @schema)
+      query = Query.new(@schema, document: document)
+
+      validator.validate(query).fetch(:errors).each do |error|
+        raise ValidationError, error["message"]
+      end
+
+      nil
     end
   end
 end
