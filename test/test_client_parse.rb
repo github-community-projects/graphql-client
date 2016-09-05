@@ -13,29 +13,6 @@ class TestClientParse < MiniTest::Test
     assert_equal "TestClientParse::TestUserFragment", TestUserFragment.name
   end
 
-  def test_parse_external_fragment
-    document = GraphQL::Client.parse(<<-'GRAPHQL')
-      query {
-        viewer {
-          ...TestClientParse::TestUserFragment
-        }
-      }
-    GRAPHQL
-
-    assert query = document.definitions[0]
-    assert_equal "query", query.operation_type
-
-    assert viewer = query.selections[0]
-    assert_equal "viewer", viewer.name
-
-    assert spread = viewer.selections[0]
-    assert_equal "TestClientParse__TestUserFragment", spread.name
-
-    assert fragment = document.definitions[1]
-    assert_equal "TestClientParse__TestUserFragment", fragment.name
-    assert_equal "User", fragment.type
-  end
-
   def test_parse_fragment
     fragment = GraphQL::Client.parse_fragment(<<-'GRAPHQL')
       fragment on User {

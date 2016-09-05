@@ -13,19 +13,6 @@ module GraphQL
       attr_accessor :schema
     end
 
-    def self.parse(str)
-      str = str.strip
-      str, fragments = scan_interpolated_fragments(str)
-
-      document = GraphQL.parse(str)
-
-      fragments.each do |name, node|
-        document.definitions << GraphQL::Language::Nodes::FragmentDefinition.new(name: name.to_s, type: node.type, directives: node.directives, selections: node.selections)
-      end
-
-      document
-    end
-
     def self.parse_document(str, schema: GraphQL::Client.schema)
       str = str.strip
       str, fragments = scan_interpolated_fragments(str)
