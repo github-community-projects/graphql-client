@@ -91,7 +91,7 @@ class TestClient < MiniTest::Test
 
   def test_client_parse_query_document
     Temp.const_set :UserDocument, @client.parse(<<-'GRAPHQL')
-      query getUser {
+      query GetUser {
         viewer {
           id
           firstName
@@ -101,7 +101,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      query D1__getUser {
+      query D1 {
         __typename
         viewer {
           __typename
@@ -113,7 +113,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::UserDocument.document.to_query_string)
+    assert_equal(query_string, Temp::UserDocument::GetUser.document.to_query_string)
 
     @client.validate!
   end
@@ -148,7 +148,7 @@ class TestClient < MiniTest::Test
 
   def test_client_parse_mutation_document
     Temp.const_set :LikeDocument, @client.parse(<<-'GRAPHQL')
-      mutation likeStory {
+      mutation LikeStory {
         __typename
         likeStory(storyID: 12345) {
           __typename
@@ -161,7 +161,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      mutation D1__likeStory {
+      mutation D1 {
         __typename
         likeStory(storyID: 12345) {
           __typename
@@ -174,7 +174,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::LikeDocument.document.to_query_string)
+    assert_equal(query_string, Temp::LikeDocument::LikeStory.document.to_query_string)
   end
 
   def test_client_parse_anonymous_fragment
@@ -216,7 +216,7 @@ class TestClient < MiniTest::Test
 
   def test_client_parse_fragment_document
     Temp.const_set :UserDocument, @client.parse(<<-'GRAPHQL')
-      fragment userProfile on User {
+      fragment UserProfile on User {
         id
         firstName
         lastName
@@ -224,7 +224,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      fragment D1__userProfile on User {
+      fragment D1 on User {
         __typename
         id
         firstName
@@ -235,81 +235,81 @@ class TestClient < MiniTest::Test
 
   def test_client_parse_query_fragment_document
     Temp.const_set :UserDocument, @client.parse(<<-'GRAPHQL')
-      query withNestedFragments {
+      query NestedFragments {
         user(id: 4) {
           friends(first: 10) {
-            ...friendFields
+            ...FriendFields
           }
           mutualFriends(first: 10) {
-            ...friendFields
+            ...FriendFields
           }
         }
       }
 
-      fragment friendFields on User {
+      fragment FriendFields on User {
         id
         name
-        ...standardProfilePic
+        ...StandardProfilePic
       }
 
-      fragment standardProfilePic on User {
+      fragment StandardProfilePic on User {
         profilePic(size: 50)
       }
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      query D1__withNestedFragments {
+      query D1 {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D2__friendFields
+            ... D2
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2__friendFields
+            ... D2
           }
         }
       }
 
-      fragment D2__friendFields on User {
+      fragment D2 on User {
         __typename
         id
         name
-        ... D3__standardProfilePic
+        ... D3
       }
 
-      fragment D3__standardProfilePic on User {
+      fragment D3 on User {
         __typename
         profilePic(size: 50)
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument.document.to_query_string)
-      query D1__withNestedFragments {
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument::NestedFragments.document.to_query_string)
+      query D1 {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D2__friendFields
+            ... D2
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2__friendFields
+            ... D2
           }
         }
       }
 
-      fragment D2__friendFields on User {
+      fragment D2 on User {
         __typename
         id
         name
-        ... D3__standardProfilePic
+        ... D3
       }
 
-      fragment D3__standardProfilePic on User {
+      fragment D3 on User {
         __typename
         profilePic(size: 50)
       }
@@ -405,14 +405,14 @@ class TestClient < MiniTest::Test
 
   def test_client_parse_query_external_document_fragment
     Temp.const_set :ProfileFragments, @client.parse(<<-'GRAPHQL')
-      fragment profilePic on User {
+      fragment ProfilePic on User {
         profilePic(size: 50)
       }
 
-      fragment friendFields on User {
+      fragment FriendFields on User {
         id
         name
-        ...profilePic
+        ...ProfilePic
       }
     GRAPHQL
 
@@ -420,26 +420,26 @@ class TestClient < MiniTest::Test
       query {
         user(id: 4) {
           friends(first: 10) {
-            ...TestClient::Temp::ProfileFragments.friendFields
+            ...TestClient::Temp::ProfileFragments::FriendFields
           }
           mutualFriends(first: 10) {
-            ...TestClient::Temp::ProfileFragments.friendFields
+            ...TestClient::Temp::ProfileFragments::FriendFields
           }
         }
       }
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      fragment D1__profilePic on User {
+      fragment D1 on User {
         __typename
         profilePic(size: 50)
       }
 
-      fragment D2__friendFields on User {
+      fragment D2 on User {
         __typename
         id
         name
-        ... D1__profilePic
+        ... D1
       }
 
       query D3 {
@@ -448,27 +448,27 @@ class TestClient < MiniTest::Test
           __typename
           friends(first: 10) {
             __typename
-            ... D2__friendFields
+            ... D2
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2__friendFields
+            ... D2
           }
         }
       }
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
-      fragment D1__profilePic on User {
+      fragment D1 on User {
         __typename
         profilePic(size: 50)
       }
 
-      fragment D2__friendFields on User {
+      fragment D2 on User {
         __typename
         id
         name
-        ... D1__profilePic
+        ... D1
       }
 
       query D3 {
@@ -477,11 +477,11 @@ class TestClient < MiniTest::Test
           __typename
           friends(first: 10) {
             __typename
-            ... D2__friendFields
+            ... D2
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2__friendFields
+            ... D2
           }
         }
       }
