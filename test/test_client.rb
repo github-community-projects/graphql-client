@@ -726,6 +726,37 @@ class TestClient < MiniTest::Test
     assert_equal "josh", owner.login
   end
 
+  def test_client_parse_fragment_spread_with_inline_fragment
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        login
+      }
+    GRAPHQL
+
+    Temp.const_set :RepositoryFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Repository {
+        name
+        owner {
+          ... on User {
+            ...TestClient::Temp::UserFragment
+          }
+        }
+      }
+    GRAPHQL
+
+    repo = Temp::RepositoryFragment.new({
+      "name" => "rails",
+      "owner" => {
+        "login" => "josh"
+      }
+    })
+    assert_equal "rails", repo.name
+    refute repo.owner.respond_to?(:login)
+
+    owner = Temp::UserFragment.new(repo.owner)
+    assert_equal "josh", owner.login
+  end
+
   def test_client_parse_invalid_fragment_cast
     Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
       fragment on User {

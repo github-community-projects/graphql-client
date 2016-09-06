@@ -106,7 +106,7 @@ module GraphQL
         when Hash
           new(obj)
         when QueryResult
-          spreads = Set.new(obj.class.source_node.selections.select { |s| s.is_a?(GraphQL::Language::Nodes::FragmentSpread) }.map(&:name))
+          spreads = Set.new(self.spreads(obj.class.source_node).map(&:name))
 
           if !spreads.include?(self.source_node.name)
             message = "couldn't cast #{obj.inspect} to #{self.inspect}\n\n"
@@ -121,6 +121,20 @@ module GraphQL
           nil
         else
           raise TypeError, "#{obj.class}"
+        end
+      end
+
+      # Internal
+      def self.spreads(node)
+        node.selections.flat_map do |selection|
+          case selection
+          when Language::Nodes::FragmentSpread
+            selection
+          when Language::Nodes::InlineFragment
+            spreads(selection)
+          else
+            []
+          end
         end
       end
 
