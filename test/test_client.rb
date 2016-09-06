@@ -61,7 +61,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, @client.document_slice(Temp::UserQuery.operation_name).to_query_string)
+    assert_equal(query_string, Temp::UserQuery.operation_document.to_query_string)
 
     @client.validate!
   end
@@ -96,7 +96,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, @client.document_slice(Temp::UserQuery.operation_name).to_query_string)
+    assert_equal(query_string, Temp::UserQuery.operation_document.to_query_string)
 
     @client.validate!
   end
@@ -132,7 +132,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, @client.document_slice(Temp::UserDocument::GetUser.operation_name).to_query_string)
+    assert_equal(query_string, Temp::UserDocument::GetUser.operation_document.to_query_string)
 
     @client.validate!
   end
@@ -167,7 +167,7 @@ class TestClient < MiniTest::Test
     assert_equal "mutation", Temp::LikeMutation.definition_node.operation_type
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, @client.document_slice(Temp::LikeMutation.operation_name).to_query_string)
+    assert_equal(query_string, Temp::LikeMutation.operation_document.to_query_string)
   end
 
   def test_client_parse_mutation_document
@@ -201,7 +201,7 @@ class TestClient < MiniTest::Test
     assert_equal "mutation", Temp::LikeDocument::LikeStory.definition_node.operation_type
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, @client.document_slice(Temp::LikeDocument::LikeStory.operation_name).to_query_string)
+    assert_equal(query_string, Temp::LikeDocument::LikeStory.operation_document.to_query_string)
   end
 
   def test_client_parse_anonymous_fragment
@@ -311,7 +311,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::UserDocument::NestedFragments.operation_name).to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument::NestedFragments.operation_document.to_query_string)
       query TestClient__Temp__UserDocument__NestedFragments {
         user(id: 4) {
           friends(first: 10) {
@@ -386,7 +386,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::UserQuery.operation_name).to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.operation_document.to_query_string)
       fragment TestClient__Temp__ProfilePictureFragment on User {
         profilePic(size: 50)
       }
@@ -459,7 +459,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::UserQuery.operation_name).to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.operation_document.to_query_string)
       fragment TestClient__Temp__ProfileFragments__ProfilePic on User {
         profilePic(size: 50)
       }
@@ -534,7 +534,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::FriendsQuery.operation_name).to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::FriendsQuery.operation_document.to_query_string)
       fragment TestClient__Temp__FriendFragment on User {
         id
         name
@@ -549,7 +549,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::MutualFriendsQuery.operation_name).to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.operation_document.to_query_string)
       fragment TestClient__Temp__FriendFragment on User {
         id
         name

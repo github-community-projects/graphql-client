@@ -60,8 +60,28 @@ module GraphQL
     end
 
     class OperationDefinition < Definition
+      def initialize(document:, **kargs)
+        @document = document
+        super(**kargs)
+      end
+
       # Public: Alias for definition name.
       alias_method :operation_name, :definition_name
+
+      # Public: Owner document of operation definition.
+      #
+      # Returns GraphQL::Language::Nodes::Document of all registered
+      # definitions.
+      attr_reader :document
+
+      # Public: Get document with only the definitions needed to perform this
+      # operation.
+      #
+      # Returns GraphQL::Language::Nodes::Document with one OperationDefinition
+      # and any FragmentDefinition dependencies.
+      def operation_document
+        @operation_document ||= Language::OperationSlice.slice(document, operation_name).deep_freeze
+      end
     end
 
     class FragmentDefinition < Definition
@@ -89,7 +109,7 @@ module GraphQL
         local_name = node.name
         definition = case node
         when Language::Nodes::OperationDefinition
-          OperationDefinition.new(node: node)
+          OperationDefinition.new(document: self.document, node: node)
         when Language::Nodes::FragmentDefinition
           FragmentDefinition.new(node: node)
         end
@@ -115,10 +135,6 @@ module GraphQL
 
     def document
       @document
-    end
-
-    def document_slice(operation_name)
-      @document_slices[operation_name] ||= Language::OperationSlice.slice(document, operation_name).deep_freeze
     end
 
     def validate!
