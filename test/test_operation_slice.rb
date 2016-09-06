@@ -50,7 +50,7 @@ class TestOperationSlice < MiniTest::Test
     document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
       query FooQuery {
         node(id: "42") {
-          ... NodeFragment
+          ...NodeFragment
         }
       }
 
@@ -74,6 +74,66 @@ class TestOperationSlice < MiniTest::Test
 
       fragment NodeFragment on Node {
         id
+      }
+    GRAPHQL
+    assert_equal expected.gsub(/^      /, "").chomp, new_document.to_query_string
+  end
+
+  def test_slice_nested_query_with_fragment
+    document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
+      fragment NodeFragment on Node {
+        id
+        ...UserFragment
+        ...AnotherUserFragment
+      }
+
+      query FooQuery {
+        node(id: "42") {
+          ...NodeFragment
+        }
+      }
+
+      fragment AnotherUnusedFragment on Project {
+        number
+      }
+
+      fragment AnotherUserFragment on Node {
+        company
+      }
+
+      fragment UserFragment on Node {
+        name
+        ...AnotherUserFragment
+      }
+
+      fragment UnusedFragment on Node {
+        __typename
+        ...AnotherUnusedFragment
+      }
+    GRAPHQL
+
+    new_document = GraphQL::Language::OperationSlice.slice(document, "FooQuery")
+
+    expected = <<-'GRAPHQL'
+      fragment NodeFragment on Node {
+        id
+        ... UserFragment
+        ... AnotherUserFragment
+      }
+
+      query FooQuery {
+        node(id: "42") {
+          ... NodeFragment
+        }
+      }
+
+      fragment AnotherUserFragment on Node {
+        company
+      }
+
+      fragment UserFragment on Node {
+        name
+        ... AnotherUserFragment
       }
     GRAPHQL
     assert_equal expected.gsub(/^      /, "").chomp, new_document.to_query_string

@@ -13,18 +13,27 @@ module GraphQL
       #
       # Returns new Nodes::Document.
       def self.slice(document, operation_name)
-        definitions = []
-        definitions << document.definitions.find { |d| d.name == operation_name }
+        seen = Set.new([operation_name])
+        stack = [operation_name]
 
-        visitor = Visitor.new(document)
-        visitor[Nodes::FragmentSpread] << -> (node, parent) {
-          if fragment = document.definitions.find { |d| d.name == node.name }
-            definitions << fragment
-          end
+        while name = stack.pop
+          names = find_definition_fragment_spreads(document, name)
+          seen.merge(names)
+          stack.concat(names.to_a)
+        end
+
+        Nodes::Document.new(definitions: document.definitions.select { |node| seen.include?(node.name) })
+      end
+
+      def self.find_definition_fragment_spreads(document, definition_name)
+        definition = document.definitions.find { |node| node.name == definition_name }
+        spreads = Set.new
+        visitor = Visitor.new(definition)
+        visitor[Nodes::FragmentSpread].enter << -> (node, parent) {
+          spreads << node.name
         }
         visitor.visit
-
-        Nodes::Document.new(definitions: definitions.uniq)
+        spreads
       end
     end
   end

@@ -374,6 +374,18 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
+      fragment D1 on User {
+        __typename
+        profilePic(size: 50)
+      }
+
+      fragment D2 on User {
+        __typename
+        id
+        name
+        ... D1
+      }
+
       query D3 {
         __typename
         user(id: 4) {
@@ -387,18 +399,6 @@ class TestClient < MiniTest::Test
             ... D2
           }
         }
-      }
-
-      fragment D1 on User {
-        __typename
-        profilePic(size: 50)
-      }
-
-      fragment D2 on User {
-        __typename
-        id
-        name
-        ... D1
       }
     GRAPHQL
   end
@@ -459,6 +459,18 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
+      fragment D1__profilePic on User {
+        __typename
+        profilePic(size: 50)
+      }
+
+      fragment D2__friendFields on User {
+        __typename
+        id
+        name
+        ... D1__profilePic
+      }
+
       query D3 {
         __typename
         user(id: 4) {
@@ -472,18 +484,6 @@ class TestClient < MiniTest::Test
             ... D2__friendFields
           }
         }
-      }
-
-      fragment D1__profilePic on User {
-        __typename
-        profilePic(size: 50)
-      }
-
-      fragment D2__friendFields on User {
-        __typename
-        id
-        name
-        ... D1__profilePic
       }
     GRAPHQL
   end
@@ -547,6 +547,12 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::FriendsQuery.document.to_query_string)
+      fragment D1 on User {
+        __typename
+        id
+        name
+      }
+
       query D2 {
         __typename
         user(id: 4) {
@@ -557,15 +563,15 @@ class TestClient < MiniTest::Test
           }
         }
       }
+    GRAPHQL
 
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.document.to_query_string)
       fragment D1 on User {
         __typename
         id
         name
       }
-    GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.document.to_query_string)
       query D3 {
         __typename
         user(id: 4) {
@@ -575,12 +581,6 @@ class TestClient < MiniTest::Test
             ... D1
           }
         }
-      }
-
-      fragment D1 on User {
-        __typename
-        id
-        name
       }
     GRAPHQL
   end
