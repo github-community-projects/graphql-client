@@ -69,9 +69,15 @@ module GraphQL
 
     def parse(str)
       str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) { |m|
-        fragment = ActiveSupport::Inflector.constantize($1)
-        # TODO: Check type of fragment
-        "...#{fragment.definition_name}"
+        const_name = $1
+        case fragment = ActiveSupport::Inflector.safe_constantize(const_name)
+        when FragmentDefinition
+          "...#{fragment.definition_name}"
+        when nil
+          raise NameError, "uninitialized constant #{const_name}\n#{str}"
+        else
+          raise TypeError, "expected #{const_name} to be a #{FragmentDefinition}, but was a #{fragment.class}"
+        end
       }
 
       doc = GraphQL::Relay::Parser.parse(str)

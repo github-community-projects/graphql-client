@@ -633,6 +633,28 @@ class TestClient < MiniTest::Test
     GRAPHQL
   end
 
+  def test_client_parse_query_missing_external_fragment
+    assert_raises NameError do
+      Temp.const_set :FooQuery, @client.parse(<<-'GRAPHQL')
+        query {
+          ...TestClient::Temp::MissingFragment
+        }
+      GRAPHQL
+    end
+  end
+
+  def test_client_parse_query_external_fragment_is_wrong_type
+    Temp.const_set :FooFragment, 42
+
+    assert_raises TypeError do
+      Temp.const_set :FooQuery, @client.parse(<<-'GRAPHQL')
+        query {
+          ...TestClient::Temp::FooFragment
+        }
+      GRAPHQL
+    end
+  end
+
   def test_client_parse_fragment_query_result_aliases
     Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
       fragment on User {
