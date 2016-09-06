@@ -4,7 +4,7 @@ require "graphql/language/nodes/deep_freeze_ext"
 require "minitest/autorun"
 
 class TestMutator < MiniTest::Test
-  def test_preprend_selections
+  def test_prepend_selections
     document = GraphQL.parse(<<-'GRAPHQL')
       query FooQuery {
         node(id: "4") {

@@ -8,9 +8,18 @@ module GraphQL
         @document = document
       end
 
+      module LazyName
+        def name
+          @name.call
+        end
+      end
+
       def rename_definitions(definitions)
         rename_node = -> (node, parent) {
-          node.name = definitions.fetch(node.name, node.name)
+          if name = definitions[node.name]
+            node.extend(LazyName) if name.is_a?(Proc)
+            node.name = name
+          end
         }
 
         visitor = Visitor.new(@document)

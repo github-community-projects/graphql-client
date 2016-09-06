@@ -17,15 +17,19 @@ module GraphQL
       @schema = schema
       @definitions = []
       @document = GraphQL::Language::Nodes::Document.new(definitions: @definitions)
-      @definition_count = 0
+      @document_slices = {}
     end
 
     class Definition < Module
-      def initialize(client:, node:, name: nil)
-        @client = client
-        @node = node
-        @name = name
+      def initialize(node:)
+        @definition_node = node
       end
+
+      # Internal: Get underlying operation or fragment defintion AST node for
+      # definition.
+      #
+      # Returns OperationDefinition or FragmentDefinition object.
+      attr_reader :definition_node
 
       # Public: Ruby constant name of definition.
       #
@@ -42,22 +46,25 @@ module GraphQL
       #
       # Returns String.
       def definition_name
-        @definition_name ||= name.gsub("::", "__")
-      end
-
-      attr_reader :node
-
-      def document
-        @document ||= Language::OperationSlice.slice(@client.document, @node.name).deep_freeze
-      end
-
-      def query_result_class
-        @query_result_class ||= GraphQL::Client::QueryResult.wrap(node)
+        @definition_name ||= name.gsub("::", "__").freeze
       end
 
       def new(*args)
         query_result_class.new(*args)
       end
+
+      private
+        def query_result_class
+          @query_result_class ||= GraphQL::Client::QueryResult.wrap(definition_node, name: name)
+        end
+    end
+
+    class OperationDefinition < Definition
+      # Public: Alias for definition name.
+      alias_method :operation_name, :definition_name
+    end
+
+    class FragmentDefinition < Definition
     end
 
     def parse(str)
@@ -73,34 +80,42 @@ module GraphQL
       # TODO: Make this __typename injection optional
       mutator.prepend_selection(GraphQL::Language::Nodes::Field.new(name: "__typename").deep_freeze)
 
+      definitions = {}
       aliases = {}
+
       doc.definitions.each do |definition|
-        # XXX: Use constant name
-        @definition_count += 1
-        aliases[definition.name] = "D#{@definition_count}"
+        local_name = definition.name
+        case definition
+        when Language::Nodes::OperationDefinition
+          d = OperationDefinition.new(node: definition)
+        when Language::Nodes::FragmentDefinition
+          d = FragmentDefinition.new(node: definition)
+        end
+        definitions[local_name] = d
+        aliases[local_name] = -> { d.definition_name }
       end
       mutator.rename_definitions(aliases)
+      doc.deep_freeze
 
-      nodes = doc.definitions.map(&:deep_freeze)
-      self.document.definitions.concat(nodes)
+      self.document.definitions.concat(doc.definitions)
 
-      definitions = nodes.map { |node|
-        Definition.new(client: self, node: node, name: node.name)
-      }
-
-      if aliases[nil]
-        definitions.first
+      if definitions[nil]
+        definitions[nil]
       else
-        m = Module.new
-        definitions.each do |definition|
-          m.const_set(aliases.key(definition.node.name), definition)
+        Module.new do
+          definitions.each do |name, definition|
+            const_set(name, definition)
+          end
         end
-        m
       end
     end
 
     def document
       @document
+    end
+
+    def document_slice(operation_name)
+      @document_slices[operation_name] ||= Language::OperationSlice.slice(document, operation_name).deep_freeze
     end
 
     def validate!

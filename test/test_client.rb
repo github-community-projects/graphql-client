@@ -42,16 +42,16 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_kind_of GraphQL::Client::Definition, Temp::UserQuery
-    # assert_equal "TestClient::Temp::UserQuery", Temp::UserQuery.name
-    # assert_equal "TestClient__Temp__UserQuery", Temp::UserQuery.definition_name
+    assert_kind_of GraphQL::Client::OperationDefinition, Temp::UserQuery
+    assert_equal "TestClient::Temp::UserQuery", Temp::UserQuery.name
+    assert_equal "TestClient__Temp__UserQuery", Temp::UserQuery.definition_name
 
-    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::UserQuery.node
-    # assert_equal "???", Temp::UserQuery.node.name
-    assert_equal "query", Temp::UserQuery.node.operation_type
+    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::UserQuery.definition_node
+    assert_equal "TestClient__Temp__UserQuery", Temp::UserQuery.definition_node.name
+    assert_equal "query", Temp::UserQuery.definition_node.operation_type
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      query D1 {
+      query TestClient__Temp__UserQuery {
         __typename
         viewer {
           __typename
@@ -63,7 +63,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::UserQuery.document.to_query_string)
+    assert_equal(query_string, @client.document_slice(Temp::UserQuery.operation_name).to_query_string)
 
     @client.validate!
   end
@@ -79,12 +79,16 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_kind_of GraphQL::Client::Definition, Temp::UserQuery
-    # assert_equal "TestClient::Temp::UserQuery", Temp::UserQuery.name
-    # assert_equal "TestClient__Temp__UserQuery", Temp::UserQuery.definition_name
+    assert_kind_of GraphQL::Client::OperationDefinition, Temp::UserQuery
+    assert_equal "TestClient::Temp::UserQuery", Temp::UserQuery.name
+    assert_equal "TestClient__Temp__UserQuery", Temp::UserQuery.definition_name
+
+    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::UserQuery.definition_node
+    assert_equal "TestClient__Temp__UserQuery", Temp::UserQuery.definition_node.name
+    assert_equal "query", Temp::UserQuery.definition_node.operation_type
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      query D1 {
+      query TestClient__Temp__UserQuery {
         __typename
         viewer {
           __typename
@@ -96,7 +100,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::UserQuery.document.to_query_string)
+    assert_equal(query_string, @client.document_slice(Temp::UserQuery.operation_name).to_query_string)
 
     @client.validate!
   end
@@ -112,13 +116,17 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_kind_of GraphQL::Client::Definition, Temp::UserDocument::GetUser
+    assert_kind_of GraphQL::Client::OperationDefinition, Temp::UserDocument::GetUser
     assert_equal "TestClient::Temp::UserDocument", Temp::UserDocument.name
-    # assert_equal "TestClient::Temp::UserDocument::GetUser", Temp::UserDocument::GetUser.name
-    # assert_equal "TestClient__Temp__UserDocument__GetUser", Temp::UserDocument::GetUser.definition_name
+    assert_equal "TestClient::Temp::UserDocument::GetUser", Temp::UserDocument::GetUser.name
+    assert_equal "TestClient__Temp__UserDocument__GetUser", Temp::UserDocument::GetUser.definition_name
+
+    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::UserDocument::GetUser.definition_node
+    assert_equal "TestClient__Temp__UserDocument__GetUser", Temp::UserDocument::GetUser.definition_node.name
+    assert_equal "query", Temp::UserDocument::GetUser.definition_node.operation_type
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      query D1 {
+      query TestClient__Temp__UserDocument__GetUser {
         __typename
         viewer {
           __typename
@@ -130,7 +138,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::UserDocument::GetUser.document.to_query_string)
+    assert_equal(query_string, @client.document_slice(Temp::UserDocument::GetUser.operation_name).to_query_string)
 
     @client.validate!
   end
@@ -147,7 +155,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      mutation D1 {
+      mutation TestClient__Temp__LikeMutation {
         __typename
         likeStory(storyID: 12345) {
           __typename
@@ -159,10 +167,16 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    # assert_equal "TestClient::Temp::LikeMutation", Temp::LikeMutation.name
+    assert_kind_of GraphQL::Client::OperationDefinition, Temp::LikeMutation
+    assert_equal "TestClient::Temp::LikeMutation", Temp::LikeMutation.name
+    assert_equal "TestClient__Temp__LikeMutation", Temp::LikeMutation.definition_name
+
+    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::LikeMutation.definition_node
+    assert_equal "TestClient__Temp__LikeMutation", Temp::LikeMutation.definition_node.name
+    assert_equal "mutation", Temp::LikeMutation.definition_node.operation_type
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::LikeMutation.document.to_query_string)
+    assert_equal(query_string, @client.document_slice(Temp::LikeMutation.operation_name).to_query_string)
   end
 
   def test_client_parse_mutation_document
@@ -180,7 +194,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      mutation D1 {
+      mutation TestClient__Temp__LikeDocument__LikeStory {
         __typename
         likeStory(storyID: 12345) {
           __typename
@@ -192,11 +206,17 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    # assert_equal "TestClient::Temp::LikeDocument", Temp::LikeDocument.name
-    # assert_equal "TestClient::Temp::LikeDocument::LikeStory", Temp::LikeDocument::LikeStory.name
+    assert_kind_of GraphQL::Client::OperationDefinition, Temp::LikeDocument::LikeStory
+    assert_equal "TestClient::Temp::LikeDocument", Temp::LikeDocument.name
+    assert_equal "TestClient::Temp::LikeDocument::LikeStory", Temp::LikeDocument::LikeStory.name
+    assert_equal "TestClient__Temp__LikeDocument__LikeStory", Temp::LikeDocument::LikeStory.definition_name
+
+    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::LikeDocument::LikeStory.definition_node
+    assert_equal "TestClient__Temp__LikeDocument__LikeStory", Temp::LikeDocument::LikeStory.definition_node.name
+    assert_equal "mutation", Temp::LikeDocument::LikeStory.definition_node.operation_type
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::LikeDocument::LikeStory.document.to_query_string)
+    assert_equal(query_string, @client.document_slice(Temp::LikeDocument::LikeStory.operation_name).to_query_string)
   end
 
   def test_client_parse_anonymous_fragment
@@ -208,8 +228,15 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
+    assert_kind_of GraphQL::Client::FragmentDefinition, Temp::UserFragment
+    assert_equal "TestClient::Temp::UserFragment", Temp::UserFragment.name
+    assert_equal "TestClient__Temp__UserFragment", Temp::UserFragment.definition_name
+
+    assert_kind_of GraphQL::Language::Nodes::FragmentDefinition, Temp::UserFragment.definition_node
+    assert_equal "TestClient__Temp__UserFragment", Temp::UserFragment.definition_node.name
+
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      fragment D1 on User {
+      fragment TestClient__Temp__UserFragment on User {
         __typename
         id
         firstName
@@ -222,15 +249,14 @@ class TestClient < MiniTest::Test
     assert_equal "Joshua", user.first_name
     assert_equal "Peek", user.last_name
 
-    # assert_equal "TestClient::Temp::UserFragment", Temp::UserFragment.name
-    # skip
-    # assert_equal "TestClient::Temp::UserFragment", user.class.name
+    assert_equal "TestClient::Temp::UserFragment", Temp::UserFragment.name
+    assert_equal "TestClient::Temp::UserFragment", user.class.name
 
     assert_raises GraphQL::Client::ValidationError do
       begin
         @client.validate!
       rescue GraphQL::Client::ValidationError => e
-        assert_equal "Fragment D1 was defined, but not used", e.message
+        assert_equal "Fragment TestClient__Temp__UserFragment was defined, but not used", e.message
         raise e
       end
     end
@@ -246,7 +272,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      fragment D1 on User {
+      fragment TestClient__Temp__UserDocument__UserProfile on User {
         __typename
         id
         firstName
@@ -280,58 +306,58 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      query D1 {
+      query TestClient__Temp__UserDocument__NestedFragments {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__UserDocument__FriendFields
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__UserDocument__FriendFields
           }
         }
       }
 
-      fragment D2 on User {
+      fragment TestClient__Temp__UserDocument__FriendFields on User {
         __typename
         id
         name
-        ... D3
+        ... TestClient__Temp__UserDocument__StandardProfilePic
       }
 
-      fragment D3 on User {
+      fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
         __typename
         profilePic(size: 50)
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument::NestedFragments.document.to_query_string)
-      query D1 {
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::UserDocument::NestedFragments.operation_name).to_query_string)
+      query TestClient__Temp__UserDocument__NestedFragments {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__UserDocument__FriendFields
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__UserDocument__FriendFields
           }
         }
       }
 
-      fragment D2 on User {
+      fragment TestClient__Temp__UserDocument__FriendFields on User {
         __typename
         id
         name
-        ... D3
+        ... TestClient__Temp__UserDocument__StandardProfilePic
       }
 
-      fragment D3 on User {
+      fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
         __typename
         profilePic(size: 50)
       }
@@ -367,58 +393,58 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      fragment D1 on User {
+      fragment TestClient__Temp__ProfilePictureFragment on User {
         __typename
         profilePic(size: 50)
       }
 
-      fragment D2 on User {
+      fragment TestClient__Temp__FriendFragment on User {
         __typename
         id
         name
-        ... D1
+        ... TestClient__Temp__ProfilePictureFragment
       }
 
-      query D3 {
+      query TestClient__Temp__UserQuery {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__FriendFragment
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__FriendFragment
           }
         }
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
-      fragment D1 on User {
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::UserQuery.operation_name).to_query_string)
+      fragment TestClient__Temp__ProfilePictureFragment on User {
         __typename
         profilePic(size: 50)
       }
 
-      fragment D2 on User {
+      fragment TestClient__Temp__FriendFragment on User {
         __typename
         id
         name
-        ... D1
+        ... TestClient__Temp__ProfilePictureFragment
       }
 
-      query D3 {
+      query TestClient__Temp__UserQuery {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__FriendFragment
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__FriendFragment
           }
         }
       }
@@ -452,58 +478,58 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      fragment D1 on User {
+      fragment TestClient__Temp__ProfileFragments__ProfilePic on User {
         __typename
         profilePic(size: 50)
       }
 
-      fragment D2 on User {
+      fragment TestClient__Temp__ProfileFragments__FriendFields on User {
         __typename
         id
         name
-        ... D1
+        ... TestClient__Temp__ProfileFragments__ProfilePic
       }
 
-      query D3 {
+      query TestClient__Temp__UserQuery {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__ProfileFragments__FriendFields
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__ProfileFragments__FriendFields
           }
         }
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
-      fragment D1 on User {
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::UserQuery.operation_name).to_query_string)
+      fragment TestClient__Temp__ProfileFragments__ProfilePic on User {
         __typename
         profilePic(size: 50)
       }
 
-      fragment D2 on User {
+      fragment TestClient__Temp__ProfileFragments__FriendFields on User {
         __typename
         id
         name
-        ... D1
+        ... TestClient__Temp__ProfileFragments__ProfilePic
       }
 
-      query D3 {
+      query TestClient__Temp__UserQuery {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__ProfileFragments__FriendFields
           }
           mutualFriends(first: 10) {
             __typename
-            ... D2
+            ... TestClient__Temp__ProfileFragments__FriendFields
           }
         }
       }
@@ -539,68 +565,68 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
-      fragment D1 on User {
+      fragment TestClient__Temp__FriendFragment on User {
         __typename
         id
         name
       }
 
-      query D2 {
+      query TestClient__Temp__FriendsQuery {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D1
+            ... TestClient__Temp__FriendFragment
           }
         }
       }
 
-      query D3 {
+      query TestClient__Temp__MutualFriendsQuery {
         __typename
         user(id: 4) {
           __typename
           mutualFriends(first: 10) {
             __typename
-            ... D1
+            ... TestClient__Temp__FriendFragment
           }
         }
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::FriendsQuery.document.to_query_string)
-      fragment D1 on User {
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::FriendsQuery.operation_name).to_query_string)
+      fragment TestClient__Temp__FriendFragment on User {
         __typename
         id
         name
       }
 
-      query D2 {
+      query TestClient__Temp__FriendsQuery {
         __typename
         user(id: 4) {
           __typename
           friends(first: 10) {
             __typename
-            ... D1
+            ... TestClient__Temp__FriendFragment
           }
         }
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.document.to_query_string)
-      fragment D1 on User {
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document_slice(Temp::MutualFriendsQuery.operation_name).to_query_string)
+      fragment TestClient__Temp__FriendFragment on User {
         __typename
         id
         name
       }
 
-      query D3 {
+      query TestClient__Temp__MutualFriendsQuery {
         __typename
         user(id: 4) {
           __typename
           mutualFriends(first: 10) {
             __typename
-            ... D1
+            ... TestClient__Temp__FriendFragment
           }
         }
       }
@@ -776,10 +802,9 @@ class TestClient < MiniTest::Test
     assert_equal "rails", repo.name
     assert_equal "josh", repo.owner.login
 
-    # assert_equal "TestClient::Temp::RepositoryFragment", Temp::RepositoryFragment.name
-    # skip
-    # assert_equal "TestClient::Temp::RepositoryFragment", repo.class.name
-    # assert_equal "TestClient::Temp::RepositoryFragment.owner", repo.owner.class.name
+    assert_equal "TestClient::Temp::RepositoryFragment", Temp::RepositoryFragment.name
+    assert_equal "TestClient::Temp::RepositoryFragment", repo.class.name
+    assert_equal "TestClient::Temp::RepositoryFragment.owner", repo.owner.class.name
 
     assert_raises TypeError do
       Temp::UserFragment.new(repo.owner)
