@@ -19,7 +19,7 @@ module GraphQL
       @definition_count = 0
     end
 
-    class Definition
+    class Definition < Module
       def initialize(client:, node:, query_result:)
         @client = client
         @node = node

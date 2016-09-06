@@ -54,6 +54,8 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
+    assert_equal "TestClient::Temp::UserQuery", Temp::UserQuery.name
+
     assert_equal(query_string, @client.document.to_query_string)
     assert_equal(query_string, Temp::UserQuery.document.to_query_string)
 
@@ -82,6 +84,8 @@ class TestClient < MiniTest::Test
         }
       }
     GRAPHQL
+
+    assert_equal "TestClient::Temp::UserQuery", Temp::UserQuery.name
 
     assert_equal(query_string, @client.document.to_query_string)
     assert_equal(query_string, Temp::UserQuery.document.to_query_string)
@@ -112,6 +116,9 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
+    assert_equal "TestClient::Temp::UserDocument", Temp::UserDocument.name
+    assert_equal "TestClient::Temp::UserDocument::GetUser", Temp::UserDocument::GetUser.name
+
     assert_equal(query_string, @client.document.to_query_string)
     assert_equal(query_string, Temp::UserDocument::GetUser.document.to_query_string)
 
@@ -141,6 +148,8 @@ class TestClient < MiniTest::Test
         }
       }
     GRAPHQL
+
+    assert_equal "TestClient::Temp::LikeMutation", Temp::LikeMutation.name
 
     assert_equal(query_string, @client.document.to_query_string)
     assert_equal(query_string, Temp::LikeMutation.document.to_query_string)
@@ -173,6 +182,9 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
+    assert_equal "TestClient::Temp::LikeDocument", Temp::LikeDocument.name
+    assert_equal "TestClient::Temp::LikeDocument::LikeStory", Temp::LikeDocument::LikeStory.name
+
     assert_equal(query_string, @client.document.to_query_string)
     assert_equal(query_string, Temp::LikeDocument::LikeStory.document.to_query_string)
   end
@@ -200,8 +212,8 @@ class TestClient < MiniTest::Test
     assert_equal "Joshua", user.first_name
     assert_equal "Peek", user.last_name
 
+    assert_equal "TestClient::Temp::UserFragment", Temp::UserFragment.name
     # skip
-    # assert_equal "TestClient::Temp::UserFragment", Temp::UserFragment.name
     # assert_equal "TestClient::Temp::UserFragment", user.class.name
 
     assert_raises GraphQL::Client::ValidationError do
@@ -754,8 +766,8 @@ class TestClient < MiniTest::Test
     assert_equal "rails", repo.name
     assert_equal "josh", repo.owner.login
 
+    assert_equal "TestClient::Temp::RepositoryFragment", Temp::RepositoryFragment.name
     # skip
-    # assert_equal "TestClient::Temp::RepositoryFragment", Temp::RepositoryFragment.name
     # assert_equal "TestClient::Temp::RepositoryFragment", repo.class.name
     # assert_equal "TestClient::Temp::RepositoryFragment.owner", repo.owner.class.name
 
