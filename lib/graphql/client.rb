@@ -83,24 +83,24 @@ module GraphQL
       doc = GraphQL::Relay::Parser.parse(str)
 
       mutator = GraphQL::Language::Mutator.new(doc)
+
       # TODO: Make this __typename injection optional
       mutator.prepend_selection(GraphQL::Language::Nodes::Field.new(name: "__typename").deep_freeze)
 
-      definitions = {}
-      aliases = {}
-
-      doc.definitions.each do |definition|
-        local_name = definition.name
-        case definition
+      definitions, renames = {}, {}
+      doc.definitions.each do |node|
+        local_name = node.name
+        definition = case node
         when Language::Nodes::OperationDefinition
-          d = OperationDefinition.new(node: definition)
+          OperationDefinition.new(node: node)
         when Language::Nodes::FragmentDefinition
-          d = FragmentDefinition.new(node: definition)
+          FragmentDefinition.new(node: node)
         end
-        definitions[local_name] = d
-        aliases[local_name] = -> { d.definition_name }
+        definitions[local_name] = definition
+        renames[local_name] = -> { definition.definition_name }
       end
-      mutator.rename_definitions(aliases)
+      mutator.rename_definitions(renames)
+
       doc.deep_freeze
 
       self.document.definitions.concat(doc.definitions)
