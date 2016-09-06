@@ -84,9 +84,6 @@ module GraphQL
 
       mutator = GraphQL::Language::Mutator.new(doc)
 
-      # TODO: Make this __typename injection optional
-      mutator.prepend_selection(GraphQL::Language::Nodes::Field.new(name: "__typename").deep_freeze)
-
       definitions, renames = {}, {}
       doc.definitions.each do |node|
         local_name = node.name

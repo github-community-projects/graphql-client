@@ -59,7 +59,7 @@ class TestOperationSlice < MiniTest::Test
       }
 
       fragment UnusedFragment on Node {
-        __typename
+        type
       }
     GRAPHQL
 
@@ -107,7 +107,7 @@ class TestOperationSlice < MiniTest::Test
       }
 
       fragment UnusedFragment on Node {
-        __typename
+        type
         ...AnotherUnusedFragment
       }
     GRAPHQL

@@ -150,9 +150,8 @@ module GraphQL
       alias_method :to_h, :data
 
       def inspect
-        ivars = (self.class.fields.keys - [:__typename]).map { |sym| "#{sym}=#{instance_variable_get("@#{sym}").inspect}" }
+        ivars = (self.class.fields.keys).map { |sym| "#{sym}=#{instance_variable_get("@#{sym}").inspect}" }
         buf = "#<#{self.class.name}"
-        buf << " " << @__typename if @__typename
         buf << " " << ivars.join(" ") if ivars.any?
         buf << ">"
         buf
