@@ -68,7 +68,7 @@ class TestOperationSlice < MiniTest::Test
     expected = <<-'GRAPHQL'
       query FooQuery {
         node(id: "42") {
-          ... NodeFragment
+          ...NodeFragment
         }
       }
 
@@ -117,13 +117,13 @@ class TestOperationSlice < MiniTest::Test
     expected = <<-'GRAPHQL'
       fragment NodeFragment on Node {
         id
-        ... UserFragment
-        ... AnotherUserFragment
+        ...UserFragment
+        ...AnotherUserFragment
       }
 
       query FooQuery {
         node(id: "42") {
-          ... NodeFragment
+          ...NodeFragment
         }
       }
 
@@ -133,7 +133,7 @@ class TestOperationSlice < MiniTest::Test
 
       fragment UserFragment on Node {
         name
-        ... AnotherUserFragment
+        ...AnotherUserFragment
       }
     GRAPHQL
     assert_equal expected.gsub(/^      /, "").chomp, new_document.to_query_string

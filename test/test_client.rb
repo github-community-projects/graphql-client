@@ -292,10 +292,10 @@ class TestClient < MiniTest::Test
       query TestClient__Temp__UserDocument__NestedFragments {
         user(id: 4) {
           friends(first: 10) {
-            ... TestClient__Temp__UserDocument__FriendFields
+            ...TestClient__Temp__UserDocument__FriendFields
           }
           mutualFriends(first: 10) {
-            ... TestClient__Temp__UserDocument__FriendFields
+            ...TestClient__Temp__UserDocument__FriendFields
           }
         }
       }
@@ -303,7 +303,7 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__UserDocument__FriendFields on User {
         id
         name
-        ... TestClient__Temp__UserDocument__StandardProfilePic
+        ...TestClient__Temp__UserDocument__StandardProfilePic
       }
 
       fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
@@ -315,10 +315,10 @@ class TestClient < MiniTest::Test
       query TestClient__Temp__UserDocument__NestedFragments {
         user(id: 4) {
           friends(first: 10) {
-            ... TestClient__Temp__UserDocument__FriendFields
+            ...TestClient__Temp__UserDocument__FriendFields
           }
           mutualFriends(first: 10) {
-            ... TestClient__Temp__UserDocument__FriendFields
+            ...TestClient__Temp__UserDocument__FriendFields
           }
         }
       }
@@ -326,7 +326,7 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__UserDocument__FriendFields on User {
         id
         name
-        ... TestClient__Temp__UserDocument__StandardProfilePic
+        ...TestClient__Temp__UserDocument__StandardProfilePic
       }
 
       fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
@@ -371,16 +371,16 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__FriendFragment on User {
         id
         name
-        ... TestClient__Temp__ProfilePictureFragment
+        ...TestClient__Temp__ProfilePictureFragment
       }
 
       query TestClient__Temp__UserQuery {
         user(id: 4) {
           friends(first: 10) {
-            ... TestClient__Temp__FriendFragment
+            ...TestClient__Temp__FriendFragment
           }
           mutualFriends(first: 10) {
-            ... TestClient__Temp__FriendFragment
+            ...TestClient__Temp__FriendFragment
           }
         }
       }
@@ -394,16 +394,16 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__FriendFragment on User {
         id
         name
-        ... TestClient__Temp__ProfilePictureFragment
+        ...TestClient__Temp__ProfilePictureFragment
       }
 
       query TestClient__Temp__UserQuery {
         user(id: 4) {
           friends(first: 10) {
-            ... TestClient__Temp__FriendFragment
+            ...TestClient__Temp__FriendFragment
           }
           mutualFriends(first: 10) {
-            ... TestClient__Temp__FriendFragment
+            ...TestClient__Temp__FriendFragment
           }
         }
       }
@@ -444,16 +444,16 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__ProfileFragments__FriendFields on User {
         id
         name
-        ... TestClient__Temp__ProfileFragments__ProfilePic
+        ...TestClient__Temp__ProfileFragments__ProfilePic
       }
 
       query TestClient__Temp__UserQuery {
         user(id: 4) {
           friends(first: 10) {
-            ... TestClient__Temp__ProfileFragments__FriendFields
+            ...TestClient__Temp__ProfileFragments__FriendFields
           }
           mutualFriends(first: 10) {
-            ... TestClient__Temp__ProfileFragments__FriendFields
+            ...TestClient__Temp__ProfileFragments__FriendFields
           }
         }
       }
@@ -467,16 +467,16 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__ProfileFragments__FriendFields on User {
         id
         name
-        ... TestClient__Temp__ProfileFragments__ProfilePic
+        ...TestClient__Temp__ProfileFragments__ProfilePic
       }
 
       query TestClient__Temp__UserQuery {
         user(id: 4) {
           friends(first: 10) {
-            ... TestClient__Temp__ProfileFragments__FriendFields
+            ...TestClient__Temp__ProfileFragments__FriendFields
           }
           mutualFriends(first: 10) {
-            ... TestClient__Temp__ProfileFragments__FriendFields
+            ...TestClient__Temp__ProfileFragments__FriendFields
           }
         }
       }
@@ -520,7 +520,7 @@ class TestClient < MiniTest::Test
       query TestClient__Temp__FriendsQuery {
         user(id: 4) {
           friends(first: 10) {
-            ... TestClient__Temp__FriendFragment
+            ...TestClient__Temp__FriendFragment
           }
         }
       }
@@ -528,7 +528,7 @@ class TestClient < MiniTest::Test
       query TestClient__Temp__MutualFriendsQuery {
         user(id: 4) {
           mutualFriends(first: 10) {
-            ... TestClient__Temp__FriendFragment
+            ...TestClient__Temp__FriendFragment
           }
         }
       }
@@ -543,7 +543,7 @@ class TestClient < MiniTest::Test
       query TestClient__Temp__FriendsQuery {
         user(id: 4) {
           friends(first: 10) {
-            ... TestClient__Temp__FriendFragment
+            ...TestClient__Temp__FriendFragment
           }
         }
       }
@@ -558,7 +558,7 @@ class TestClient < MiniTest::Test
       query TestClient__Temp__MutualFriendsQuery {
         user(id: 4) {
           mutualFriends(first: 10) {
-            ... TestClient__Temp__FriendFragment
+            ...TestClient__Temp__FriendFragment
           }
         }
       }
