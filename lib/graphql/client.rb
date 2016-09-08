@@ -13,8 +13,7 @@ module GraphQL
 
     def initialize(schema:)
       @schema = schema
-      @definitions = []
-      @document = GraphQL::Language::Nodes::Document.new(definitions: @definitions)
+      @document = GraphQL::Language::Nodes::Document.new(definitions: [])
     end
 
     class Definition < Module
