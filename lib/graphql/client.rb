@@ -18,8 +18,20 @@ module GraphQL
     end
 
     class Definition < Module
-      def initialize(node:)
+      def self.for(node:, **kargs)
+        case node
+        when Language::Nodes::OperationDefinition
+          OperationDefinition.new(node: node, **kargs)
+        when Language::Nodes::FragmentDefinition
+          FragmentDefinition.new(node: node, **kargs)
+        else
+          raise TypeError, "expected node to be a definition type, but was #{node.class}"
+        end
+      end
+
+      def initialize(node:, document:)
         @definition_node = node
+        @document = document
       end
 
       # Internal: Get underlying operation or fragment defintion AST node for
@@ -46,6 +58,13 @@ module GraphQL
         @definition_name ||= name.gsub("::", "__").freeze
       end
 
+      # Public: Get document with only the definitions needed to perform this
+      # operation.
+      #
+      # Returns GraphQL::Language::Nodes::Document with one OperationDefinition
+      # and any FragmentDefinition dependencies.
+      attr_reader :document
+
       def new(*args)
         query_result_class.new(*args)
       end
@@ -57,38 +76,21 @@ module GraphQL
     end
 
     class OperationDefinition < Definition
-      def initialize(document:, **kargs)
-        @document = document
-        super(**kargs)
-      end
-
       # Public: Alias for definition name.
       alias_method :operation_name, :definition_name
-
-      # Public: Owner document of operation definition.
-      #
-      # Returns GraphQL::Language::Nodes::Document of all registered
-      # definitions.
-      attr_reader :document
-
-      # Public: Get document with only the definitions needed to perform this
-      # operation.
-      #
-      # Returns GraphQL::Language::Nodes::Document with one OperationDefinition
-      # and any FragmentDefinition dependencies.
-      def operation_document
-        @operation_document ||= Language::OperationSlice.slice(document, operation_name).deep_freeze
-      end
     end
 
     class FragmentDefinition < Definition
     end
 
     def parse(str)
+      definition_dependencies = Set.new
+
       str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) { |m|
         const_name = $1
         case fragment = ActiveSupport::Inflector.safe_constantize(const_name)
         when FragmentDefinition
+          definition_dependencies.merge(fragment.document.definitions)
           "...#{fragment.definition_name}"
         when nil
           raise NameError, "uninitialized constant #{const_name}\n#{str}"
@@ -99,17 +101,15 @@ module GraphQL
 
       doc = GraphQL.parse(str)
 
+      definition_dependencies.merge(doc.definitions)
+      document_dependencies = Language::Nodes::Document.new(definitions: definition_dependencies.to_a)
+
       definitions, renames = {}, {}
       doc.definitions.each do |node|
-        local_name = node.name
-        definition = case node
-        when Language::Nodes::OperationDefinition
-          OperationDefinition.new(document: self.document, node: node)
-        when Language::Nodes::FragmentDefinition
-          FragmentDefinition.new(node: node)
-        end
-        definitions[local_name] = definition
-        renames[local_name] = -> { definition.definition_name }
+        sliced_document = Language::OperationSlice.slice(document_dependencies, node.name)
+        definition = Definition.for(node: node, document: sliced_document)
+        renames[node.name] = -> { definition.definition_name }
+        definitions[node.name] = definition
       end
       rename_definitions(doc, renames)
 

@@ -61,7 +61,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::UserQuery.operation_document.to_query_string)
+    assert_equal(query_string, Temp::UserQuery.document.to_query_string)
 
     @client.validate!
   end
@@ -96,7 +96,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::UserQuery.operation_document.to_query_string)
+    assert_equal(query_string, Temp::UserQuery.document.to_query_string)
 
     @client.validate!
   end
@@ -132,7 +132,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::UserDocument::GetUser.operation_document.to_query_string)
+    assert_equal(query_string, Temp::UserDocument::GetUser.document.to_query_string)
 
     @client.validate!
   end
@@ -167,7 +167,7 @@ class TestClient < MiniTest::Test
     assert_equal "mutation", Temp::LikeMutation.definition_node.operation_type
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::LikeMutation.operation_document.to_query_string)
+    assert_equal(query_string, Temp::LikeMutation.document.to_query_string)
   end
 
   def test_client_parse_mutation_document
@@ -201,7 +201,7 @@ class TestClient < MiniTest::Test
     assert_equal "mutation", Temp::LikeDocument::LikeStory.definition_node.operation_type
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::LikeDocument::LikeStory.operation_document.to_query_string)
+    assert_equal(query_string, Temp::LikeDocument::LikeStory.document.to_query_string)
   end
 
   def test_client_parse_anonymous_fragment
@@ -220,13 +220,16 @@ class TestClient < MiniTest::Test
     assert_kind_of GraphQL::Language::Nodes::FragmentDefinition, Temp::UserFragment.definition_node
     assert_equal "TestClient__Temp__UserFragment", Temp::UserFragment.definition_node.name
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
       fragment TestClient__Temp__UserFragment on User {
         id
         firstName
         lastName
       }
     GRAPHQL
+
+    assert_equal(query_string, Temp::UserFragment.document.to_query_string)
+    assert_equal(query_string, @client.document.to_query_string)
 
     user = Temp::UserFragment.new({"id" => 1, "firstName" => "Joshua", "lastName" => "Peek"})
     assert_equal 1, user.id
@@ -255,13 +258,16 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
       fragment TestClient__Temp__UserDocument__UserProfile on User {
         id
         firstName
         lastName
       }
     GRAPHQL
+
+    assert_equal(query_string, Temp::UserDocument::UserProfile.document.to_query_string)
+    assert_equal(query_string, @client.document.to_query_string)
   end
 
   def test_client_parse_query_fragment_document
@@ -311,7 +317,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument::NestedFragments.operation_document.to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument::NestedFragments.document.to_query_string)
       query TestClient__Temp__UserDocument__NestedFragments {
         user(id: 4) {
           friends(first: 10) {
@@ -329,6 +335,24 @@ class TestClient < MiniTest::Test
         ...TestClient__Temp__UserDocument__StandardProfilePic
       }
 
+      fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
+        profilePic(size: 50)
+      }
+    GRAPHQL
+
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument::FriendFields.document.to_query_string)
+      fragment TestClient__Temp__UserDocument__FriendFields on User {
+        id
+        name
+        ...TestClient__Temp__UserDocument__StandardProfilePic
+      }
+
+      fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
+        profilePic(size: 50)
+      }
+    GRAPHQL
+
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument::StandardProfilePic.document.to_query_string)
       fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
         profilePic(size: 50)
       }
@@ -386,7 +410,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.operation_document.to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
       fragment TestClient__Temp__ProfilePictureFragment on User {
         profilePic(size: 50)
       }
@@ -459,7 +483,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.operation_document.to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
       fragment TestClient__Temp__ProfileFragments__ProfilePic on User {
         profilePic(size: 50)
       }
@@ -534,7 +558,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::FriendsQuery.operation_document.to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::FriendsQuery.document.to_query_string)
       fragment TestClient__Temp__FriendFragment on User {
         id
         name
@@ -549,7 +573,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.operation_document.to_query_string)
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.document.to_query_string)
       fragment TestClient__Temp__FriendFragment on User {
         id
         name
