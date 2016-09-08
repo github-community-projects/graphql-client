@@ -15,7 +15,6 @@ module GraphQL
       @schema = schema
       @definitions = []
       @document = GraphQL::Language::Nodes::Document.new(definitions: @definitions)
-      @document_slices = {}
     end
 
     class Definition < Module
