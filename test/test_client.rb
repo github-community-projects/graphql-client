@@ -790,4 +790,67 @@ class TestClient < MiniTest::Test
       Temp::UserFragment.new(repo.owner)
     end
   end
+
+  def test_undefine_definition
+    skip "TODO: Fix undefining constants"
+
+    Temp.const_set :UserQuery, @client.parse(<<-'GRAPHQL')
+      {
+        viewer {
+          id
+        }
+      }
+    GRAPHQL
+    definition = Temp::UserQuery
+
+    assert_equal "TestClient::Temp::UserQuery", definition.name
+    assert_equal "TestClient__Temp__UserQuery", definition.definition_name
+
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
+      query TestClient__Temp__UserQuery {
+        viewer {
+          id
+        }
+      }
+    GRAPHQL
+    assert_equal(query_string, @client.document.to_query_string)
+
+    Temp.send :remove_const, :UserQuery
+
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
+    GRAPHQL
+    assert_equal(query_string, @client.document.to_query_string)
+  end
+
+  def test_replace_constant
+    skip "TODO: Fix undefining constants"
+
+    old_query = @client.parse(<<-'GRAPHQL')
+      {
+        viewer {
+          id
+        }
+      }
+    GRAPHQL
+    Temp.const_set :UserQuery, old_query
+
+    new_query = @client.parse(<<-'GRAPHQL')
+      {
+        viewer {
+          name
+        }
+      }
+    GRAPHQL
+    Temp.send :remove_const, :UserQuery
+    Temp.const_set :UserQuery, new_query
+
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
+      query TestClient__Temp__UserQuery {
+        viewer {
+          name
+        }
+      }
+    GRAPHQL
+    assert_equal(query_string, @client.document.to_query_string)
+  end
 end
