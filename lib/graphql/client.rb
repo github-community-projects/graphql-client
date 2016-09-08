@@ -1,7 +1,6 @@
 require "active_support/inflector"
 require "graphql"
 require "graphql/client/query_result"
-require "graphql/language/mutator"
 require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/operation_slice"
 
@@ -101,8 +100,6 @@ module GraphQL
 
       doc = GraphQL.parse(str)
 
-      mutator = GraphQL::Language::Mutator.new(doc)
-
       definitions, renames = {}, {}
       doc.definitions.each do |node|
         local_name = node.name
@@ -115,7 +112,7 @@ module GraphQL
         definitions[local_name] = definition
         renames[local_name] = -> { definition.definition_name }
       end
-      mutator.rename_definitions(renames)
+      rename_definitions(doc, renames)
 
       doc.deep_freeze
 
@@ -146,5 +143,29 @@ module GraphQL
 
       nil
     end
+
+    private
+      module LazyName
+        def name
+          @name.call
+        end
+      end
+
+      def rename_definitions(document, definitions)
+        rename_node = -> (node, parent) {
+          if name = definitions[node.name]
+            node.extend(LazyName) if name.is_a?(Proc)
+            node.name = name
+          end
+        }
+
+        visitor = Language::Visitor.new(document)
+        visitor[Language::Nodes::FragmentDefinition].leave << rename_node
+        visitor[Language::Nodes::OperationDefinition].leave << rename_node
+        visitor[Language::Nodes::FragmentSpread].leave << rename_node
+        visitor.visit
+
+        nil
+      end
   end
 end
