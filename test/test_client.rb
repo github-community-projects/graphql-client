@@ -16,7 +16,7 @@ class TestClient < MiniTest::Test
     field :viewer, UserType
   end
 
-  Schema = GraphQL::Schema.new(query: QueryType)
+  Schema = GraphQL::Schema.define(query: QueryType)
 
   module Temp
   end
