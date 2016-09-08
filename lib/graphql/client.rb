@@ -4,7 +4,6 @@ require "graphql/client/query_result"
 require "graphql/language/mutator"
 require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/operation_slice"
-require "graphql/relay/parser"
 
 module GraphQL
   class Client
@@ -100,7 +99,7 @@ module GraphQL
         end
       }
 
-      doc = GraphQL::Relay::Parser.parse(str)
+      doc = GraphQL.parse(str)
 
       mutator = GraphQL::Language::Mutator.new(doc)
 
