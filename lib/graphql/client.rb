@@ -11,7 +11,7 @@ module GraphQL
 
     attr_reader :schema
 
-    def initialize(schema:)
+    def initialize(schema: nil)
       @schema = schema
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
     end
@@ -100,11 +100,27 @@ module GraphQL
 
       doc = GraphQL.parse(str)
 
+      doc.definitions.each do |node|
+        node.name ||= "__anonymous__"
+      end
+
       definition_dependencies.merge(doc.definitions)
       document_dependencies = Language::Nodes::Document.new(definitions: definition_dependencies.to_a)
 
+      if @schema
+        rules = GraphQL::StaticValidation::ALL_RULES - [GraphQL::StaticValidation::FragmentsAreUsed]
+        validator = GraphQL::StaticValidation::Validator.new(schema: @schema, rules: rules)
+        query = Query.new(@schema, document: document_dependencies)
+
+        errors = validator.validate(query)
+        errors.fetch(:errors).each do |error|
+          raise ValidationError, error["message"] + "\n\n" + str
+        end
+      end
+
       definitions = {}
       doc.definitions.each do |node|
+        node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::OperationSlice.slice(document_dependencies, node.name)
         definition = Definition.for(node: node, document: sliced_document)
         definitions[node.name] = definition
@@ -139,17 +155,6 @@ module GraphQL
 
     def document
       @document
-    end
-
-    def validate!
-      validator = StaticValidation::Validator.new(schema: @schema)
-      query = Query.new(@schema, document: document)
-
-      validator.validate(query).fetch(:errors).each do |error|
-        raise ValidationError, error["message"]
-      end
-
-      nil
     end
 
     private

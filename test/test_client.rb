@@ -4,19 +4,80 @@ require "json"
 require "minitest/autorun"
 
 class TestClient < MiniTest::Test
+  NodeType = GraphQL::InterfaceType.define do
+    name "Node"
+    field :id, !types.ID
+  end
+
+  AdminUser = GraphQL::InterfaceType.define do
+    name "AdminUser"
+    field :password, !types.String
+  end
+
   UserType = GraphQL::ObjectType.define do
     name "User"
+    interfaces [NodeType, AdminUser]
     field :id, !types.ID
     field :firstName, !types.String
     field :lastName, !types.String
+    field :name, !types.String
+    field :login, !types.String
+    field :login_url, !types.String
+    field :profileName, !types.String
+    field :isCool, !types.Boolean
+    field :profilePic, types.String do
+      argument :size, types.Int
+    end
+    field :repositories, !types[!RepositoryType]
+    field :friends, -> { !types[!UserType] } do
+      argument :first, types.Int
+    end
+    field :mutualFriends, -> { !types[!UserType] } do
+      argument :first, types.Int
+    end
+  end
+
+  OrganizationType = GraphQL::ObjectType.define do
+    name "Organization"
+    interfaces [NodeType]
+    field :name, !types.String
+  end
+
+  RepositoryType = GraphQL::ObjectType.define do
+    name "Repository"
+    field :name, !types.String
+    field :owner, !UserType
+    field :starCount, !types.Int
+    field :watchers, -> { !types[!UserType] }
   end
 
   QueryType = GraphQL::ObjectType.define do
     name "Query"
-    field :viewer, UserType
+    field :viewer, !UserType
+    field :node, NodeType do
+      argument :id, !types.ID
+    end
+    field :user, UserType do
+      argument :id, !types.ID
+    end
+    field :organization, OrganizationType do
+      argument :id, !types.ID
+    end
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType)
+  StarResult = GraphQL::ObjectType.define do
+    name "StarResult"
+    field :repository, !RepositoryType
+  end
+
+  MutationType = GraphQL::ObjectType.define do
+    name "Mutation"
+    field :star, !StarResult do
+      argument :repositoryID, !types.ID
+    end
+  end
+
+  Schema = GraphQL::Schema.define(query: QueryType, mutation: MutationType)
 
   module Temp
   end
@@ -62,8 +123,6 @@ class TestClient < MiniTest::Test
 
     assert_equal(query_string, @client.document.to_query_string)
     assert_equal(query_string, Temp::UserQuery.document.to_query_string)
-
-    @client.validate!
   end
 
   def test_client_parse_anonymous_query
@@ -97,8 +156,6 @@ class TestClient < MiniTest::Test
 
     assert_equal(query_string, @client.document.to_query_string)
     assert_equal(query_string, Temp::UserQuery.document.to_query_string)
-
-    @client.validate!
   end
 
   def test_client_parse_query_document
@@ -133,75 +190,73 @@ class TestClient < MiniTest::Test
 
     assert_equal(query_string, @client.document.to_query_string)
     assert_equal(query_string, Temp::UserDocument::GetUser.document.to_query_string)
-
-    @client.validate!
   end
 
   def test_client_parse_anonymous_mutation
-    Temp.const_set :LikeMutation, @client.parse(<<-'GRAPHQL')
+    Temp.const_set :StarMutation, @client.parse(<<-'GRAPHQL')
       mutation {
-        likeStory(storyID: 12345) {
-          story {
-            likeCount
+        star(repositoryID: 12345) {
+          repository {
+            starCount
           }
         }
       }
     GRAPHQL
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      mutation TestClient__Temp__LikeMutation {
-        likeStory(storyID: 12345) {
-          story {
-            likeCount
+      mutation TestClient__Temp__StarMutation {
+        star(repositoryID: 12345) {
+          repository {
+            starCount
           }
         }
       }
     GRAPHQL
 
-    assert_kind_of GraphQL::Client::OperationDefinition, Temp::LikeMutation
-    assert_equal "TestClient::Temp::LikeMutation", Temp::LikeMutation.name
-    assert_equal "TestClient__Temp__LikeMutation", Temp::LikeMutation.definition_name
+    assert_kind_of GraphQL::Client::OperationDefinition, Temp::StarMutation
+    assert_equal "TestClient::Temp::StarMutation", Temp::StarMutation.name
+    assert_equal "TestClient__Temp__StarMutation", Temp::StarMutation.definition_name
 
-    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::LikeMutation.definition_node
-    assert_equal "TestClient__Temp__LikeMutation", Temp::LikeMutation.definition_node.name
-    assert_equal "mutation", Temp::LikeMutation.definition_node.operation_type
+    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::StarMutation.definition_node
+    assert_equal "TestClient__Temp__StarMutation", Temp::StarMutation.definition_node.name
+    assert_equal "mutation", Temp::StarMutation.definition_node.operation_type
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::LikeMutation.document.to_query_string)
+    assert_equal(query_string, Temp::StarMutation.document.to_query_string)
   end
 
   def test_client_parse_mutation_document
-    Temp.const_set :LikeDocument, @client.parse(<<-'GRAPHQL')
-      mutation LikeStory {
-        likeStory(storyID: 12345) {
-          story {
-            likeCount
+    Temp.const_set :StarDocument, @client.parse(<<-'GRAPHQL')
+      mutation StarRepo {
+        star(repositoryID: 12345) {
+          repository {
+            starCount
           }
         }
       }
     GRAPHQL
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      mutation TestClient__Temp__LikeDocument__LikeStory {
-        likeStory(storyID: 12345) {
-          story {
-            likeCount
+      mutation TestClient__Temp__StarDocument__StarRepo {
+        star(repositoryID: 12345) {
+          repository {
+            starCount
           }
         }
       }
     GRAPHQL
 
-    assert_kind_of GraphQL::Client::OperationDefinition, Temp::LikeDocument::LikeStory
-    assert_equal "TestClient::Temp::LikeDocument", Temp::LikeDocument.name
-    assert_equal "TestClient::Temp::LikeDocument::LikeStory", Temp::LikeDocument::LikeStory.name
-    assert_equal "TestClient__Temp__LikeDocument__LikeStory", Temp::LikeDocument::LikeStory.definition_name
+    assert_kind_of GraphQL::Client::OperationDefinition, Temp::StarDocument::StarRepo
+    assert_equal "TestClient::Temp::StarDocument", Temp::StarDocument.name
+    assert_equal "TestClient::Temp::StarDocument::StarRepo", Temp::StarDocument::StarRepo.name
+    assert_equal "TestClient__Temp__StarDocument__StarRepo", Temp::StarDocument::StarRepo.definition_name
 
-    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::LikeDocument::LikeStory.definition_node
-    assert_equal "TestClient__Temp__LikeDocument__LikeStory", Temp::LikeDocument::LikeStory.definition_node.name
-    assert_equal "mutation", Temp::LikeDocument::LikeStory.definition_node.operation_type
+    assert_kind_of GraphQL::Language::Nodes::OperationDefinition, Temp::StarDocument::StarRepo.definition_node
+    assert_equal "TestClient__Temp__StarDocument__StarRepo", Temp::StarDocument::StarRepo.definition_node.name
+    assert_equal "mutation", Temp::StarDocument::StarRepo.definition_node.operation_type
 
     assert_equal(query_string, @client.document.to_query_string)
-    assert_equal(query_string, Temp::LikeDocument::LikeStory.document.to_query_string)
+    assert_equal(query_string, Temp::StarDocument::StarRepo.document.to_query_string)
   end
 
   def test_client_parse_anonymous_fragment
@@ -238,12 +293,18 @@ class TestClient < MiniTest::Test
 
     assert_equal "TestClient::Temp::UserFragment", Temp::UserFragment.name
     assert_equal "TestClient::Temp::UserFragment", user.class.name
+  end
 
+  def test_client_parse_with_validation_error
     assert_raises GraphQL::Client::ValidationError do
       begin
-        @client.validate!
+        Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+          fragment on User {
+            missingField
+          }
+        GRAPHQL
       rescue GraphQL::Client::ValidationError => e
-        assert_equal "Fragment TestClient__Temp__UserFragment was defined, but not used", e.message
+        assert_equal "Field 'missingField' doesn't exist on type 'User'\n", e.message.lines.first
         raise e
       end
     end
