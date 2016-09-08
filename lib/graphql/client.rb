@@ -103,14 +103,24 @@ module GraphQL
       definition_dependencies.merge(doc.definitions)
       document_dependencies = Language::Nodes::Document.new(definitions: definition_dependencies.to_a)
 
-      definitions, renames = {}, {}
+      definitions = {}
       doc.definitions.each do |node|
         sliced_document = Language::OperationSlice.slice(document_dependencies, node.name)
         definition = Definition.for(node: node, document: sliced_document)
-        renames[node.name] = -> { definition.definition_name }
         definitions[node.name] = definition
       end
-      rename_definitions(doc, renames)
+
+      rename_node = -> (node, parent) {
+        if definition = definitions[node.name]
+          node.extend(LazyName)
+          node.name = -> { definition.definition_name }
+        end
+      }
+      visitor = Language::Visitor.new(doc)
+      visitor[Language::Nodes::FragmentDefinition].leave << rename_node
+      visitor[Language::Nodes::OperationDefinition].leave << rename_node
+      visitor[Language::Nodes::FragmentSpread].leave << rename_node
+      visitor.visit
 
       doc.deep_freeze
 
@@ -147,23 +157,6 @@ module GraphQL
         def name
           @name.call
         end
-      end
-
-      def rename_definitions(document, definitions)
-        rename_node = -> (node, parent) {
-          if name = definitions[node.name]
-            node.extend(LazyName) if name.is_a?(Proc)
-            node.name = name
-          end
-        }
-
-        visitor = Language::Visitor.new(document)
-        visitor[Language::Nodes::FragmentDefinition].leave << rename_node
-        visitor[Language::Nodes::OperationDefinition].leave << rename_node
-        visitor[Language::Nodes::FragmentSpread].leave << rename_node
-        visitor.visit
-
-        nil
       end
   end
 end
