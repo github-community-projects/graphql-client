@@ -105,6 +105,8 @@ module GraphQL
         case obj
         when Hash
           new(obj)
+        when self
+          return obj
         when QueryResult
           spreads = Set.new(self.spreads(obj.class.source_node).map(&:name))
 

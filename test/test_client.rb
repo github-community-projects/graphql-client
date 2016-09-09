@@ -841,6 +841,9 @@ class TestClient < MiniTest::Test
 
     owner = Temp::UserFragment.new(repo.owner)
     assert_equal "josh", owner.login
+
+    owner = Temp::UserFragment.new(owner)
+    assert_equal "josh", owner.login
   end
 
   def test_client_parse_invalid_fragment_cast
