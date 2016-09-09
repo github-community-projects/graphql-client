@@ -18,7 +18,7 @@ class TestClientFetch < MiniTest::Test
 
   Schema = GraphQL::Schema.define(query: QueryType)
 
-  Fetch = -> (document, variables) {
+  Fetch = -> (document, variables, context) {
     Schema.execute(document.to_query_string, variables: variables)
   }
 

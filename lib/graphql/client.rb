@@ -199,13 +199,13 @@ module GraphQL
       end
     end
 
-    def query(definition, variables: {})
+    def query(definition, variables: {}, context: {})
       unless fetch
         raise Error, "client network fetching not configured"
       end
 
       document = definition.document
-      result = fetch.call(document, variables)
+      result = fetch.call(document, variables, context)
       data, errors, extensions = result.values_at("data", "errors", "extensions")
 
       if data && errors
