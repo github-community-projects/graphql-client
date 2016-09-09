@@ -9,12 +9,21 @@ module GraphQL
     class Error < StandardError; end
     class ValidationError < Error; end
 
-    attr_reader :schema
+    class ResponseError < Error
+      def initialize(definition, error)
+        @request_definition = definition
+        @locations = error["locations"]
+        super error["message"]
+      end
+    end
+
+    attr_reader :schema, :fetch
 
     attr_accessor :document_tracking_enabled
 
-    def initialize(schema: nil)
+    def initialize(schema: nil, fetch: nil)
       @schema = schema
+      @fetch = fetch
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
       @document_tracking_enabled = false
     end
@@ -153,6 +162,71 @@ module GraphQL
 
     def document
       @document
+    end
+
+    class Response
+      attr_reader :extensions
+
+      def initialize(extensions: nil)
+        @extensions = extensions || {}
+      end
+    end
+
+    class SuccessfulResponse < Response
+      attr_reader :data
+
+      def initialize(data:, **kargs)
+        @data = data
+        super(**kargs)
+      end
+    end
+
+    class PartialResponse < SuccessfulResponse
+      attr_reader :errors
+
+      def initialize(errors:, **kargs)
+        @errors = errors
+        super(**kargs)
+      end
+    end
+
+    class FailedResponse < Response
+      attr_reader :errors
+
+      def initialize(errors:, **kargs)
+        @errors = errors
+        super(**kargs)
+      end
+    end
+
+    def query(definition, variables: {})
+      unless fetch
+        raise Error, "client network fetching not configured"
+      end
+
+      document = definition.document
+      result = fetch.call(document, variables)
+      data, errors, extensions = result.values_at("data", "errors", "extensions")
+
+      if data && errors
+        PartialResponse.new(
+          data: definition.new(data),
+          errors: errors.map { |error| ResponseError.new(definition, error) },
+          extensions: extensions
+        )
+      elsif data && !errors
+        SuccessfulResponse.new(
+          data: definition.new(data),
+          extensions: extensions
+        )
+      elsif !data && errors
+        FailedResponse.new(
+          errors: errors.map { |error| ResponseError.new(definition, error) },
+          extensions: extensions
+        )
+      else
+        raise Error, "invalid GraphQL response, expected data or errors"
+      end
     end
 
     private
