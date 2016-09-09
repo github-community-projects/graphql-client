@@ -42,13 +42,6 @@ module GraphQL
       # Returns OperationDefinition or FragmentDefinition object.
       attr_reader :definition_node
 
-      # Public: Ruby constant name of definition.
-      #
-      # Returns String or errors if definition was not assigned to a constant.
-      def name
-        @name ||= super || raise(RuntimeError, "definition must be assigned to a constant")
-      end
-
       # Public: Global name of definition in client document.
       #
       # Returns a GraphQL safe name of the Ruby constant String.
@@ -57,7 +50,7 @@ module GraphQL
       #
       # Returns String.
       def definition_name
-        @definition_name ||= name.gsub("::", "__").freeze
+        @definition_name ||= (name || "#{self.class.name}_#{object_id}").gsub("::", "__").freeze
       end
 
       # Public: Get document with only the definitions needed to perform this

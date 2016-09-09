@@ -886,14 +886,23 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_raises RuntimeError do
-      user_query.name
-    end
+    assert_equal nil, user_query.name
+    assert_equal "GraphQL__Client__OperationDefinition_#{user_query.object_id}", user_query.definition_name
+
+    query_string = <<-GRAPHQL.gsub(/^      /, "").chomp
+      query GraphQL__Client__OperationDefinition_#{user_query.object_id} {
+        viewer {
+          id
+        }
+      }
+    GRAPHQL
+    assert_equal(query_string, user_query.document.to_query_string)
+
+    skip "anonymous definition should not be tracked in document"
+    assert_equal("", @client.document.to_query_string)
   end
 
   def test_undefine_definition
-    skip "TODO: Fix undefining constants"
-
     Temp.const_set :UserQuery, @client.parse(<<-'GRAPHQL')
       {
         viewer {
@@ -917,14 +926,10 @@ class TestClient < MiniTest::Test
 
     Temp.send :remove_const, :UserQuery
 
-    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-    GRAPHQL
-    assert_equal(query_string, @client.document.to_query_string)
+    skip "removed definition should not be tracked in document"
   end
 
   def test_replace_constant
-    skip "TODO: Fix undefining constants"
-
     old_query = @client.parse(<<-'GRAPHQL')
       {
         viewer {
@@ -933,6 +938,9 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
     Temp.const_set :UserQuery, old_query
+
+    # Access UserQuery.name
+    Temp::UserQuery.definition_name
 
     new_query = @client.parse(<<-'GRAPHQL')
       {
@@ -951,6 +959,18 @@ class TestClient < MiniTest::Test
         }
       }
     GRAPHQL
+    assert_equal(query_string, new_query.document.to_query_string)
+
+    assert_equal <<-'GRAPHQL'.gsub(/^      /, "").chomp, old_query.document.to_query_string
+      query TestClient__Temp__UserQuery {
+        viewer {
+          id
+        }
+      }
+    GRAPHQL
+
+    skip "removed definition should not be tracked in document"
+
     assert_equal(query_string, @client.document.to_query_string)
   end
 end
