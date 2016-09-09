@@ -876,6 +876,20 @@ class TestClient < MiniTest::Test
     end
   end
 
+  def test_local_definition
+    user_query = @client.parse(<<-'GRAPHQL')
+      {
+        viewer {
+          id
+        }
+      }
+    GRAPHQL
+
+    assert_raises RuntimeError do
+      user_query.name
+    end
+  end
+
   def test_undefine_definition
     skip "TODO: Fix undefining constants"
 
