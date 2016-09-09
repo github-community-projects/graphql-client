@@ -84,6 +84,7 @@ class TestClient < MiniTest::Test
 
   def setup
     @client = GraphQL::Client.new(schema: Schema)
+    @client.document_tracking_enabled = true
   end
 
   def teardown

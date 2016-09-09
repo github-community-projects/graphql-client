@@ -11,9 +11,12 @@ module GraphQL
 
     attr_reader :schema
 
+    attr_accessor :document_tracking_enabled
+
     def initialize(schema: nil)
       @schema = schema
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
+      @document_tracking_enabled = false
     end
 
     class Definition < Module
@@ -140,7 +143,9 @@ module GraphQL
 
       doc.deep_freeze
 
-      self.document.definitions.concat(doc.definitions)
+      if document_tracking_enabled
+        self.document.definitions.concat(doc.definitions)
+      end
 
       if definitions[nil]
         definitions[nil]
