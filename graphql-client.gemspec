@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "graphql-client"
-  s.version = "0.0.11"
+  s.version = "0.0.12"
   s.summary = "GraphQL Client"
   s.description = "???"
   s.homepage = "https://github.com/github/graphql-client"
