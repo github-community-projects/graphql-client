@@ -976,4 +976,36 @@ class TestClient < MiniTest::Test
 
     assert_equal(query_string, @client.document.to_query_string)
   end
+
+  def test_spread_definition_defined_by_other_client
+    @client2 = GraphQL::Client.new(schema: Schema)
+
+    Temp.const_set :UserFragment, @client2.parse(<<-'GRAPHQL')
+      fragment on User {
+        login
+      }
+    GRAPHQL
+
+    Temp.const_set :RepositoryFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Repository {
+        name
+        owner {
+          ...TestClient::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    assert_equal <<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::RepositoryFragment.document.to_query_string
+      fragment TestClient__Temp__UserFragment on User {
+        login
+      }
+
+      fragment TestClient__Temp__RepositoryFragment on Repository {
+        name
+        owner {
+          ...TestClient__Temp__UserFragment
+        }
+      }
+    GRAPHQL
+  end
 end
