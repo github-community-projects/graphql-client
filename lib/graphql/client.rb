@@ -59,7 +59,13 @@ module GraphQL
       #
       # Returns String.
       def definition_name
-        @definition_name ||= (name || "#{self.class.name}_#{object_id}").gsub("::", "__").freeze
+        return @definition_name if defined?(@definition_name)
+
+        if name
+          @definition_name = name.gsub("::", "__").freeze
+        else
+          "#{self.class.name}_#{object_id}".gsub("::", "__").freeze
+        end
       end
 
       # Public: Get document with only the definitions needed to perform this
