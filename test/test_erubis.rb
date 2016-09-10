@@ -3,6 +3,13 @@ require "graphql/client/erubis"
 require "minitest/autorun"
 
 class TestErubis < MiniTest::Test
+  def test_no_graphql_section
+    src = <<-ERB
+      <%= 42 %>
+    ERB
+    assert_equal nil, GraphQL::Client::Erubis.extract_graphql_sections(src)
+  end
+
   def test_graphql_section
     src = <<-ERB
       <%graphql
