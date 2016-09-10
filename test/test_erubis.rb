@@ -3,8 +3,8 @@ require "graphql/client/erubis"
 require "minitest/autorun"
 
 class TestErubis < MiniTest::Test
-  def test_ignore_graphql_section
-    erubis = GraphQL::Client::Erubis.new <<-ERB
+  def test_graphql_section
+    src = <<-ERB
       <%graphql
         query {
           viewer {
@@ -15,8 +15,21 @@ class TestErubis < MiniTest::Test
       <%= 42 %>
     ERB
 
+    erubis = GraphQL::Client::Erubis.new(src)
+
     output_buffer = ActionView::OutputBuffer.new
     erubis.result(binding())
     assert_equal "42", output_buffer.strip
+
+    query = <<-ERB
+        query {
+          viewer {
+            login
+          }
+        }
+    ERB
+
+    assert_equal query.gsub("        ", "").strip,
+      GraphQL::Client::Erubis.extract_graphql_sections(src).first.gsub("        ", "").strip
   end
 end
