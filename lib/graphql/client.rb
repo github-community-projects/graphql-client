@@ -1,4 +1,5 @@
 require "active_support/inflector"
+require "active_support/notifications"
 require "graphql"
 require "graphql/client/query_result"
 require "graphql/language/nodes/deep_freeze_ext"
@@ -226,8 +227,16 @@ module GraphQL
         raise Error, "client network fetching not configured"
       end
 
-      document = definition.document
-      result = fetch.call(document, definition.operation_name, variables, context)
+      payload = {
+        document: definition.document,
+        operation_name: definition.operation_name,
+        operation_type: definition.definition_node.operation_type,
+        variables: variables
+      }
+      result = ActiveSupport::Notifications.instrument("query.graphql", payload) do
+        fetch.call(definition.document, definition.operation_name, variables, context)
+      end
+
       data, errors, extensions = result.values_at("data", "errors", "extensions")
 
       if data && errors
