@@ -155,7 +155,7 @@ module GraphQL
       if @schema
         rules = GraphQL::StaticValidation::ALL_RULES - [GraphQL::StaticValidation::FragmentsAreUsed]
         validator = GraphQL::StaticValidation::Validator.new(schema: @schema, rules: rules)
-        query = Query.new(@schema, document: document_dependencies)
+        query = GraphQL::Query.new(@schema, document: document_dependencies)
 
         errors = validator.validate(query)
         errors.fetch(:errors).each do |error|
@@ -239,19 +239,51 @@ module GraphQL
       end
     end
 
+    class Query
+      attr_reader :document, :operation_name, :variables, :context
+
+      def initialize(document, operation_name: nil, variables: {}, context: {})
+        @document = document
+        @operation_name = operation_name
+        @variables = variables
+        @context = context
+      end
+
+      def to_s
+        document.to_query_string
+      end
+
+      def operation
+        document.definitions.find { |node| node.name == operation_name }
+      end
+
+      def operation_type
+        operation.operation_type
+      end
+
+      def payload
+        {
+          document: document,
+          operation_name: operation_name,
+          operation_type: operation_type,
+          variables: variables
+        }
+      end
+    end
+
     def query(definition, variables: {}, context: {})
       unless fetch
         raise Error, "client network fetching not configured"
       end
 
-      payload = {
-        document: definition.document,
+      query = Query.new(definition.document,
         operation_name: definition.operation_name,
-        operation_type: definition.definition_node.operation_type,
-        variables: variables
-      }
-      result = ActiveSupport::Notifications.instrument("query.graphql", payload) do
-        fetch.call(definition.document, definition.operation_name, variables, context)
+        variables: variables,
+        context: context
+      )
+
+      result = ActiveSupport::Notifications.instrument("query.graphql", query.payload) do
+        fetch.call(query)
       end
 
       data, errors, extensions = result.values_at("data", "errors", "extensions")
@@ -275,6 +307,13 @@ module GraphQL
       else
         raise Error, "invalid GraphQL response, expected data or errors"
       end
+    end
+
+    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
+    IntrospectionQuery = Query.new(IntrospectionDocument)
+
+    def fetch_schema
+      fetch.call(IntrospectionQuery)
     end
 
     private
