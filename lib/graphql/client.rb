@@ -211,7 +211,7 @@ module GraphQL
       end
 
       document = definition.document
-      result = fetch.call(document, variables, context)
+      result = fetch.call(document, definition.operation_name, variables, context)
       data, errors, extensions = result.values_at("data", "errors", "extensions")
 
       if data && errors
