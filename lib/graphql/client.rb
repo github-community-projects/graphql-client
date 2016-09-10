@@ -17,6 +17,22 @@ module GraphQL
       end
     end
 
+    class ResponseErrors < Error
+      include Enumerable
+
+      attr_reader :errors
+
+      def initialize(definition, errors)
+        @request_definition = definition
+        @errors = errors.map { |error| ResponseError.new(definition, error) }
+        super @errors.map(&:message).join(", ")
+      end
+
+      def each(&block)
+        errors.each(&block)
+      end
+    end
+
     attr_reader :schema, :fetch
 
     attr_accessor :document_tracking_enabled
@@ -217,7 +233,7 @@ module GraphQL
       if data && errors
         PartialResponse.new(
           data: definition.new(data),
-          errors: errors.map { |error| ResponseError.new(definition, error) },
+          errors: ResponseErrors.new(definition, errors),
           extensions: extensions
         )
       elsif data && !errors
@@ -227,7 +243,7 @@ module GraphQL
         )
       elsif !data && errors
         FailedResponse.new(
-          errors: errors.map { |error| ResponseError.new(definition, error) },
+          errors: ResponseErrors.new(definition, errors),
           extensions: extensions
         )
       else

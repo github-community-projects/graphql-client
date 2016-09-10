@@ -46,12 +46,12 @@ class TestClientFetch < MiniTest::Test
     Temp.const_set :Query, @client.parse("{ error }")
     response = @client.query(Temp::Query)
     assert_kind_of GraphQL::Client::FailedResponse, response
-    assert_equal [
-      GraphQL::Client::ResponseError.new(Temp::Query, {
+    assert_equal GraphQL::Client::ResponseErrors.new(Temp::Query,[
+      {
         "message" => "b00m",
         "locations" => [{ "line" => 2, "column" => 3 }]
-      })
-    ], response.errors
+      }
+    ]), response.errors
   end
 
   def test_partial_response
@@ -59,11 +59,11 @@ class TestClientFetch < MiniTest::Test
     response = @client.query(Temp::Query)
     assert_kind_of GraphQL::Client::PartialResponse, response
     assert_equal nil, response.data.partial_error
-    assert_equal [
-      GraphQL::Client::ResponseError.new(Temp::Query, {
+    assert_equal GraphQL::Client::ResponseErrors.new(Temp::Query, [
+      {
         "message" => "just a little broken",
         "locations" => [{ "line" => 2, "column" => 3 }]
-      })
-    ], response.errors
+      }
+    ]), response.errors
   end
 end
