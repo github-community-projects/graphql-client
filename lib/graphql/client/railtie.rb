@@ -1,5 +1,6 @@
 require "graphql"
 require "graphql/client"
+require "graphql/client/log_subscriber"
 require "rails/railtie"
 
 module GraphQL
