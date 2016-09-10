@@ -38,8 +38,25 @@ module GraphQL
 
     attr_accessor :document_tracking_enabled
 
+    def self.load_schema(schema)
+      case schema
+      when GraphQL::Schema
+        schema
+      when Hash
+        GraphQL::Schema::Loader.load(schema)
+      when String
+        if schema.end_with?(".json")
+          load_schema(File.read(schema))
+        else
+          load_schema(JSON.parse(schema))
+        end
+      else
+        nil
+      end
+    end
+
     def initialize(schema: nil, fetch: nil)
-      @schema = schema
+      @schema = self.class.load_schema(schema)
       @fetch = fetch
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
       @document_tracking_enabled = false
