@@ -23,10 +23,14 @@ module GraphQL
 
       initializer "graphql.configure_views_namespace" do |app|
         require "graphql/client/view_module"
+
+        path = app.paths["app/views"].first
+        client = config.graphql.client
+
         Object.const_set(:Views, Module.new {
           extend GraphQL::Client::ViewModule
-          self.path = "#{app.root}/app/views"
-          self.client = config.graphql.client
+          self.path = path
+          self.client = client
         })
       end
     end
