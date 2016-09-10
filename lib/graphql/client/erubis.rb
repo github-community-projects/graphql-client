@@ -4,7 +4,7 @@ module GraphQL
   class Client
     class Erubis < ActionView::Template::Handlers::Erubis
       def self.extract_graphql_sections(src)
-        src.scan(/<%graphql([^%]+)%>/).flatten
+        src.scan(/<%graphql([^%]+)%>/).flatten.first
       end
 
       # Ignore static <%graphql sections

@@ -30,6 +30,6 @@ class TestErubis < MiniTest::Test
     ERB
 
     assert_equal query.gsub("        ", "").strip,
-      GraphQL::Client::Erubis.extract_graphql_sections(src).first.gsub("        ", "").strip
+      GraphQL::Client::Erubis.extract_graphql_sections(src).gsub("        ", "").strip
   end
 end
