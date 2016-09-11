@@ -12,6 +12,7 @@ class TestErubis < MiniTest::Test
 
   def test_graphql_section
     src = <<-ERB
+      <%# Some comment %>
       <%graphql
         query {
           viewer {
@@ -28,7 +29,7 @@ class TestErubis < MiniTest::Test
     erubis.result(binding)
     assert_equal "42", output_buffer.strip
 
-    query = <<-ERB
+    expected_query = <<-ERB
         query {
           viewer {
             login
@@ -36,7 +37,8 @@ class TestErubis < MiniTest::Test
         }
     ERB
 
-    assert_equal query.gsub("        ", "").strip,
-                 GraphQL::Client::Erubis.extract_graphql_section(src).gsub("        ", "").strip
+    actual_query, lineno = GraphQL::Client::Erubis.extract_graphql_section(src)
+    assert_equal 2, lineno
+    assert_equal expected_query.gsub("        ", "").strip, actual_query.gsub("        ", "").strip
   end
 end

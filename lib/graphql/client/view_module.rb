@@ -112,9 +112,8 @@ module GraphQL
 
         if File.extname(path) == ".erb"
           contents = File.read(path)
-          query = GraphQL::Client::Erubis.extract_graphql_section(contents)
-          # TODO: Use generic client parser
-          mod = client.parse(query) if query
+          query, lineno = GraphQL::Client::Erubis.extract_graphql_section(contents)
+          mod = client.parse(query, path, lineno) if query
         end
 
         mod.extend(ViewModule)

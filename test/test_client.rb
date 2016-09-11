@@ -296,16 +296,32 @@ class TestClient < MiniTest::Test
     assert_equal "TestClient::Temp::UserFragment", user.class.name
   end
 
-  def test_client_parse_with_validation_error
+  def test_client_parse_with_validation_errors
+    assert_raises GraphQL::Client::ValidationError do
+      begin
+        Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+          fragment on MissingType {
+            __typename
+          }
+        GRAPHQL
+      rescue GraphQL::Client::ValidationError => e
+        assert_equal "No such type MissingType, so it can't be a fragment condition", e.message
+        assert_equal "#{__FILE__}:#{__LINE__ - 6}", e.backtrace.first
+        raise e
+      end
+    end
+
     assert_raises GraphQL::Client::ValidationError do
       begin
         Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
           fragment on User {
+            __typename
             missingField
           }
         GRAPHQL
       rescue GraphQL::Client::ValidationError => e
-        assert_equal "Field 'missingField' doesn't exist on type 'User'\n", e.message.lines.first
+        assert_equal "Field 'missingField' doesn't exist on type 'User'", e.message
+        assert_equal "#{__FILE__}:#{__LINE__ - 7}", e.backtrace.first
         raise e
       end
     end
@@ -654,11 +670,16 @@ class TestClient < MiniTest::Test
 
   def test_client_parse_query_missing_external_fragment
     assert_raises NameError do
-      Temp.const_set :FooQuery, @client.parse(<<-'GRAPHQL')
-        query {
-          ...TestClient::Temp::MissingFragment
-        }
-      GRAPHQL
+      begin
+        Temp.const_set :FooQuery, @client.parse(<<-'GRAPHQL')
+          query {
+            ...TestClient::Temp::MissingFragment
+          }
+        GRAPHQL
+      rescue NameError => e
+        assert_equal "#{__FILE__}:#{__LINE__ - 4}", e.backtrace.first
+        raise e
+      end
     end
   end
 

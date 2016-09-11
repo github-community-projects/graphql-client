@@ -104,19 +104,33 @@ module GraphQL
     class FragmentDefinition < Definition
     end
 
-    def parse(str)
+    def parse(str, filename = nil, lineno = nil)
+      if filename.nil? || lineno.nil?
+        filename, lineno, = caller(1, 1).first.split(":", 3)
+        lineno = lineno.to_i
+      end
+
       definition_dependencies = Set.new
 
-      str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) do |_m|
-        const_name = Regexp.last_match(1)
+      str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) do
+        match = Regexp.last_match
+        const_name = match[1]
         case fragment = ActiveSupport::Inflector.safe_constantize(const_name)
         when FragmentDefinition
           definition_dependencies.merge(fragment.document.definitions)
           "...#{fragment.definition_name}"
-        when nil
-          raise NameError, "uninitialized constant #{const_name}\n#{str}"
         else
-          raise TypeError, "expected #{const_name} to be a #{FragmentDefinition}, but was a #{fragment.class}"
+          if fragment
+            error = TypeError.new("expected #{const_name} to be a #{FragmentDefinition}, but was a #{fragment.class}")
+          else
+            error = NameError.new("uninitialized constant #{const_name}")
+          end
+
+          if filename && lineno
+            error.set_backtrace(["#{filename}:#{lineno + match.pre_match.count("\n") + 1}"] + caller)
+          end
+
+          raise error
         end
       end
 
@@ -136,7 +150,10 @@ module GraphQL
 
         errors = validator.validate(query)
         errors.fetch(:errors).each do |error|
-          raise ValidationError, error["message"] + "\n\n" + str
+          validation_line = error["locations"][0]["line"]
+          error = ValidationError.new(error["message"])
+          error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller) if filename && lineno
+          raise error
         end
       end
 

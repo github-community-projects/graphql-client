@@ -21,9 +21,13 @@ module GraphQL
       #
       # src - String ERB text
       #
-      # Returns String GraphQL query or nil or no section was defined.
+      # Returns String GraphQL query and line number or nil or no section was
+      # defined.
       def self.extract_graphql_section(src)
-        src.scan(/<%graphql([^%]+)%>/).flatten.first
+        query_string = src.scan(/<%graphql([^%]+)%>/).flatten.first
+        if query_string
+          return query_string, Regexp.last_match.pre_match.count("\n") + 1
+        end
       end
 
       # Internal: Extend Rails' Erubis handler to simply ignore <%graphql
