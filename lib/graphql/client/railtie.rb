@@ -1,6 +1,5 @@
 require "graphql"
 require "graphql/client"
-require "graphql/client/log_subscriber"
 require "rails/railtie"
 
 module GraphQL
@@ -14,6 +13,11 @@ module GraphQL
       initializer "graphql.eager_load_hack" do |app|
         require "graphql"
         GraphQL::BOOLEAN_TYPE.name
+      end
+
+      initializer "graphql.configure_log_subscriber" do |app|
+        require "graphql/client/log_subscriber"
+        GraphQL::Client::LogSubscriber.attach_to :graphql
       end
 
       initializer "graphql.configure_erb_implementation" do |app|

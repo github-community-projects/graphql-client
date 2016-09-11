@@ -7,7 +7,7 @@ class TestErubis < MiniTest::Test
     src = <<-ERB
       <%= 42 %>
     ERB
-    assert_equal nil, GraphQL::Client::Erubis.extract_graphql_sections(src)
+    assert_equal nil, GraphQL::Client::Erubis.extract_graphql_section(src)
   end
 
   def test_graphql_section
@@ -37,6 +37,6 @@ class TestErubis < MiniTest::Test
     ERB
 
     assert_equal query.gsub("        ", "").strip,
-      GraphQL::Client::Erubis.extract_graphql_sections(src).gsub("        ", "").strip
+      GraphQL::Client::Erubis.extract_graphql_section(src).gsub("        ", "").strip
   end
 end
