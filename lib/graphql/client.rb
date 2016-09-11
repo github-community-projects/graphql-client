@@ -140,8 +140,7 @@ module GraphQL
         node.name ||= "__anonymous__"
       end
 
-      definition_dependencies.merge(doc.definitions)
-      document_dependencies = Language::Nodes::Document.new(definitions: definition_dependencies.to_a)
+      document_dependencies = Language::Nodes::Document.new(definitions: doc.definitions + definition_dependencies.to_a)
 
       if @schema
         rules = GraphQL::StaticValidation::ALL_RULES - [GraphQL::StaticValidation::FragmentsAreUsed]

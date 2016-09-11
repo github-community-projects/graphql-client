@@ -490,16 +490,6 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
-      fragment TestClient__Temp__ProfilePictureFragment on User {
-        profilePic(size: 50)
-      }
-
-      fragment TestClient__Temp__FriendFragment on User {
-        id
-        name
-        ...TestClient__Temp__ProfilePictureFragment
-      }
-
       query TestClient__Temp__UserQuery {
         user(id: 4) {
           friends(first: 10) {
@@ -509,6 +499,16 @@ class TestClient < MiniTest::Test
             ...TestClient__Temp__FriendFragment
           }
         }
+      }
+
+      fragment TestClient__Temp__FriendFragment on User {
+        id
+        name
+        ...TestClient__Temp__ProfilePictureFragment
+      }
+
+      fragment TestClient__Temp__ProfilePictureFragment on User {
+        profilePic(size: 50)
       }
     GRAPHQL
   end
@@ -563,16 +563,6 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
-      fragment TestClient__Temp__ProfileFragments__ProfilePic on User {
-        profilePic(size: 50)
-      }
-
-      fragment TestClient__Temp__ProfileFragments__FriendFields on User {
-        id
-        name
-        ...TestClient__Temp__ProfileFragments__ProfilePic
-      }
-
       query TestClient__Temp__UserQuery {
         user(id: 4) {
           friends(first: 10) {
@@ -582,6 +572,16 @@ class TestClient < MiniTest::Test
             ...TestClient__Temp__ProfileFragments__FriendFields
           }
         }
+      }
+
+      fragment TestClient__Temp__ProfileFragments__ProfilePic on User {
+        profilePic(size: 50)
+      }
+
+      fragment TestClient__Temp__ProfileFragments__FriendFields on User {
+        id
+        name
+        ...TestClient__Temp__ProfileFragments__ProfilePic
       }
     GRAPHQL
   end
@@ -638,11 +638,6 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::FriendsQuery.document.to_query_string)
-      fragment TestClient__Temp__FriendFragment on User {
-        id
-        name
-      }
-
       query TestClient__Temp__FriendsQuery {
         user(id: 4) {
           friends(first: 10) {
@@ -650,20 +645,25 @@ class TestClient < MiniTest::Test
           }
         }
       }
-    GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.document.to_query_string)
       fragment TestClient__Temp__FriendFragment on User {
         id
         name
       }
+    GRAPHQL
 
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::MutualFriendsQuery.document.to_query_string)
       query TestClient__Temp__MutualFriendsQuery {
         user(id: 4) {
           mutualFriends(first: 10) {
             ...TestClient__Temp__FriendFragment
           }
         }
+      }
+
+      fragment TestClient__Temp__FriendFragment on User {
+        id
+        name
       }
     GRAPHQL
   end
@@ -1006,15 +1006,15 @@ class TestClient < MiniTest::Test
     GRAPHQL
 
     assert_equal <<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::RepositoryFragment.document.to_query_string
-      fragment TestClient__Temp__UserFragment on User {
-        login
-      }
-
       fragment TestClient__Temp__RepositoryFragment on Repository {
         name
         owner {
           ...TestClient__Temp__UserFragment
         }
+      }
+
+      fragment TestClient__Temp__UserFragment on User {
+        login
       }
     GRAPHQL
   end
