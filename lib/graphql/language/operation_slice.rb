@@ -16,7 +16,7 @@ module GraphQL
         seen = Set.new([operation_name])
         stack = [operation_name]
 
-        while stack.length > 0
+        until stack.empty?
           name = stack.pop
           names = find_definition_fragment_spreads(document, name)
           seen.merge(names)
@@ -28,12 +28,12 @@ module GraphQL
 
       def self.find_definition_fragment_spreads(document, definition_name)
         definition = document.definitions.find { |node| node.name == definition_name }
-        raise "missing definition: #{definition_name}" if !definition
+        raise "missing definition: #{definition_name}" unless definition
         spreads = Set.new
         visitor = Visitor.new(definition)
-        visitor[Nodes::FragmentSpread].enter << -> (node, parent) {
+        visitor[Nodes::FragmentSpread].enter << -> (node, _parent) do
           spreads << node.name
-        }
+        end
         visitor.visit
         spreads
       end

@@ -42,7 +42,7 @@ module GraphQL
       # query - The GraphQL::Client::Query being sent
       #
       # Returns Hash of String header names and values.
-      def headers(query)
+      def headers(_)
         {}
       end
 

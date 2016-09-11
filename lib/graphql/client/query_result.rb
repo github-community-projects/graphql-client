@@ -42,9 +42,7 @@ module GraphQL
 
             # Convert GraphQL camelcase to snake case: commitComments -> commit_comments
             field_alias = ActiveSupport::Inflector.underscore(field)
-            if field != field_alias
-              send :alias_method, field_alias, field
-            end
+            send :alias_method, field_alias, field if field != field_alias
 
             class_eval <<-RUBY, __FILE__, __LINE__
               def #{field_alias}?
@@ -52,15 +50,14 @@ module GraphQL
               end
             RUBY
 
-            if field == "edges"
-              class_eval <<-RUBY, __FILE__, __LINE__
+            next unless field == "edges"
+            class_eval <<-RUBY, __FILE__, __LINE__
                 def each_node
                   return enum_for(:each_node) unless block_given?
                   edges.each { |edge| yield edge.node }
                   self
                 end
-              RUBY
-            end
+            RUBY
           end
 
           assigns = fields.map do |field, type|
@@ -85,12 +82,12 @@ module GraphQL
         end
       end
 
-      def self.source_node
-        @source_node
+      class << self
+        attr_reader :source_node
       end
 
-      def self.fields
-        @fields
+      class << self
+        attr_reader :fields
       end
 
       def self.name
@@ -98,7 +95,7 @@ module GraphQL
       end
 
       def self.inspect
-        "#<#{self.name} fields=#{@fields.keys.inspect}>"
+        "#<#{name} fields=#{@fields.keys.inspect}>"
       end
 
       def self.cast(obj)
@@ -110,9 +107,9 @@ module GraphQL
         when QueryResult
           spreads = Set.new(self.spreads(obj.class.source_node).map(&:name))
 
-          if !spreads.include?(self.source_node.name)
-            message = "couldn't cast #{obj.inspect} to #{self.inspect}\n\n"
-            suggestion = "\n  ...#{name || "YourFragment"} # SUGGESTION"
+          unless spreads.include?(source_node.name)
+            message = "couldn't cast #{obj.inspect} to #{inspect}\n\n"
+            suggestion = "\n  ...#{name || 'YourFragment'} # SUGGESTION"
             message << GraphQL::Language::Generation.generate(obj.class.source_node).sub(/\n}$/, "#{suggestion}\n}")
             raise TypeError, message
           end
@@ -122,7 +119,7 @@ module GraphQL
         when NilClass
           nil
         else
-          raise TypeError, "#{obj.class}"
+          raise TypeError, obj.class.to_s
         end
       end
 
@@ -150,7 +147,7 @@ module GraphQL
       end
 
       def self.|(other)
-        new_fields = self.fields.dup
+        new_fields = fields.dup
         other.fields.each do |name, value|
           if new_fields[name]
             new_fields[name] |= value
@@ -159,14 +156,14 @@ module GraphQL
           end
         end
         # TODO: Picking first source node seems error prone
-        define(name: self.name, source_node: self.source_node, fields: new_fields)
+        define(name: self.name, source_node: source_node, fields: new_fields)
       end
 
       attr_reader :data
-      alias_method :to_h, :data
+      alias to_h data
 
       def inspect
-        ivars = (self.class.fields.keys).map { |sym| "#{sym}=#{instance_variable_get("@#{sym}").inspect}" }
+        ivars = self.class.fields.keys.map { |sym| "#{sym}=#{instance_variable_get("@#{sym}").inspect}" }
         buf = "#<#{self.class.name}"
         buf << " " << ivars.join(" ") if ivars.any?
         buf << ">"
@@ -177,6 +174,10 @@ module GraphQL
         super
       rescue NoMethodError => e
         raise NoMethodError, "undefined method `#{e.name}' for #{inspect}"
+      end
+
+      def respond_to_missing?(*args)
+        super
       end
     end
   end

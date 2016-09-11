@@ -12,7 +12,7 @@ class TestQueryResult < MiniTest::Test
     GRAPHQL
     person_klass = GraphQL::Client::QueryResult.wrap(fragment)
 
-    person = person_klass.new({"name" => "Josh", "company" => "GitHub"})
+    person = person_klass.new("name" => "Josh", "company" => "GitHub")
     assert_equal "Josh", person.name
     assert_equal "GitHub", person.company
   end
@@ -26,7 +26,7 @@ class TestQueryResult < MiniTest::Test
     GRAPHQL
     person_klass = GraphQL::Client::QueryResult.wrap(fragment)
 
-    person = person_klass.new({"firstName" => "Joshua", "lastName" => "Peek"})
+    person = person_klass.new("firstName" => "Joshua", "lastName" => "Peek")
     assert_equal "Joshua", person.first_name
     assert_equal "Peek", person.last_name
   end
@@ -40,7 +40,7 @@ class TestQueryResult < MiniTest::Test
     GRAPHQL
     person_klass = GraphQL::Client::QueryResult.wrap(fragment)
 
-    person = person_klass.new({"name" => "Josh", "company" => nil})
+    person = person_klass.new("name" => "Josh", "company" => nil)
     assert_equal true, person.name?
     assert_equal false, person.company?
   end
@@ -52,7 +52,7 @@ class TestQueryResult < MiniTest::Test
       }
     GRAPHQL
     person_klass = GraphQL::Client::QueryResult.wrap(fragment)
-    person = person_klass.new({"fullName" => "Joshua Peek"})
+    person = person_klass.new("fullName" => "Joshua Peek")
 
     begin
       person.name
@@ -69,7 +69,7 @@ class TestQueryResult < MiniTest::Test
   GRAPHQL
 
   def test_no_method_error_constant
-    person = Person.new({"fullName" => "Joshua Peek"})
+    person = Person.new("fullName" => "Joshua Peek")
 
     begin
       person.name
@@ -133,7 +133,7 @@ class TestQueryResult < MiniTest::Test
     assert query_klass = GraphQL::Client::QueryResult.wrap(query)
     assert_equal query, query_klass.source_node
 
-    assert data = query_klass.new({"version" => 42})
+    assert data = query_klass.new("version" => 42)
     assert_equal 42, data.version
   end
 
@@ -165,7 +165,7 @@ class TestQueryResult < MiniTest::Test
     assert user_klass = GraphQL::Client::QueryResult.wrap(users_field)
     assert_equal users_field, user_klass.source_node
 
-    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "name" => "Josh")
     assert_equal 1, user.id
     assert_equal "Josh", user.name
   end
@@ -185,7 +185,7 @@ class TestQueryResult < MiniTest::Test
     assert user_klass = GraphQL::Client::QueryResult.wrap(users_field)
     assert_equal users_field, user_klass.source_node
 
-    assert user = user_klass.new({"relayID" => 1, "fullName" => "Joshua Peek"})
+    assert user = user_klass.new("relayID" => 1, "fullName" => "Joshua Peek")
     assert_equal 1, user.relay_id
     assert_equal "Joshua Peek", user.full_name
   end
@@ -215,7 +215,15 @@ class TestQueryResult < MiniTest::Test
     assert user_klass = GraphQL::Client::QueryResult.wrap(users_field)
     assert_equal users_field, user_klass.source_node
 
-    assert user = user_klass.new({"id" => 1, "name" => "Josh", "issues" => { "count" => 3, "assignedCount" => 2, "authoredCount" => 1 } })
+    assert user = user_klass.new(
+      "id" => 1,
+      "name" => "Josh",
+      "issues" => {
+        "count" => 3,
+        "assignedCount" => 2,
+        "authoredCount" => 1
+      }
+    )
     assert_equal 1, user.id
     assert_equal "Josh", user.name
     assert_equal 3, user.issues.count
@@ -252,7 +260,15 @@ class TestQueryResult < MiniTest::Test
     assert user_klass = GraphQL::Client::QueryResult.wrap(users_field)
     assert_equal users_field, user_klass.source_node
 
-    assert user = user_klass.new({"id" => 1, "name" => "Josh", "issues" => { "count" => 3, "assignedCount" => 2, "authoredCount" => 1 } })
+    assert user = user_klass.new(
+      "id" => 1,
+      "name" => "Josh",
+      "issues" => {
+        "count" => 3,
+        "assignedCount" => 2,
+        "authoredCount" => 1
+      }
+    )
     assert_equal 1, user.id
     assert_equal "Josh", user.name
     assert_equal 3, user.issues.count
@@ -272,7 +288,7 @@ class TestQueryResult < MiniTest::Test
     assert viewer_klass = GraphQL::Client::QueryResult.wrap(viewer_fragment)
     assert_equal viewer_fragment, viewer_klass.source_node
 
-    assert viewer = viewer_klass.new({"id" => 1, "name" => "Josh"})
+    assert viewer = viewer_klass.new("id" => 1, "name" => "Josh")
     assert_equal 1, viewer.id
     assert_equal "Josh", viewer.name
   end
@@ -308,13 +324,13 @@ class TestQueryResult < MiniTest::Test
 
     assert user_klass = GraphQL::Client::QueryResult.wrap(user_field)
     assert_equal user_field, user_klass.source_node
-    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "name" => "Josh")
     assert_equal 1, user.id
     assert_equal "Josh", user.name
 
     assert user_klass = GraphQL::Client::QueryResult.wrap(user_fragment)
     assert_equal user_fragment, user_klass.source_node
-    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "name" => "Josh")
     assert_equal 1, user.id
     assert_equal "Josh", user.name
   end
@@ -338,7 +354,7 @@ class TestQueryResult < MiniTest::Test
     assert user_klass = GraphQL::Client::QueryResult.wrap(user_field)
     assert_equal user_field, user_klass.source_node
 
-    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "name" => "Josh")
     refute user.respond_to?(:id)
     refute user.respond_to?(:name)
   end
@@ -364,7 +380,7 @@ class TestQueryResult < MiniTest::Test
     assert user_klass = GraphQL::Client::QueryResult.wrap(user_field)
     assert_equal user_field, user_klass.source_node
 
-    assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "login" => "josh", "name" => "Josh")
     assert_equal 1, user.id
     assert_equal "josh", user.login
     refute user.respond_to?(:name)
@@ -406,11 +422,11 @@ class TestQueryResult < MiniTest::Test
     assert query = document.definitions.first
     assert fragment = document.definitions.last
 
-    assert result = GraphQL::Client::QueryResult.wrap(query).new({"user" => {"id" => 1, "name" => "Josh"} })
+    assert result = GraphQL::Client::QueryResult.wrap(query).new("user" => { "id" => 1, "name" => "Josh" })
     refute result.user.respond_to?(:id)
     refute result.user.respond_to?(:name)
 
-    assert user = GraphQL::Client::QueryResult.wrap(fragment).new({"id" => 1, "name" => "Josh"})
+    assert user = GraphQL::Client::QueryResult.wrap(fragment).new("id" => 1, "name" => "Josh")
     assert_equal 1, user.id
     assert_equal "Josh", user.name
   end
@@ -434,13 +450,13 @@ class TestQueryResult < MiniTest::Test
 
     assert user_klass = GraphQL::Client::QueryResult.wrap(user_field)
     assert_equal user_field, user_klass.source_node
-    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "name" => "Josh")
     refute user.respond_to?(:id)
     refute user.respond_to?(:name)
 
     assert user_klass = GraphQL::Client::QueryResult.wrap(user_field)
     assert_equal user_field, user_klass.source_node
-    assert user = user_klass.new({"id" => 1, "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "name" => "Josh")
     refute user.respond_to?(:id)
     refute user.respond_to?(:name)
   end
@@ -466,14 +482,14 @@ class TestQueryResult < MiniTest::Test
 
     assert user_klass = GraphQL::Client::QueryResult.wrap(user_field)
     assert_equal user_field, user_klass.source_node
-    assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "login" => "josh", "name" => "Josh")
     assert_equal 1, user.id
     assert_equal "josh", user.login
     refute user.respond_to?(:name)
 
     assert user_klass = GraphQL::Client::QueryResult.wrap(user_field)
     assert_equal user_field, user_klass.source_node
-    assert user = user_klass.new({"id" => 1, "login" => "josh", "name" => "Josh"})
+    assert user = user_klass.new("id" => 1, "login" => "josh", "name" => "Josh")
     assert_equal 1, user.id
     assert_equal "josh", user.login
     refute user.respond_to?(:name)
@@ -497,34 +513,31 @@ class TestQueryResult < MiniTest::Test
     GRAPHQL
 
     assert query_klass = GraphQL::Client::QueryResult.wrap(query)
-    data = query_klass.new({
-      "rebels" => {
-        "name" => "Alliance to Restore the Republic",
-        "ships" => {
-          "edges" => [
-            {
-              "cursor" => "YXJyYXljb25uZWN0aW9uOjA=",
-              "node" => {
-                "name" => "X-Wing"
-              }
-            },
-            {
-              "cursor" => "YXJyYXljb25uZWN0aW9uOjE=",
-              "node" => {
-                "name" => "Y-Wing"
-              }
-            }
-          ]
-        }
-      }
-    })
+    data = query_klass.new("rebels" => {
+                             "name" => "Alliance to Restore the Republic",
+                             "ships" => {
+                               "edges" => [
+                                 {
+                                   "cursor" => "YXJyYXljb25uZWN0aW9uOjA=",
+                                   "node" => {
+                                     "name" => "X-Wing"
+                                   }
+                                 },
+                                 {
+                                   "cursor" => "YXJyYXljb25uZWN0aW9uOjE=",
+                                   "node" => {
+                                     "name" => "Y-Wing"
+                                   }
+                                 }
+                               ]
+                             }
+                           })
 
     assert_equal "Alliance to Restore the Republic", data.rebels.name
     assert_equal 2, data.rebels.ships.edges.length
     assert_equal "X-Wing", data.rebels.ships.edges[0].node.name
     assert_equal "Y-Wing", data.rebels.ships.edges[1].node.name
 
-    assert_equal ["X-Wing", "Y-Wing"],
-      data.rebels.ships.each_node.map { |ship| ship.name }
+    assert_equal ["X-Wing", "Y-Wing"], data.rebels.ships.each_node.map(&:name)
   end
 end

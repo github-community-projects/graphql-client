@@ -28,8 +28,6 @@ module GraphQL
         else
           load_schema(JSON.parse(schema))
         end
-      else
-        nil
       end
     end
 
@@ -92,14 +90,15 @@ module GraphQL
       end
 
       private
-        def query_result_class
-          @query_result_class ||= GraphQL::Client::QueryResult.wrap(definition_node, name: name)
-        end
+
+      def query_result_class
+        @query_result_class ||= GraphQL::Client::QueryResult.wrap(definition_node, name: name)
+      end
     end
 
     class OperationDefinition < Definition
       # Public: Alias for definition name.
-      alias_method :operation_name, :definition_name
+      alias operation_name definition_name
     end
 
     class FragmentDefinition < Definition
@@ -108,8 +107,8 @@ module GraphQL
     def parse(str)
       definition_dependencies = Set.new
 
-      str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) { |m|
-        const_name = $1
+      str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) do |_m|
+        const_name = Regexp.last_match(1)
         case fragment = ActiveSupport::Inflector.safe_constantize(const_name)
         when FragmentDefinition
           definition_dependencies.merge(fragment.document.definitions)
@@ -119,7 +118,7 @@ module GraphQL
         else
           raise TypeError, "expected #{const_name} to be a #{FragmentDefinition}, but was a #{fragment.class}"
         end
-      }
+      end
 
       doc = GraphQL.parse(str)
 
@@ -149,12 +148,13 @@ module GraphQL
         definitions[node.name] = definition
       end
 
-      rename_node = -> (node, parent) {
-        if definition = definitions[node.name]
+      rename_node = ->(node, _parent) do
+        definition = definitions[node.name]
+        if definition
           node.extend(LazyName)
           node.name = -> { definition.definition_name }
         end
-      }
+      end
       visitor = Language::Visitor.new(doc)
       visitor[Language::Nodes::FragmentDefinition].leave << rename_node
       visitor[Language::Nodes::OperationDefinition].leave << rename_node
@@ -163,9 +163,7 @@ module GraphQL
 
       doc.deep_freeze
 
-      if document_tracking_enabled
-        self.document.definitions.concat(doc.definitions)
-      end
+      document.definitions.concat(doc.definitions) if document_tracking_enabled
 
       if definitions[nil]
         definitions[nil]
@@ -178,20 +176,15 @@ module GraphQL
       end
     end
 
-    def document
-      @document
-    end
+    attr_reader :document
 
     def query(definition, variables: {}, context: {})
-      unless fetch
-        raise Error, "client network fetching not configured"
-      end
+      raise Error, "client network fetching not configured" unless fetch
 
       query = Query.new(definition.document,
-        operation_name: definition.operation_name,
-        variables: variables,
-        context: context
-      )
+                        operation_name: definition.operation_name,
+                        variables: variables,
+                        context: context)
 
       result = ActiveSupport::Notifications.instrument("query.graphql", query.payload) do
         fetch.call(query)
@@ -227,11 +220,10 @@ module GraphQL
       fetch.call(IntrospectionQuery)
     end
 
-    private
-      module LazyName
-        def name
-          @name.call
-        end
+    module LazyName
+      def name
+        @name.call
       end
+    end
   end
 end

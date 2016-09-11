@@ -25,7 +25,7 @@ class TestErubis < MiniTest::Test
     erubis = GraphQL::Client::Erubis.new(src)
 
     output_buffer = ActionView::OutputBuffer.new
-    erubis.result(binding())
+    erubis.result(binding)
     assert_equal "42", output_buffer.strip
 
     query = <<-ERB
@@ -37,6 +37,6 @@ class TestErubis < MiniTest::Test
     ERB
 
     assert_equal query.gsub("        ", "").strip,
-      GraphQL::Client::Erubis.extract_graphql_section(src).gsub("        ", "").strip
+                 GraphQL::Client::Erubis.extract_graphql_section(src).gsub("        ", "").strip
   end
 end

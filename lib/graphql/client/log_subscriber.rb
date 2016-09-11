@@ -17,8 +17,17 @@ module GraphQL
     class LogSubscriber < ActiveSupport::LogSubscriber
       def query(event)
         # TODO: Colorize output
-        info { "#{event.payload[:operation_type].upcase} (#{event.duration.round(1)}ms) #{event.payload[:operation_name].gsub("__", "::")}" }
-        debug { event.payload[:document].to_query_string }
+        info do
+          [
+            event.payload[:operation_type].upcase,
+            "(#{event.duration.round(1)}ms)",
+            event.payload[:operation_name].gsub("__", "::")
+          ].join(" ")
+        end
+
+        debug do
+          event.payload[:document].to_query_string
+        end
       end
     end
   end

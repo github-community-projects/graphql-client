@@ -20,17 +20,14 @@ module GraphQL
       #
       # Returns nothing.
       def eager_load!
-        return unless File.directory?(self.path)
+        return unless File.directory?(path)
 
-        Dir.entries(self.path).each do |entry|
+        Dir.entries(path).each do |entry|
           next if entry == "." || entry == ".."
           name = entry.sub(/(\.\w+)+$/, "").camelize.to_sym
           if ViewModule.valid_constant_name?(name) && loadable_const_defined?(name)
             mod = const_get(name, false)
             mod.eager_load!
-          else
-            # Ignore template names that don't camelize to safe constants:
-            #   404, foo-dash
           end
         end
 
@@ -97,7 +94,7 @@ module GraphQL
       # Returns String absolute path to file, otherwise nil.
       def const_path(name)
         pathname = ActiveSupport::Inflector.underscore(name.to_s)
-        Dir[File.join(self.path, "{#{pathname},_#{pathname}}{/,.*}")].map { |fn| File.expand_path(fn) }.first
+        Dir[File.join(path, "{#{pathname},_#{pathname}}{/,.*}")].map { |fn| File.expand_path(fn) }.first
       end
 
       # Internal: Initialize new module for constant name and load ERB statics.
@@ -121,7 +118,7 @@ module GraphQL
         end
 
         mod.extend(ViewModule)
-        mod.client = self.client
+        mod.client = client
         mod.path = path
         mod
       end
@@ -132,7 +129,9 @@ module GraphQL
       #
       # Returns module or raises NameError if missing.
       def const_missing(name)
-        if path = const_path(name)
+        path = const_path(name)
+
+        if path
           mod = load_module(path)
           const_set(name, mod)
           mod.unloadable

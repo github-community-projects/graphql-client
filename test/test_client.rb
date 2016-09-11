@@ -287,7 +287,7 @@ class TestClient < MiniTest::Test
     assert_equal(query_string, Temp::UserFragment.document.to_query_string)
     assert_equal(query_string, @client.document.to_query_string)
 
-    user = Temp::UserFragment.new({"id" => 1, "firstName" => "Joshua", "lastName" => "Peek"})
+    user = Temp::UserFragment.new("id" => 1, "firstName" => "Joshua", "lastName" => "Peek")
     assert_equal 1, user.id
     assert_equal "Joshua", user.first_name
     assert_equal "Peek", user.last_name
@@ -414,11 +414,12 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserDocument::StandardProfilePic.document.to_query_string)
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
       fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
         profilePic(size: 50)
       }
     GRAPHQL
+    assert_equal(query_string, Temp::UserDocument::StandardProfilePic.document.to_query_string)
   end
 
   def test_client_parse_query_external_fragments_document
@@ -683,7 +684,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    user = Temp::UserFragment.new({"login_url" => "/login", "profileName" => "Josh", "name" => "Josh", "isCool" => true})
+    user = Temp::UserFragment.new("login_url" => "/login", "profileName" => "Josh", "name" => "Josh", "isCool" => true)
     assert_equal "/login", user.login_url
     assert_equal "Josh", user.profile_name
     assert_equal "Josh", user.name
@@ -703,17 +704,15 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    user = Temp::UserFragment.new({
-      "id" => "1",
-      "repositories" => [
-        {
-          "name" => "github",
-          "watchers" => {
-            "login" => "josh"
-          }
-        }
-      ]
-    })
+    user = Temp::UserFragment.new("id" => "1",
+                                  "repositories" => [
+                                    {
+                                      "name" => "github",
+                                      "watchers" => {
+                                        "login" => "josh"
+                                      }
+                                    }
+                                  ])
 
     assert_equal "1", user.id
     assert_kind_of Array, user.repositories
@@ -738,17 +737,15 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    user = Temp::UserFragment.new({
-      "id" => "1",
-      "repositories" => [
-        {
-          "name" => "github",
-          "watchers" => {
-            "login" => "josh"
-          }
-        }
-      ]
-    })
+    user = Temp::UserFragment.new("id" => "1",
+                                  "repositories" => [
+                                    {
+                                      "name" => "github",
+                                      "watchers" => {
+                                        "login" => "josh"
+                                      }
+                                    }
+                                  ])
 
     assert_equal "1", user.id
     assert_kind_of Array, user.repositories
@@ -772,11 +769,9 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    user = Temp::UserFragment.new({
-      "id" => "1",
-      "login" => "josh",
-      "password" => "secret"
-    })
+    user = Temp::UserFragment.new("id" => "1",
+                                  "login" => "josh",
+                                  "password" => "secret")
 
     assert_equal "1", user.id
     assert_equal "josh", user.login
@@ -799,12 +794,10 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    repo = Temp::RepositoryFragment.new({
-      "name" => "rails",
-      "owner" => {
-        "login" => "josh"
-      }
-    })
+    repo = Temp::RepositoryFragment.new("name" => "rails",
+                                        "owner" => {
+                                          "login" => "josh"
+                                        })
     assert_equal "rails", repo.name
     refute repo.owner.respond_to?(:login)
 
@@ -830,12 +823,10 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    repo = Temp::RepositoryFragment.new({
-      "name" => "rails",
-      "owner" => {
-        "login" => "josh"
-      }
-    })
+    repo = Temp::RepositoryFragment.new("name" => "rails",
+                                        "owner" => {
+                                          "login" => "josh"
+                                        })
     assert_equal "rails", repo.name
     refute repo.owner.respond_to?(:login)
 
@@ -862,12 +853,10 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    repo = Temp::RepositoryFragment.new({
-      "name" => "rails",
-      "owner" => {
-        "login" => "josh"
-      }
-    })
+    repo = Temp::RepositoryFragment.new("name" => "rails",
+                                        "owner" => {
+                                          "login" => "josh"
+                                        })
     assert_equal "rails", repo.name
     assert_equal "josh", repo.owner.login
 

@@ -6,21 +6,21 @@ class TestClientFetch < MiniTest::Test
   QueryType = GraphQL::ObjectType.define do
     name "Query"
     field :version, !types.Int do
-      resolve -> (query, args, ctx) { 1 }
+      resolve -> (_query, _args, _ctx) { 1 }
     end
     field :error, !types.String do
-      resolve -> (query, args, ctx) { raise GraphQL::ExecutionError.new("b00m") }
+      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
     field :partial_error, types.String do
-      resolve -> (query, args, ctx) { raise GraphQL::ExecutionError.new("just a little broken") }
+      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "just a little broken" }
     end
   end
 
   Schema = GraphQL::Schema.define(query: QueryType)
 
-  Fetch = -> (query) {
+  Fetch = -> (query) do
     Schema.execute(query.to_s, operation_name: query.operation_name, variables: query.variables)
-  }
+  end
 
   module Temp
   end
@@ -46,12 +46,12 @@ class TestClientFetch < MiniTest::Test
     Temp.const_set :Query, @client.parse("{ error }")
     response = @client.query(Temp::Query)
     assert_kind_of GraphQL::Client::FailedResponse, response
-    assert_equal GraphQL::Client::ResponseErrors.new(Temp::Query,[
-      {
-        "message" => "b00m",
-        "locations" => [{ "line" => 2, "column" => 3 }]
-      }
-    ]), response.errors
+    assert_equal GraphQL::Client::ResponseErrors.new(Temp::Query, [
+                                                       {
+                                                         "message" => "b00m",
+                                                         "locations" => [{ "line" => 2, "column" => 3 }]
+                                                       }
+                                                     ]), response.errors
   end
 
   def test_partial_response
@@ -60,10 +60,10 @@ class TestClientFetch < MiniTest::Test
     assert_kind_of GraphQL::Client::PartialResponse, response
     assert_equal nil, response.data.partial_error
     assert_equal GraphQL::Client::ResponseErrors.new(Temp::Query, [
-      {
-        "message" => "just a little broken",
-        "locations" => [{ "line" => 2, "column" => 3 }]
-      }
-    ]), response.errors
+                                                       {
+                                                         "message" => "just a little broken",
+                                                         "locations" => [{ "line" => 2, "column" => 3 }]
+                                                       }
+                                                     ]), response.errors
   end
 end

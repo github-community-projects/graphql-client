@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "actionpack", ">= 3.0", "< 6.0"
   s.add_development_dependency "minitest", "~> 5.9"
   s.add_development_dependency "rake", "~> 11.2"
+  s.add_development_dependency "rubocop", "~> 0.42"
 
   s.required_ruby_version = ">= 2.1.0"
 

@@ -10,17 +10,17 @@ module GraphQL
 
       # Eager load leaky dependency to workaround AS::Dependencies unloading issues
       #   https://github.com/rmosolgo/graphql-ruby/pull/240
-      initializer "graphql.eager_load_hack" do |app|
+      initializer "graphql.eager_load_hack" do |_app|
         require "graphql"
         GraphQL::BOOLEAN_TYPE.name
       end
 
-      initializer "graphql.configure_log_subscriber" do |app|
+      initializer "graphql.configure_log_subscriber" do |_app|
         require "graphql/client/log_subscriber"
         GraphQL::Client::LogSubscriber.attach_to :graphql
       end
 
-      initializer "graphql.configure_erb_implementation" do |app|
+      initializer "graphql.configure_erb_implementation" do |_app|
         require "graphql/client/erubis"
         ActionView::Template::Handlers::ERB.erb_implementation = GraphQL::Client::Erubis
       end
@@ -33,11 +33,11 @@ module GraphQL
 
         config.watchable_dirs[path] = [:erb]
 
-        Object.const_set(:Views, Module.new {
+        Object.const_set(:Views, Module.new do
           extend GraphQL::Client::ViewModule
           self.path = path
           self.client = client
-        })
+        end)
       end
     end
   end
