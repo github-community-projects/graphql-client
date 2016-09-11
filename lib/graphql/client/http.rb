@@ -7,7 +7,7 @@ module GraphQL
     # Public: Basic HTTP network adapter.
     #
     #   GraphQL::Client::Client.new(
-    #     fetch: GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/")
+    #     execute: GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/")
     #   )
     #
     # Assumes GraphQL endpoint follows the express-graphql endpoint conventions.
@@ -20,7 +20,7 @@ module GraphQL
       # Public: Create HTTP adapter instance for a single GraphQL endpoint.
       #
       #   GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/") do
-      #     def headers(query)
+      #     def headers(context)
       #       { "User-Agent": "My Client" }
       #     end
       #   end
@@ -39,21 +39,22 @@ module GraphQL
 
       # Public: Extension point for subclasses to set custom request headers.
       #
-      # query - The GraphQL::Client::Query being sent
-      #
       # Returns Hash of String header names and values.
-      def headers(_)
+      def headers(_context)
         {}
       end
 
       # Public: Make an HTTP request for GraphQL query.
       #
-      # Implements Client's "fetch" adapter interface.
+      # Implements Client's "execute" adapter interface.
       #
-      # query - The GraphQL::Client::Query being sent
+      # document - The Query GraphQL::Language::Nodes::Document
+      # operation_name - The String operation definition name
+      # variables - Hash of query variables
+      # context - An arbitrary Hash of values which you can access
       #
       # Returns { "data" => ... , "errors" => ... } Hash.
-      def call(query)
+      def execute(document:, operation_name: nil, variables: {}, context: {})
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
 
@@ -61,12 +62,12 @@ module GraphQL
 
         request["Accept"] = "application/json"
         request["Content-Type"] = "application/json"
-        headers(query).each { |name, value| request[name] = value }
+        headers(context).each { |name, value| request[name] = value }
 
         body = {}
-        body["query"] = query.to_s
-        body["variables"] = JSON.generate(query.variables) if query.variables.any?
-        body["operationName"] = query.operation_name if query.operation_name
+        body["query"] = document.to_query_string
+        body["variables"] = JSON.generate(variables) if variables.any?
+        body["operationName"] = operation_name if operation_name
         request.body = JSON.generate(body)
 
         response = http.request(request)

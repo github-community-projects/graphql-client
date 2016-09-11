@@ -1,5 +1,7 @@
 module GraphQL
   class Client
-    class Error < StandardError; end
+    # Public: Abstract base class for all errors raised by GraphQL::Client.
+    class Error < StandardError
+    end
   end
 end

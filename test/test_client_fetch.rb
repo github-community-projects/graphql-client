@@ -18,15 +18,11 @@ class TestClientFetch < MiniTest::Test
 
   Schema = GraphQL::Schema.define(query: QueryType)
 
-  Fetch = -> (query) do
-    Schema.execute(query.to_s, operation_name: query.operation_name, variables: query.variables)
-  end
-
   module Temp
   end
 
   def setup
-    @client = GraphQL::Client.new(schema: Schema, fetch: Fetch)
+    @client = GraphQL::Client.new(schema: Schema, execute: Schema)
   end
 
   def teardown

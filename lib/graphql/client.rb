@@ -3,7 +3,6 @@ require "active_support/notifications"
 require "graphql"
 require "graphql/client/error"
 require "graphql/client/query_result"
-require "graphql/client/query"
 require "graphql/client/response"
 require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/operation_slice"
@@ -12,13 +11,13 @@ module GraphQL
   # GraphQL Client helps build and execute queries against a GraphQL backend.
   #
   # A client instance SHOULD be configured with a schema to enable query
-  # validation. And SHOULD also be configured with a backend fetch adapter to
-  # point at a remote GraphQL HTTP service or execute directly against a Schema
-  # object.
+  # validation. And SHOULD also be configured with a backend "execute" adapter
+  # to point at a remote GraphQL HTTP service or execute directly against a
+  # Schema object.
   class Client
     class ValidationError < Error; end
 
-    attr_reader :schema, :fetch
+    attr_reader :schema, :execute
 
     attr_accessor :document_tracking_enabled
 
@@ -37,9 +36,9 @@ module GraphQL
       end
     end
 
-    def initialize(schema: nil, fetch: nil)
+    def initialize(schema: nil, execute: nil)
       @schema = self.class.load_schema(schema)
-      @fetch = fetch
+      @execute = execute
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
       @document_tracking_enabled = false
     end
@@ -209,15 +208,30 @@ module GraphQL
     attr_reader :document
 
     def query(definition, variables: {}, context: {})
-      raise Error, "client network fetching not configured" unless fetch
+      raise Error, "client network execution not configured" unless execute
 
-      query = Query.new(definition.document,
-                        operation_name: definition.operation_name,
-                        variables: variables,
-                        context: context)
+      unless definition.is_a?(OperationDefinition)
+        raise TypeError, "expected definition to be a #{OperationDefinition.name} but was #{document.class.name}"
+      end
 
-      result = ActiveSupport::Notifications.instrument("query.graphql", query.payload) do
-        fetch.call(query)
+      document = definition.document
+      operation = definition.definition_node
+
+      payload = {
+        document: document,
+        operation_name: operation.name,
+        operation_type: operation.operation_type,
+        variables: variables,
+        context: context
+      }
+
+      result = ActiveSupport::Notifications.instrument("query.graphql", payload) do
+        execute.execute(
+          document: document,
+          operation_name: operation.name,
+          variables: variables,
+          context: context
+        )
       end
 
       data, errors, extensions = result.values_at("data", "errors", "extensions")
@@ -244,10 +258,14 @@ module GraphQL
     end
 
     IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
-    IntrospectionQuery = Query.new(IntrospectionDocument)
 
     def fetch_schema
-      fetch.call(IntrospectionQuery)
+      execute.execute(
+        document: IntrospectionDocument,
+        operation_name: "IntrospectionQuery",
+        variables: {},
+        context: {}
+      )
     end
 
     # Internal: FragmentSpread and FragmentDefinition extension to allow its
