@@ -669,14 +669,14 @@ class TestClient < MiniTest::Test
   end
 
   def test_client_parse_query_missing_external_fragment
-    assert_raises NameError do
+    assert_raises GraphQL::Client::ValidationError do
       begin
         Temp.const_set :FooQuery, @client.parse(<<-'GRAPHQL')
           query {
             ...TestClient::Temp::MissingFragment
           }
         GRAPHQL
-      rescue NameError => e
+      rescue GraphQL::Client::ValidationError => e
         assert_equal "#{__FILE__}:#{__LINE__ - 4}", e.backtrace.first
         raise e
       end
@@ -686,7 +686,7 @@ class TestClient < MiniTest::Test
   def test_client_parse_query_external_fragment_is_wrong_type
     Temp.const_set :FooFragment, 42
 
-    assert_raises TypeError do
+    assert_raises GraphQL::Client::ValidationError do
       Temp.const_set :FooQuery, @client.parse(<<-'GRAPHQL')
         query {
           ...TestClient::Temp::FooFragment
