@@ -233,27 +233,7 @@ module GraphQL
         )
       end
 
-      data, errors, extensions = result.values_at("data", "errors", "extensions")
-
-      if data && errors
-        PartialResponse.new(
-          data: definition.new(data),
-          errors: ResponseErrors.new(definition, errors),
-          extensions: extensions
-        )
-      elsif data && !errors
-        SuccessfulResponse.new(
-          data: definition.new(data),
-          extensions: extensions
-        )
-      elsif !data && errors
-        FailedResponse.new(
-          errors: ResponseErrors.new(definition, errors),
-          extensions: extensions
-        )
-      else
-        raise Error, "invalid GraphQL response, expected data or errors"
-      end
+      Response.for(definition, result)
     end
 
     IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
