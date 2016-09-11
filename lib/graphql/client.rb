@@ -1,39 +1,16 @@
 require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
+require "graphql/client/error"
 require "graphql/client/query_result"
 require "graphql/client/query"
+require "graphql/client/response"
 require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/operation_slice"
 
 module GraphQL
   class Client
-    class Error < StandardError; end
     class ValidationError < Error; end
-
-    class ResponseError < Error
-      def initialize(definition, error)
-        @request_definition = definition
-        @locations = error["locations"]
-        super error["message"]
-      end
-    end
-
-    class ResponseErrors < Error
-      include Enumerable
-
-      attr_reader :errors
-
-      def initialize(definition, errors)
-        @request_definition = definition
-        @errors = errors.map { |error| ResponseError.new(definition, error) }
-        super @errors.map(&:message).join(", ")
-      end
-
-      def each(&block)
-        errors.each(&block)
-      end
-    end
 
     attr_reader :schema, :fetch
 
@@ -203,41 +180,6 @@ module GraphQL
 
     def document
       @document
-    end
-
-    class Response
-      attr_reader :extensions
-
-      def initialize(extensions: nil)
-        @extensions = extensions || {}
-      end
-    end
-
-    class SuccessfulResponse < Response
-      attr_reader :data
-
-      def initialize(data:, **kargs)
-        @data = data
-        super(**kargs)
-      end
-    end
-
-    class PartialResponse < SuccessfulResponse
-      attr_reader :errors
-
-      def initialize(errors:, **kargs)
-        @errors = errors
-        super(**kargs)
-      end
-    end
-
-    class FailedResponse < Response
-      attr_reader :errors
-
-      def initialize(errors:, **kargs)
-        @errors = errors
-        super(**kargs)
-      end
     end
 
     def query(definition, variables: {}, context: {})
