@@ -8,11 +8,10 @@ Gem::Specification.new do |s|
 
   s.files = Dir["README.md", "LICENSE", "lib/**/*.rb"]
 
-  # TODO: Make Rails dependencies optional
-  s.add_dependency "actionpack", ">= 3.0", "< 6.0"
   s.add_dependency "activesupport", ">= 3.0", "< 6.0"
   s.add_dependency "graphql", "~> 0.18"
 
+  s.add_development_dependency "actionpack", ">= 3.0", "< 6.0"
   s.add_development_dependency "minitest", "~> 5.9"
   s.add_development_dependency "rake", "~> 11.2"
 
