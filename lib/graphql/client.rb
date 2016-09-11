@@ -96,13 +96,12 @@ module GraphQL
       attr_reader :document
 
       def new(*args)
-        query_result_class.new(*args)
+        type.new(*args)
       end
 
-      private
-
-      def query_result_class
-        @query_result_class ||= GraphQL::Client::QueryResult.wrap(definition_node, name: name)
+      def type
+        # TODO: Fix type indirection
+        @type ||= GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type")
       end
     end
 

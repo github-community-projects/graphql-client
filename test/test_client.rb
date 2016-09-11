@@ -293,7 +293,7 @@ class TestClient < MiniTest::Test
     assert_equal "Peek", user.last_name
 
     assert_equal "TestClient::Temp::UserFragment", Temp::UserFragment.name
-    assert_equal "TestClient::Temp::UserFragment", user.class.name
+    assert_equal "TestClient::Temp::UserFragment.type", user.class.name
   end
 
   def test_client_parse_fragment_document
@@ -820,12 +820,15 @@ class TestClient < MiniTest::Test
                                         "owner" => {
                                           "login" => "josh"
                                         })
+
+    assert_kind_of Temp::RepositoryFragment.type, repo
     assert_equal "rails", repo.name
+    assert_kind_of TestClient::Temp::RepositoryFragment.type[:owner], repo.owner
     assert_equal "josh", repo.owner.login
 
     assert_equal "TestClient::Temp::RepositoryFragment", Temp::RepositoryFragment.name
-    assert_equal "TestClient::Temp::RepositoryFragment", repo.class.name
-    assert_equal "TestClient::Temp::RepositoryFragment.owner", repo.owner.class.name
+    assert_equal "TestClient::Temp::RepositoryFragment.type", repo.class.name
+    assert_equal "TestClient::Temp::RepositoryFragment.type[:owner]", repo.owner.class.name
 
     assert_raises TypeError do
       Temp::UserFragment.new(repo.owner)

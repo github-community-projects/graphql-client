@@ -22,7 +22,7 @@ module GraphQL
           when Language::Nodes::FragmentSpread
           when Language::Nodes::Field
             field_name = selection.alias || selection.name
-            field_klass = selection.selections.any? ? wrap(selection, name: "#{name}.#{field_name}") : nil
+            field_klass = selection.selections.any? ? wrap(selection, name: "#{name}[:#{field_name}]") : nil
             fields[field_name] ? fields[field_name] |= field_klass : fields[field_name] = field_klass
           when Language::Nodes::InlineFragment
             wrap(selection, name: name).fields.each do |fragment_name, klass|
@@ -90,10 +90,12 @@ module GraphQL
 
       class << self
         attr_reader :source_node
-      end
 
-      class << self
         attr_reader :fields
+
+        def [](name)
+          fields[name]
+        end
       end
 
       def self.name
