@@ -2,6 +2,7 @@ require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
 require "graphql/client/query_result"
+require "graphql/client/query"
 require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/operation_slice"
 
@@ -236,38 +237,6 @@ module GraphQL
       def initialize(errors:, **kargs)
         @errors = errors
         super(**kargs)
-      end
-    end
-
-    class Query
-      attr_reader :document, :operation_name, :variables, :context
-
-      def initialize(document, operation_name: nil, variables: {}, context: {})
-        @document = document
-        @operation_name = operation_name
-        @variables = variables
-        @context = context
-      end
-
-      def to_s
-        document.to_query_string
-      end
-
-      def operation
-        document.definitions.find { |node| node.name == operation_name }
-      end
-
-      def operation_type
-        operation.operation_type
-      end
-
-      def payload
-        {
-          document: document,
-          operation_name: operation_name,
-          operation_type: operation_type,
-          variables: variables
-        }
       end
     end
 
