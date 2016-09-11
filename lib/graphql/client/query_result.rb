@@ -171,7 +171,14 @@ module GraphQL
       alias to_h data
 
       def inspect
-        ivars = self.class.fields.keys.map { |sym| "#{sym}=#{instance_variable_get("@#{sym}").inspect}" }
+        ivars = self.class.fields.keys.map do |sym|
+          value = instance_variable_get("@#{sym}")
+          if value.is_a?(QueryResult)
+            "#{sym}=#<#{value.class.name}>"
+          else
+            "#{sym}=#{value.inspect}"
+          end
+        end
         buf = "#<#{self.class.name}"
         buf << " " << ivars.join(" ") if ivars.any?
         buf << ">"
