@@ -3,8 +3,5 @@ require "rubocop/rake_task"
 
 task default: [:test, :rubocop]
 
-Rake::TestTask.new do |t|
-  t.warning = false
-end
-
+Rake::TestTask.new
 RuboCop::RakeTask.new
