@@ -6,8 +6,8 @@ module GraphQL
     #
     # Logs GraphQL queries to Rails logger.
     #
-    #   QUERY (123ms) UsersController::ShowQuery
-    #   MUTATION (456ms) UsersController::UpdateMutation
+    #   UsersController::ShowQuery QUERY (123ms)
+    #   UsersController::UpdateMutation MUTATION (456ms)
     #
     # Enable GraphQL Client query logging.
     #
@@ -16,13 +16,10 @@ module GraphQL
     #
     class LogSubscriber < ActiveSupport::LogSubscriber
       def query(event)
-        # TODO: Colorize output
         info do
-          [
-            event.payload[:operation_type].upcase,
-            "(#{event.duration.round(1)}ms)",
-            event.payload[:operation_name].gsub("__", "::")
-          ].join(" ")
+          name = event.payload[:operation_name].gsub("__", "::")
+          type = event.payload[:operation_type].upcase
+          color("#{name} #{type} (#{event.duration.round(1)}ms)", nil, true)
         end
 
         debug do
