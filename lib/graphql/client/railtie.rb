@@ -4,6 +4,13 @@ require "rails/railtie"
 
 module GraphQL
   class Client
+    # Optional Rails configuration for GraphQL::Client.
+    #
+    # Simply require this file to activate in the application.
+    #
+    #   # config/application.rb
+    #   require "graphql/client/railtie"
+    #
     class Railtie < Rails::Railtie
       config.graphql = ActiveSupport::OrderedOptions.new
       config.graphql.client = GraphQL::Client.new
@@ -29,6 +36,10 @@ module GraphQL
         require "graphql/client/view_module"
 
         path = app.paths["app/views"].first
+
+        # TODO: Accessing config.graphql.client during the initialization
+        # process seems error prone. The application may reassign
+        # config.graphql.client after this block is executed.
         client = config.graphql.client
 
         config.watchable_dirs[path] = [:erb]

@@ -1,5 +1,12 @@
 module GraphQL
   class Client
+    # The Query struct represents a that can be executed by a GraphQL server.
+    #
+    # A Query instance will be constructed by Client#query and passed to the
+    # network adapter to actually be executed (likely making an HTTP request).
+    #
+    # See also GraphQL::Query for a server specific representation.
+    #   https://github.com/rmosolgo/graphql-ruby/blob/master/lib/graphql/query.rb
     class Query
       # Internal: Construct Query.
       #

@@ -3,6 +3,7 @@ require "graphql"
 module GraphQL
   module Language
     module Nodes
+      # :nodoc:
       class AbstractNode
         # Public: Freeze entire Node tree
         #

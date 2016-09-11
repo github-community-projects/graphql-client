@@ -9,6 +9,12 @@ require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/operation_slice"
 
 module GraphQL
+  # GraphQL Client helps build and execute queries against a GraphQL backend.
+  #
+  # A client instance SHOULD be configured with a schema to enable query
+  # validation. And SHOULD also be configured with a backend fetch adapter to
+  # point at a remote GraphQL HTTP service or execute directly against a Schema
+  # object.
   class Client
     class ValidationError < Error; end
 
@@ -38,6 +44,11 @@ module GraphQL
       @document_tracking_enabled = false
     end
 
+    # Definitions are constructed by Client.parse and wrap a parsed AST of the
+    # query string as well as hold references to any external query definition
+    # dependencies.
+    #
+    # Definitions MUST be assigned to a constant.
     class Definition < Module
       def self.for(node:, **kargs)
         case node
@@ -96,11 +107,14 @@ module GraphQL
       end
     end
 
+    # Specific operation definition subtype for queries, mutations or
+    # subscriptions.
     class OperationDefinition < Definition
       # Public: Alias for definition name.
       alias operation_name definition_name
     end
 
+    # Specific fragment definition subtype.
     class FragmentDefinition < Definition
     end
 
@@ -236,6 +250,8 @@ module GraphQL
       fetch.call(IntrospectionQuery)
     end
 
+    # Internal: FragmentSpread and FragmentDefinition extension to allow its
+    # name to point to a lazily defined Proc instead of a static string.
     module LazyName
       def name
         @name.call

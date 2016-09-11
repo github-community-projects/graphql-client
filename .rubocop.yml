@@ -19,9 +19,6 @@ Metrics/PerceivedComplexity:
 Metrics/LineLength:
   Max: 120
 
-Style/Documentation:
-  Enabled: false
-
 Style/Lambda:
   EnforcedStyle: literal
 

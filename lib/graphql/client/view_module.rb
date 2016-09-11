@@ -4,6 +4,17 @@ require "graphql/client/erubis"
 
 module GraphQL
   class Client
+    # Allows a magic namespace to map to app/views/**/*.erb files to retrieve
+    # statically defined GraphQL definitions.
+    #
+    #   # app/views/users/show.html.erb
+    #   <%grapql
+    #     fragment UserFragment on User { }
+    #   %>
+    #
+    #   # Loads graphql section from app/views/users/show.html.erb
+    #   Views::Users::Show::UserFragment
+    #
     module ViewModule
       attr_accessor :client
 

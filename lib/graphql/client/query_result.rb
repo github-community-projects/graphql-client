@@ -4,6 +4,12 @@ require "set"
 
 module GraphQL
   class Client
+    # A QueryResult struct wraps data returned from a GraphQL response.
+    #
+    # Wrapping the JSON-like Hash allows access with nice Ruby accessor methods
+    # rather than using `obj["key"]` access.
+    #
+    # Wrappers also limit field visibility to fragment definitions.
     class QueryResult
       # Internal: Get QueryResult class for result of query.
       #

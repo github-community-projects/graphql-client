@@ -2,6 +2,8 @@ require "graphql"
 
 module GraphQL
   module Language
+    # Public: Document transformations to return a minimal document to represent
+    # operation.
     module OperationSlice
       # Public: Return's minimal document to represent operation.
       #
