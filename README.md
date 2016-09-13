@@ -34,13 +34,13 @@ end
 
 # passing schema as a string
 schema = load_schema
-Client = GraphQL::Client.new(
+client = GraphQL::Client.new(
   schema: schema,
   execute: HTTPAdapter
 )
 
 # passing schema as a file
-Client = GraphQL::Client.new(
+client = GraphQL::Client.new(
   schema: "schema.json",
   execute: HTTPAdapter
 )
