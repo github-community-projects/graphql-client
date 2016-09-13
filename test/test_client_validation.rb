@@ -78,7 +78,7 @@ class TestClientValidation < MiniTest::Test
       }
     GRAPHQL
   rescue GraphQL::Client::ValidationError => e
-    assert_equal "#{__FILE__}:#{__LINE__ - 6}", e.backtrace.first
+    assert_equal "#{__FILE__}:#{__LINE__ - 4}", e.backtrace.first
     assert_equal "Field 'missingField' doesn't exist on type 'User'", e.message
   else
     flunk "GraphQL::Client::ValidationError expected but nothing was raised"
@@ -94,7 +94,7 @@ class TestClientValidation < MiniTest::Test
       }
     GRAPHQL
   rescue GraphQL::Client::ValidationError => e
-    assert_equal "#{__FILE__}:#{__LINE__ - 7}", e.backtrace.first
+    assert_equal "#{__FILE__}:#{__LINE__ - 5}", e.backtrace.first
     assert_equal "Field 'missingField' doesn't exist on type 'User'", e.message
   else
     flunk "GraphQL::Client::ValidationError expected but nothing was raised"
