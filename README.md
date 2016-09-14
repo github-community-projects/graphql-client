@@ -18,7 +18,10 @@ module SWAPI
   # Fetch latest schema on boot,
   Schema = GraphQL::Client.load_schema(HTTP)
   # However, its smart to dump this to a JSON file and load from disk
-  Schema = GraphQL::Client.load_schema("path/to/schema.json")
+  #
+  # GraphQL::Client.dump_schema(HTTP, "path/to/schema.json")
+  #
+  # Schema = GraphQL::Client.load_schema("path/to/schema.json")
 
   Client = GraphQL::Client.new(schema: Schema, execute: HTTP)
 end

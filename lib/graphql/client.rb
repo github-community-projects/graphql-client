@@ -6,6 +6,7 @@ require "graphql/client/query_result"
 require "graphql/client/response"
 require "graphql/language/nodes/deep_freeze_ext"
 require "graphql/language/operation_slice"
+require "json"
 
 module GraphQL
   # GraphQL Client helps build and execute queries against a GraphQL backend.
@@ -21,8 +22,6 @@ module GraphQL
 
     attr_accessor :document_tracking_enabled
 
-    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
-
     def self.load_schema(schema)
       case schema
       when GraphQL::Schema
@@ -36,17 +35,31 @@ module GraphQL
           load_schema(JSON.parse(schema))
         end
       else
-        if schema.respond_to?(:execute)
-          load_schema(
-            schema.execute(
-              document: IntrospectionDocument,
-              operation_name: "IntrospectionQuery",
-              variables: {},
-              context: {}
-            )
-          )
-        end
+        load_schema(dump_schema(schema)) if schema.respond_to?(:execute)
       end
+    end
+
+    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
+
+    def self.dump_schema(schema, io = nil)
+      unless schema.respond_to?(:execute)
+        raise TypeError, "expected schema to respond to #execute(), but was #{schema.class}"
+      end
+
+      result = schema.execute(
+        document: IntrospectionDocument,
+        operation_name: "IntrospectionQuery",
+        variables: {},
+        context: {}
+      )
+
+      if io
+        io = IO.new(io, "w") if io.is_a?(String)
+        io.write(JSON.pretty_generate(result))
+        io.close_write
+      end
+
+      result
     end
 
     def initialize(schema: nil, execute: nil)

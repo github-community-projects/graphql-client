@@ -31,4 +31,17 @@ class TestClientSchema < MiniTest::Test
   def test_load_schema_ignores_missing_path
     refute GraphQL::Client.load_schema("#{__dir__}/missing-schema.json")
   end
+
+  def test_dump_schema
+    schema = GraphQL::Client.dump_schema(Schema)
+    assert_kind_of Hash, schema
+    assert_equal "AwesomeQuery", schema["data"]["__schema"]["queryType"]["name"]
+  end
+
+  def test_dump_schema_io
+    buffer = StringIO.new
+    GraphQL::Client.dump_schema(Schema, buffer)
+    buffer.rewind
+    assert_equal "{\n  \"data\"", buffer.read(10)
+  end
 end
