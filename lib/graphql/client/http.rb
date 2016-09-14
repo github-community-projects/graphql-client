@@ -72,7 +72,7 @@ module GraphQL
 
         response = http.request(request)
         case response
-        when Net::HTTPOK
+        when Net::HTTPOK, Net::HTTPBadRequest
           JSON.parse(response.body)
         else
           { "errors" => [{ "message" => "#{response.code} #{response.message}" }] }
