@@ -1,19 +1,5 @@
 # graphql-client
 
-## Installation
-
-Add this line to your application's Gemfile:
-
-    gem 'graphql-client'
-
-And then execute:
-
-    $ bundle install
-
-Or install it yourself as:
-
-    $ gem install graphql-client
-
 ## Usage
 
 To work with the client, you'll need to pass two variables to the initializer:
@@ -24,28 +10,32 @@ To work with the client, you'll need to pass two variables to the initializer:
 Once you've got that, you can set up the client like this:
 
 ``` ruby
-HTTPAdapter = GraphQL::Client::HTTP.new("https://api.github.com/graphql") do
-  def headers(context)
-    {
-      "Authorization" => "Bearer #{ENV['SECRET_TOKEN']}"
-    }
-  end
+require "graphql/client"
+
+module SWAPI
+  HTTP = GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/")
+
+  # Fetch latest schema on boot,
+  Schema = GraphQL::Client.load_schema(HTTP)
+  # However, its smart to dump this to a JSON file and load from disk
+  Schema = GraphQL::Client.load_schema("path/to/schema.json")
+
+  Client = GraphQL::Client.new(schema: Schema, execute: HTTP)
 end
-
-# passing schema as a string
-schema = load_schema
-client = GraphQL::Client.new(
-  schema: schema,
-  execute: HTTPAdapter
-)
-
-# passing schema as a file
-client = GraphQL::Client.new(
-  schema: "schema.json",
-  execute: HTTPAdapter
-)
 ```
 
-Then, all you'll need to do is pass your GraphQL query to `client.query` to fetch the response.
+Then, all you'll need to do is pass your GraphQL query to `SWAPI::Client.query` to fetch the response.
 
-You can also call `client.parse` on a query to generate a validation against the GraphQL query.
+You can also call `SWAPI::Client.parse` on a query to generate a validation against the GraphQL query.
+
+## Installation
+
+Add `graphql-client` to your app's Gemfile:
+
+``` ruby
+gem 'graphql-client'
+```
+
+## See Also
+
+* [graphql-ruby](https://github.com/rmosolgo/graphql-ruby) gem which supports 90% of the features this library provides. ❤️ @rmosolgo
