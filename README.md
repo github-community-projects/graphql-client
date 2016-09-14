@@ -104,6 +104,33 @@ result = SWAPI::Client.query(Hero::Query)
 result.data.luke.home_planet
 ```
 
+### Rails ERB integration
+
+If you're using Ruby on Rails ERB templates, theres a ERB extension that allows static queries to be defined in the template itself.
+
+In standard Ruby you can simply assign queries and fragments to constants and they'll be available throughout the app. However, the contents of an ERB template is compiled into a Ruby method, and methods can't assign constants. So a new ERB tag was extended to declare static sections that include a GraphQL query.
+
+``` erb
+<%# app/views/humans/human.html.erb %>
+<%graphql
+  fragment HumanFragment on Human {
+    name
+    homePlanet
+  }
+%>
+
+<p><%= human.name %> lives on <%= human.home_planet %>.</p>
+```
+
+These `<%graphql` sections are simply ignored at runtime but make their definitions available through constants. The module namespacing is derived from the `.erb`'s path plus the definition name.
+
+```
+>> "views/humans/human".camelize
+=> "Views::Humans::Human"
+>> Views::Humans::Human::HumanFragment
+=> #<GraphQL::Client::FragmentDefinition>
+```
+
 ## Examples
 
 [github/github-graphql-rails-example](https://github.com/github/github-graphql-rails-example) is an example application using this library to implement views on the GitHub GraphQL API.
