@@ -30,9 +30,9 @@ module GraphQL
       when Hash
         GraphQL::Schema::Loader.load(schema)
       when String
-        if schema.end_with?(".json")
+        if schema.end_with?(".json") && File.exist?(schema)
           load_schema(File.read(schema))
-        else
+        elsif schema =~ /\A\s*{/
           load_schema(JSON.parse(schema))
         end
       else

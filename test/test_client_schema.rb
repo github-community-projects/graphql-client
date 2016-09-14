@@ -27,4 +27,8 @@ class TestClientSchema < MiniTest::Test
     schema = GraphQL::Client.load_schema(json)
     assert_equal "AwesomeQuery", schema.query.name
   end
+
+  def test_load_schema_ignores_missing_path
+    refute GraphQL::Client.load_schema("#{__dir__}/missing-schema.json")
+  end
 end
