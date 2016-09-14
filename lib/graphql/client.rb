@@ -21,6 +21,8 @@ module GraphQL
 
     attr_accessor :document_tracking_enabled
 
+    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
+
     def self.load_schema(schema)
       case schema
       when GraphQL::Schema
@@ -32,6 +34,17 @@ module GraphQL
           load_schema(File.read(schema))
         else
           load_schema(JSON.parse(schema))
+        end
+      else
+        if schema.respond_to?(:execute)
+          load_schema(
+            schema.execute(
+              document: IntrospectionDocument,
+              operation_name: "IntrospectionQuery",
+              variables: {},
+              context: {}
+            )
+          )
         end
       end
     end
@@ -234,17 +247,6 @@ module GraphQL
       end
 
       Response.for(definition, result)
-    end
-
-    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
-
-    def fetch_schema
-      execute.execute(
-        document: IntrospectionDocument,
-        operation_name: "IntrospectionQuery",
-        variables: {},
-        context: {}
-      )
     end
 
     # Internal: FragmentSpread and FragmentDefinition extension to allow its
