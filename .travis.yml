@@ -1,9 +1,7 @@
-language: ruby
-rvm:
-  - 2.1
-
 sudo: false
+language: ruby
 cache: bundler
 
-git:
-  depth: 10
+rvm:
+  - "2.1.10"
+  - "2.3.1"
