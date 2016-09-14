@@ -54,7 +54,7 @@ module GraphQL
       )
 
       if io
-        io = IO.new(io, "w") if io.is_a?(String)
+        io = File.open(io, "w") if io.is_a?(String)
         io.write(JSON.pretty_generate(result))
         io.close_write
       end
