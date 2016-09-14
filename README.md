@@ -1,5 +1,7 @@
 # graphql-client
 
+GraphQL Client is a Ruby library for declaring, composing and executing GraphQL queries.
+
 ## Usage
 
 ### Configuration
