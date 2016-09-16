@@ -29,7 +29,7 @@ module GraphQL
       # block - Optional block to configure class
       def initialize(uri, &block)
         @uri = URI.parse(uri)
-        class_eval(&block) if block_given?
+        instance_eval(&block) if block_given?
       end
 
       # Public: Parsed endpoint URI
