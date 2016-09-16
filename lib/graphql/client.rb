@@ -153,7 +153,13 @@ module GraphQL
       str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)+)/) do
         match = Regexp.last_match
         const_name = match[1]
-        case fragment = ActiveSupport::Inflector.safe_constantize(const_name)
+        begin
+          fragment = ActiveSupport::Inflector.constantize(const_name)
+        rescue NameError
+          fragment = nil
+        end
+
+        case fragment
         when FragmentDefinition
           definition_dependencies.merge(fragment.document.definitions)
           "...#{fragment.definition_name}"
