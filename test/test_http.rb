@@ -3,8 +3,10 @@ require "graphql/client/http"
 require "minitest/autorun"
 
 class TestHTTP < MiniTest::Test
-  def setup
-    @http = GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/")
+  SWAPI = GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/") do
+    def headers(_context)
+      { "User-Agent" => "GraphQL/1.0" }
+    end
   end
 
   def test_execute
@@ -28,7 +30,7 @@ class TestHTTP < MiniTest::Test
         }
       }
     }
-    actual = @http.execute(document: document, operation_name: name, variables: variables)
+    actual = SWAPI.execute(document: document, operation_name: name, variables: variables)
     assert_equal(expected, actual)
   end
 end
