@@ -6,7 +6,7 @@ In a dynamic language like Ruby, over and under fetching are two common pitfalls
 
 Over-fetching occurs when additional fields are declared in a fragment but are not actually used in the template. This will likely happen when template code is modified to remove usage of a certain field.
 
-``` erb
+``` diff
   <%graphql
     fragment Issue on Issue {
       title
