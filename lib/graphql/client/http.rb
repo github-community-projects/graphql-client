@@ -66,7 +66,7 @@ module GraphQL
 
         body = {}
         body["query"] = document.to_query_string
-        body["variables"] = JSON.generate(variables) if variables.any?
+        body["variables"] = variables if variables.any?
         body["operationName"] = operation_name if operation_name
         request.body = JSON.generate(body)
 
