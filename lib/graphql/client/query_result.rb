@@ -1,5 +1,7 @@
 require "active_support/inflector"
 require "graphql"
+require "graphql/client/errors"
+require "graphql/client/list"
 require "set"
 
 module GraphQL
@@ -58,18 +60,18 @@ module GraphQL
 
             next unless field == "edges"
             class_eval <<-RUBY, __FILE__, __LINE__
-                def each_node
-                  return enum_for(:each_node) unless block_given?
-                  edges.each { |edge| yield edge.node }
-                  self
-                end
+              def each_node
+                return enum_for(:each_node) unless block_given?
+                edges.each { |edge| yield edge.node }
+                self
+              end
             RUBY
           end
 
           assigns = fields.map do |field, type|
             if type
               <<-RUBY
-                @#{field} = self.class.fields[:#{field}].cast(@data["#{field}"])
+                @#{field} = self.class.fields[:#{field}].cast(@data["#{field}"], @ast_path + ["#{field}"], @all_errors.details["#{field}"])
               RUBY
             else
               <<-RUBY
@@ -79,8 +81,12 @@ module GraphQL
           end
 
           class_eval <<-RUBY, __FILE__, __LINE__
-            def initialize(data)
+            def initialize(data, ast_path = [], errors = [])
               @data = data
+              @ast_path = ast_path
+              @all_errors = Errors.filter_path(errors || [], @ast_path)
+              @errors = Errors.find_path(errors || [], @ast_path)
+
               #{assigns.join("\n")}
               freeze
             end
@@ -106,10 +112,10 @@ module GraphQL
         "#<#{name} fields=#{@fields.keys.inspect}>"
       end
 
-      def self.cast(obj)
+      def self.cast(obj, ast_path = [], *args)
         case obj
         when Hash
-          new(obj)
+          new(obj, ast_path, *args)
         when self
           return obj
         when QueryResult
@@ -121,9 +127,9 @@ module GraphQL
             message << GraphQL::Language::Generation.generate(obj.class.source_node).sub(/\n}$/, "#{suggestion}\n}")
             raise TypeError, message
           end
-          cast(obj.to_h)
+          cast(obj.to_h, obj.ast_path, obj.all_errors)
         when Array
-          obj.map { |e| cast(e) }
+          List.new(obj.each_with_index.map { |e, idx| cast(e, ast_path + [idx], *args) }, ast_path, *args)
         when NilClass
           nil
         else
@@ -145,12 +151,12 @@ module GraphQL
         end
       end
 
-      def self.new(obj)
+      def self.new(obj, *args)
         case obj
         when Hash
           super
         else
-          cast(obj)
+          cast(obj, *args)
         end
       end
 
@@ -166,6 +172,10 @@ module GraphQL
         # TODO: Picking first source node seems error prone
         define(name: self.name, source_node: source_node, fields: new_fields)
       end
+
+      attr_reader :ast_path
+
+      attr_reader :errors, :all_errors
 
       attr_reader :data
       alias to_h data
