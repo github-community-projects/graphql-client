@@ -67,6 +67,8 @@ module GraphQL
         body["operationName"] = operation_name if operation_name
         request.body = JSON.generate(body)
 
+        connection.start unless connection.started?
+
         response = connection.request(request)
         case response
         when Net::HTTPOK, Net::HTTPBadRequest
