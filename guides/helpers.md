@@ -7,7 +7,7 @@ Helpers accessing many or nested object fields may declare a fragment for those 
 ``` ruby
 module MilestoneHelper
   # Define static query fragment for fetching data for helper.
-  MilestoneProgressFragment = YourApp::Client.parse <<-'GRAPHQL'
+  MilestoneProgressFragment = FooApp::Client.parse <<-'GRAPHQL'
     fragment on Milestone {
       closedIssueCount
       totalIssueCount
