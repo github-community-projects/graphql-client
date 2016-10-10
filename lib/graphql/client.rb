@@ -5,7 +5,6 @@ require "graphql/client/error"
 require "graphql/client/query_result"
 require "graphql/client/response"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/operation_slice"
 require "json"
 
 module GraphQL
@@ -203,7 +202,7 @@ module GraphQL
       definitions = {}
       doc.definitions.each do |node|
         node.name = nil if node.name == "__anonymous__"
-        sliced_document = Language::OperationSlice.slice(document_dependencies, node.name)
+        sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
         definition = Definition.for(node: node, document: sliced_document)
         definitions[node.name] = definition
       end

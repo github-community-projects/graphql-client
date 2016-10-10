@@ -1,9 +1,8 @@
 require "graphql"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/operation_slice"
 require "minitest/autorun"
 
-class TestOperationSlice < MiniTest::Test
+class TestDefinitionSlice < MiniTest::Test
   def test_slice_simple_query_operation
     document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
       query FooQuery {
@@ -13,7 +12,7 @@ class TestOperationSlice < MiniTest::Test
       }
     GRAPHQL
 
-    new_document = GraphQL::Language::OperationSlice.slice(document, "FooQuery")
+    new_document = GraphQL::Language::DefinitionSlice.slice(document, "FooQuery")
 
     expected = <<-'GRAPHQL'
       query FooQuery {
@@ -34,7 +33,7 @@ class TestOperationSlice < MiniTest::Test
       }
     GRAPHQL
 
-    new_document = GraphQL::Language::OperationSlice.slice(document, "FooMutation")
+    new_document = GraphQL::Language::DefinitionSlice.slice(document, "FooMutation")
 
     expected = <<-'GRAPHQL'
       mutation FooMutation {
@@ -63,7 +62,7 @@ class TestOperationSlice < MiniTest::Test
       }
     GRAPHQL
 
-    new_document = GraphQL::Language::OperationSlice.slice(document, "FooQuery")
+    new_document = GraphQL::Language::DefinitionSlice.slice(document, "FooQuery")
 
     expected = <<-'GRAPHQL'
       query FooQuery {
@@ -112,7 +111,7 @@ class TestOperationSlice < MiniTest::Test
       }
     GRAPHQL
 
-    new_document = GraphQL::Language::OperationSlice.slice(document, "FooQuery")
+    new_document = GraphQL::Language::DefinitionSlice.slice(document, "FooQuery")
 
     expected = <<-'GRAPHQL'
       fragment NodeFragment on Node {
