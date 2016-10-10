@@ -62,7 +62,11 @@ module GraphQL
       #
       # Returns Array of errors.
       def [](key)
-        messages.fetch(@field_aliases.fetch(key.to_s, key.to_s), [])
+        case key
+        when String, Symbol
+          key = @field_aliases.fetch(key.to_s, key.to_s)
+        end
+        messages.fetch(key, [])
       end
 
       # Public: Iterates through each error key, value pair in the error

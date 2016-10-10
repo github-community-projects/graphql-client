@@ -2,13 +2,10 @@ module GraphQL
   class Client
     # Public: Array wrapper for value returned from GraphQL List.
     class List < Array
-      def initialize(values, path = [], _errors = [])
+      def initialize(values, path = [], errors = [])
         @ast_path = path
-
-        # TODO: Implement List errors
-        @all_errors = Errors.new([])
-        @errors = Errors.new([])
-
+        @all_errors = Errors.filter_path(errors || [], @ast_path)
+        @errors = Errors.find_path(errors || [], @ast_path)
         super(values)
         freeze
       end

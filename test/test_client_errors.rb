@@ -8,10 +8,16 @@ class TestClientErrors < MiniTest::Test
     field :nullableError, types.String do
       resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
+    field :nonnullableError, !types.String do
+      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+    end
   end
 
   QueryType = GraphQL::ObjectType.define do
     name "Query"
+    field :version, !types.Int do
+      resolve -> (_query, _args, _ctx) { 1 }
+    end
     field :node, FooType do
       resolve -> (_query, _args, _ctx) { GraphQL::ExecutionError.new("missing node") }
     end
@@ -19,6 +25,9 @@ class TestClientErrors < MiniTest::Test
       resolve -> (_query, _args, _ctx) { [GraphQL::ExecutionError.new("missing node"), {}] }
     end
     field :nullableError, types.String do
+      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+    end
+    field :nonnullableError, !types.String do
       resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
     field :foo, !FooType do
@@ -172,6 +181,32 @@ class TestClientErrors < MiniTest::Test
     assert_equal "b00m", response.data.foo.all_errors["nullableError"][0]
   end
 
+  def test_nonnullable_root_error
+    Temp.const_set :Query, @client.parse("{ version, nonnullableError }")
+    assert response = @client.query(Temp::Query)
+
+    assert_equal nil, response.data
+    assert_empty response.errors
+    assert_equal "b00m", response.all_errors["base"][0]
+
+    assert_equal nil, response.data
+    assert_empty response.errors
+    assert_equal "b00m", response.all_errors["base"][0]
+    skip
+    assert_equal "b00m", response.errors["base"][0]
+  end
+
+  def test_nonnullable_nested_error
+    Temp.const_set :Query, @client.parse("{ version, foo { nonnullableError } }")
+    assert response = @client.query(Temp::Query)
+
+    assert_equal nil, response.data
+    assert_empty response.errors
+    assert_equal "b00m", response.all_errors["base"][0]
+    skip
+    assert_equal "b00m", response.errors["base"][0]
+  end
+
   def test_collection_errors
     Temp.const_set :Query, @client.parse("{ foos { nullableError } }")
     assert response = @client.query(Temp::Query)
@@ -197,7 +232,6 @@ class TestClientErrors < MiniTest::Test
 
     refute_empty response.data.errors
     assert_equal "missing node", response.data.errors["node"][0]
-    skip "graphql-ruby doesn't add errors list values"
     assert_equal "missing node", response.data.nodes.errors[0][0]
   end
 end
