@@ -55,9 +55,6 @@ module GraphQL
       #
       # Returns { "data" => ... , "errors" => ... } Hash.
       def execute(document:, operation_name: nil, variables: {}, context: {})
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = uri.scheme == "https"
-
         request = Net::HTTP::Post.new(uri.request_uri)
 
         request["Accept"] = "application/json"
@@ -66,16 +63,25 @@ module GraphQL
 
         body = {}
         body["query"] = document.to_query_string
-        body["variables"] = JSON.generate(variables) if variables.any?
+        body["variables"] = variables if variables.any?
         body["operationName"] = operation_name if operation_name
         request.body = JSON.generate(body)
 
-        response = http.request(request)
+        response = connection.request(request)
         case response
         when Net::HTTPOK, Net::HTTPBadRequest
           JSON.parse(response.body)
         else
           { "errors" => [{ "message" => "#{response.code} #{response.message}" }] }
+        end
+      end
+
+      # Public: Extension point for subclasses to customize the Net:HTTP client
+      #
+      # Returns a Net::HTTP object
+      def connection
+        Net::HTTP.new(uri.host, uri.port).tap do |client|
+          client.use_ssl = uri.scheme == "https"
         end
       end
     end
