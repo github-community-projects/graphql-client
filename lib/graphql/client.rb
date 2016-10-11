@@ -270,6 +270,11 @@ module GraphQL
       errors ||= []
       GraphQL::Client::Errors.normalize_error_paths(data, errors)
 
+      errors.each do |error|
+        error_payload = payload.merge(message: error["message"], error: error)
+        ActiveSupport::Notifications.instrument("error.graphql", error_payload)
+      end
+
       Response.new(
         data: definition.new(data, Errors.new(errors, ["data"])),
         errors: Errors.new(errors),

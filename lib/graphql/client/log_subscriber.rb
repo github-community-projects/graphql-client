@@ -16,14 +16,22 @@ module GraphQL
     #
     class LogSubscriber < ActiveSupport::LogSubscriber
       def query(event)
-        info do
+        logger.info do
           name = event.payload[:operation_name].gsub("__", "::")
           type = event.payload[:operation_type].upcase
           color("#{name} #{type} (#{event.duration.round(1)}ms)", nil, true)
         end
 
-        debug do
+        logger.debug do
           event.payload[:document].to_query_string
+        end
+      end
+
+      def error(event)
+        logger.error do
+          name = event.payload[:operation_name].gsub("__", "::")
+          message = event.payload[:message]
+          color("#{name} ERROR: #{message}", nil, true)
         end
       end
     end
