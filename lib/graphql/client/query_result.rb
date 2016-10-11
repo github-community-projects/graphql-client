@@ -71,7 +71,7 @@ module GraphQL
           assigns = fields.map do |field, type|
             if type
               <<-RUBY
-                @#{field} = self.class.fields[:#{field}].cast(@data["#{field}"], @ast_path + ["#{field}"], @all_errors.details["#{field}"])
+                @#{field} = self.class.fields[:#{field}].cast(@data["#{field}"], @errors.filter_by_path("#{field}"))
               RUBY
             else
               <<-RUBY
@@ -81,11 +81,9 @@ module GraphQL
           end
 
           class_eval <<-RUBY, __FILE__, __LINE__
-            def initialize(data, ast_path = [], errors = [])
+            def initialize(data, errors = Errors.new)
               @data = data
-              @ast_path = ast_path
-              @all_errors = Errors.filter_path(errors || [], @ast_path)
-              @errors = Errors.find_path(errors || [], @ast_path)
+              @errors = errors
 
               #{assigns.join("\n")}
               freeze
@@ -112,10 +110,10 @@ module GraphQL
         "#<#{name} fields=#{@fields.keys.inspect}>"
       end
 
-      def self.cast(obj, ast_path = [], *args)
+      def self.cast(obj, errors = Errors.new)
         case obj
         when Hash
-          new(obj, ast_path, *args)
+          new(obj, errors)
         when self
           return obj
         when QueryResult
@@ -127,9 +125,9 @@ module GraphQL
             message << GraphQL::Language::Generation.generate(obj.class.source_node).sub(/\n}$/, "#{suggestion}\n}")
             raise TypeError, message
           end
-          cast(obj.to_h, obj.ast_path, obj.all_errors)
+          cast(obj.to_h, obj.errors)
         when Array
-          List.new(obj.each_with_index.map { |e, idx| cast(e, ast_path + [idx], *args) }, ast_path, *args)
+          List.new(obj.each_with_index.map { |e, idx| cast(e, errors.filter_by_path(idx)) }, errors)
         when NilClass
           nil
         else
@@ -173,9 +171,10 @@ module GraphQL
         define(name: self.name, source_node: source_node, fields: new_fields)
       end
 
-      attr_reader :ast_path
-
-      attr_reader :errors, :all_errors
+      # Public: Return errors associated with data.
+      #
+      # Returns Errors collection.
+      attr_reader :errors
 
       attr_reader :data
       alias to_h data

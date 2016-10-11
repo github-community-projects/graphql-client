@@ -8,51 +8,85 @@ module GraphQL
     class Errors
       include Enumerable
 
-      def self.filter_path(errors, path)
-        errors = errors.select { |error| path == error["path"][0, path.length] }
-        errors = errors.group_by { |error| error["path"][path.length] }
-        errors.delete(nil)
-        new(errors)
-      end
-
-      def self.find_path(errors, path)
-        errors = errors.select { |error| path == error["path"][0...-1] }
-        errors = errors.group_by { |error| error["path"][path.length] }
-        errors.delete(nil)
-        new(errors)
+      def self.normalize_error_paths(data, errors)
+        errors.each do |error|
+          path = ["data"]
+          current = data
+          error.fetch("path", []).each do |key|
+            break unless current
+            path << key
+            current = current[key]
+          end
+          error["normalizedPath"] = path
+        end
+        errors
       end
 
       # Internal: Initalize from collection of errors.
       #
       # errors - Array of GraphQL Hash error objects
-      def initialize(errors)
-        @messages = {}
-        @details = {}
-        @field_aliases = {}
+      # path   - Array of String|Integer fields to data
+      # all    - Boolean flag if all nested errors should be available
+      def initialize(errors = [], path = [], all = false)
+        @ast_path = path
+        @all = all
+        @raw_errors = errors
+      end
 
-        errors.each do |field, field_errors|
-          field_errors.each do |error|
-            @messages[field] ||= []
-            @details[field] ||= []
-
-            @messages[field] << error.fetch("message")
-            @details[field] << error
-
-            if field.is_a?(String)
-              field_alias = ActiveSupport::Inflector.underscore(field)
-              @field_aliases[field_alias] = field if field != field_alias
-            end
-          end
+      def all
+        if @all
+          self
+        else
+          self.class.new(@raw_errors, @ast_path, true)
         end
+      end
 
-        freeze
+      def filter_by_path(field)
+        self.class.new(@raw_errors, @ast_path + [field], @all)
       end
 
       # Public: Access Hash of error messages.
-      attr_reader :messages
+      def messages
+        return @messages if defined? @messages
+
+        @messages = {}
+        @field_aliases = {}
+
+        details.each do |field, errors|
+          if field.is_a?(String)
+            field_alias = ActiveSupport::Inflector.underscore(field)
+            @field_aliases[field_alias] = field if field != field_alias
+          end
+
+          @messages[field] ||= []
+          errors.each do |error|
+            @messages[field] << error.fetch("message")
+          end
+        end
+
+        @messages
+      end
 
       # Public: Access Hash of error objects.
-      attr_reader :details
+      def details
+        return @details if defined? @details
+
+        @details = {}
+
+        @raw_errors.each do |error|
+          path = error.fetch("normalizedPath", [])
+          expected_path = @all ? path[0, @ast_path.length] : path[0...-1]
+          next unless @ast_path == expected_path
+
+          field = path[@ast_path.length]
+          next unless field
+
+          @details[field] ||= []
+          @details[field] << error
+        end
+
+        @details
+      end
 
       # Public: When passed a symbol or a name of a field, returns an array of
       # errors for the method.
@@ -64,6 +98,8 @@ module GraphQL
       def [](key)
         case key
         when String, Symbol
+          # populate internal @messages and @field_aliases
+          messages
           key = @field_aliases.fetch(key.to_s, key.to_s)
         end
         messages.fetch(key, [])
@@ -136,12 +172,11 @@ module GraphQL
         messages.values
       end
 
-      # Internal: Freeze internal collections.
-      def freeze
-        @messages.freeze
-        @details.freeze
-        @field_aliases.freeze
-        super
+      # Public: Display console friendly representation of errors collection.
+      #
+      # Returns String.
+      def inspect
+        "#<#{self.class} @messages=#{messages.inspect} @details=#{details.inspect}>"
       end
     end
   end

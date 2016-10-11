@@ -1,18 +1,19 @@
+require "graphql/client/errors"
+
 module GraphQL
   class Client
     # Public: Array wrapper for value returned from GraphQL List.
     class List < Array
-      def initialize(values, path = [], errors = [])
-        @ast_path = path
-        @all_errors = Errors.filter_path(errors || [], @ast_path)
-        @errors = Errors.find_path(errors || [], @ast_path)
+      def initialize(values, errors = Errors.new)
         super(values)
+        @errors = errors
         freeze
       end
 
-      attr_reader :ast_path
+      # Public: Return errors associated with list of data.
+      #
+      # Returns Errors collection.
       attr_reader :errors
-      attr_reader :all_errors
     end
   end
 end

@@ -83,9 +83,6 @@ class TestQueryResult < MiniTest::Test
     person = Temp::Person.new(response.data.me)
     assert_equal "Josh", person.name
     assert_equal "GitHub", person.company
-
-    assert_equal ["me"], response.data.me.ast_path
-    assert_equal ["me"], person.ast_path
   end
 
   def test_snakecase_field_aliases
@@ -255,11 +252,5 @@ class TestQueryResult < MiniTest::Test
     assert_equal "josh", data.users.edges[0].node.login
     assert_equal "mislav", data.users.edges[1].node.login
     assert_equal %w(josh mislav), data.users.each_node.map(&:login)
-
-    assert_equal ["users"], data.users.ast_path
-    assert_equal ["users", "edges", 0], data.users.edges[0].ast_path
-    assert_equal ["users", "edges", 1], data.users.edges[1].ast_path
-    assert_equal ["users", "edges", 0, "node"], data.users.edges[0].node.ast_path
-    assert_equal ["users", "edges", 1, "node"], data.users.edges[1].node.ast_path
   end
 end

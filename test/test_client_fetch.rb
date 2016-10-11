@@ -46,7 +46,10 @@ class TestClientFetch < MiniTest::Test
     refute response.data
 
     refute_empty response.errors
-    assert_equal "Field 'err' doesn't exist on type 'Query'", response.errors[:base][0]
+    assert_equal "Field 'err' doesn't exist on type 'Query'", response.errors[:data][0]
+
+    refute_empty response.errors.all
+    assert_equal "Field 'err' doesn't exist on type 'Query'", response.errors[:data][0]
   end
 
   def test_failed_response
@@ -54,21 +57,21 @@ class TestClientFetch < MiniTest::Test
     assert response = @client.query(Temp::Query)
     refute response.data
 
-    skip
     refute_empty response.errors
-    assert_equal "b00m", response.errors[:base][0]
+    assert_equal "b00m", response.errors[:data][0]
   end
 
   def test_partial_response
     Temp.const_set :Query, @client.parse("{ partial_error }")
     response = @client.query(Temp::Query)
 
-    assert_empty response.errors
-    refute_empty response.all_errors
-    assert_equal "just a little broken", response.all_errors[:base][0]
-
+    assert response.data
     assert_equal nil, response.data.partial_error
     refute_empty response.data.errors
     assert_equal "just a little broken", response.data.errors["partial_error"][0]
+
+    assert_empty response.errors
+    refute_empty response.errors.all
+    assert_equal "just a little broken", response.errors.all[:data][0]
   end
 end
