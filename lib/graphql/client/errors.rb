@@ -1,4 +1,4 @@
-require "active_support/inflector"
+require "graphql/client/hash_with_indifferent_access"
 
 module GraphQL
   class Client
@@ -49,29 +49,23 @@ module GraphQL
       def messages
         return @messages if defined? @messages
 
-        @messages = {}
-        @field_aliases = {}
+        messages = {}
 
         details.each do |field, errors|
-          if field.is_a?(String)
-            field_alias = ActiveSupport::Inflector.underscore(field)
-            @field_aliases[field_alias] = field if field != field_alias
-          end
-
-          @messages[field] ||= []
+          messages[field] ||= []
           errors.each do |error|
-            @messages[field] << error.fetch("message")
+            messages[field] << error.fetch("message")
           end
         end
 
-        @messages
+        @messages = HashWithIndifferentAccess.new(messages)
       end
 
       # Public: Access Hash of error objects.
       def details
         return @details if defined? @details
 
-        @details = {}
+        details = {}
 
         @raw_errors.each do |error|
           path = error.fetch("normalizedPath", [])
@@ -81,11 +75,11 @@ module GraphQL
           field = path[@ast_path.length]
           next unless field
 
-          @details[field] ||= []
-          @details[field] << error
+          details[field] ||= []
+          details[field] << error
         end
 
-        @details
+        @details = HashWithIndifferentAccess.new(details)
       end
 
       # Public: When passed a symbol or a name of a field, returns an array of
@@ -96,12 +90,6 @@ module GraphQL
       #
       # Returns Array of errors.
       def [](key)
-        case key
-        when String, Symbol
-          # populate internal @messages and @field_aliases
-          messages
-          key = @field_aliases.fetch(key.to_s, key.to_s)
-        end
         messages.fetch(key, [])
       end
 
@@ -111,7 +99,7 @@ module GraphQL
       # message.
       def each
         return enum_for(:each) unless block_given?
-        messages.each_key do |field|
+        messages.keys.each do |field|
           messages[field].each { |error| yield field, error }
         end
       end

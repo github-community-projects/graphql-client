@@ -171,11 +171,11 @@ class TestClientErrors < MiniTest::Test
 
     errors = GraphQL::Client::Errors.new(raw_errors, [], true)
     assert_equal 4, errors.count
-    assert_equal({ "node" => %w(1 2 3), "version" => ["4"] }, errors.messages)
+    assert_equal({ "node" => %w(1 2 3), "version" => ["4"] }, errors.messages.to_h)
 
     errors = GraphQL::Client::Errors.new(raw_errors, ["node"], true)
     assert_equal 3, errors.count
-    assert_equal({ "id" => ["1"], "owner" => ["2"], "repositories" => ["3"] }, errors.messages)
+    assert_equal({ "id" => ["1"], "owner" => ["2"], "repositories" => ["3"] }, errors.messages.to_h)
 
     errors = GraphQL::Client::Errors.new(raw_errors, ["version"], true)
     assert_empty errors
@@ -203,19 +203,19 @@ class TestClientErrors < MiniTest::Test
 
     errors = GraphQL::Client::Errors.new(raw_errors, [], false)
     assert_equal 1, errors.count
-    assert_equal({ "version" => ["4"] }, errors.messages)
+    assert_equal({ "version" => ["4"] }, errors.messages.to_h)
 
     errors = GraphQL::Client::Errors.new(raw_errors, ["node"], false)
     assert_equal 1, errors.count
-    assert_equal({ "id" => ["1"] }, errors.messages)
+    assert_equal({ "id" => ["1"] }, errors.messages.to_h)
 
     errors = GraphQL::Client::Errors.new(raw_errors, %w(node owner), false)
     assert_equal 1, errors.count
-    assert_equal({ "name" => ["2"] }, errors.messages)
+    assert_equal({ "name" => ["2"] }, errors.messages.to_h)
 
     errors = GraphQL::Client::Errors.new(raw_errors, ["node", "repositories", 0], false)
     assert_equal 1, errors.count
-    assert_equal({ "name" => ["3"] }, errors.messages)
+    assert_equal({ "name" => ["3"] }, errors.messages.to_h)
 
     errors = GraphQL::Client::Errors.new(raw_errors, ["version"], false)
     assert_empty errors
