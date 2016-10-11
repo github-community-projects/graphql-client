@@ -2,6 +2,7 @@ require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
 require "graphql/client/error"
+require "graphql/client/errors"
 require "graphql/client/query_result"
 require "graphql/client/response"
 require "graphql/language/nodes/deep_freeze_ext"
@@ -264,7 +265,16 @@ module GraphQL
         )
       end
 
-      Response.for(definition, result)
+      data, errors, extensions = result.values_at("data", "errors", "extensions")
+
+      errors ||= []
+      GraphQL::Client::Errors.normalize_error_paths(data, errors)
+
+      Response.new(
+        data: definition.new(data, Errors.new(errors, ["data"])),
+        errors: Errors.new(errors),
+        extensions: extensions
+      )
     end
 
     # Internal: FragmentSpread and FragmentDefinition extension to allow its

@@ -1,5 +1,7 @@
 require "active_support/inflector"
 require "graphql"
+require "graphql/client/errors"
+require "graphql/client/list"
 require "set"
 
 module GraphQL
@@ -58,18 +60,18 @@ module GraphQL
 
             next unless field == "edges"
             class_eval <<-RUBY, __FILE__, __LINE__
-                def each_node
-                  return enum_for(:each_node) unless block_given?
-                  edges.each { |edge| yield edge.node }
-                  self
-                end
+              def each_node
+                return enum_for(:each_node) unless block_given?
+                edges.each { |edge| yield edge.node }
+                self
+              end
             RUBY
           end
 
           assigns = fields.map do |field, type|
             if type
               <<-RUBY
-                @#{field} = self.class.fields[:#{field}].cast(@data["#{field}"])
+                @#{field} = self.class.fields[:#{field}].cast(@data["#{field}"], @errors.filter_by_path("#{field}"))
               RUBY
             else
               <<-RUBY
@@ -79,8 +81,10 @@ module GraphQL
           end
 
           class_eval <<-RUBY, __FILE__, __LINE__
-            def initialize(data)
+            def initialize(data, errors = Errors.new)
               @data = data
+              @errors = errors
+
               #{assigns.join("\n")}
               freeze
             end
@@ -106,10 +110,10 @@ module GraphQL
         "#<#{name} fields=#{@fields.keys.inspect}>"
       end
 
-      def self.cast(obj)
+      def self.cast(obj, errors = Errors.new)
         case obj
         when Hash
-          new(obj)
+          new(obj, errors)
         when self
           return obj
         when QueryResult
@@ -121,9 +125,9 @@ module GraphQL
             message << GraphQL::Language::Generation.generate(obj.class.source_node).sub(/\n}$/, "#{suggestion}\n}")
             raise TypeError, message
           end
-          cast(obj.to_h)
+          cast(obj.to_h, obj.errors)
         when Array
-          obj.map { |e| cast(e) }
+          List.new(obj.each_with_index.map { |e, idx| cast(e, errors.filter_by_path(idx)) }, errors)
         when NilClass
           nil
         else
@@ -145,12 +149,12 @@ module GraphQL
         end
       end
 
-      def self.new(obj)
+      def self.new(obj, *args)
         case obj
         when Hash
           super
         else
-          cast(obj)
+          cast(obj, *args)
         end
       end
 
@@ -166,6 +170,11 @@ module GraphQL
         # TODO: Picking first source node seems error prone
         define(name: self.name, source_node: source_node, fields: new_fields)
       end
+
+      # Public: Return errors associated with data.
+      #
+      # Returns Errors collection.
+      attr_reader :errors
 
       attr_reader :data
       alias to_h data
