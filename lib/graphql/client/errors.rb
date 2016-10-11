@@ -8,7 +8,15 @@ module GraphQL
     class Errors
       include Enumerable
 
-      def self.normalize_error_paths(data, errors)
+      # Internal: Normalize GraphQL Error "path" ensuring the path exists.
+      #
+      # Records "normalizedPath" value to error object.
+      #
+      # data - Hash of response data
+      # errors - Array of error Hashes
+      #
+      # Returns nothing.
+      def self.normalize_error_paths(data = nil, errors = [])
         errors.each do |error|
           path = ["data"]
           current = data
@@ -33,6 +41,12 @@ module GraphQL
         @raw_errors = errors
       end
 
+      # Public: Return collection of all nested errors.
+      #
+      #   data.errors[:node]
+      #   data.errors.all[:node]
+      #
+      # Returns Errors collection.
       def all
         if @all
           self
@@ -41,11 +55,21 @@ module GraphQL
         end
       end
 
+      # Internal: Return collection of errors for a given subfield.
+      #
+      #   data.errors.filter_by_path("node")
+      #
+      # Returns Errors collection.
       def filter_by_path(field)
         self.class.new(@raw_errors, @ast_path + [field], @all)
       end
 
       # Public: Access Hash of error messages.
+      #
+      #   data.errors.messages["node"]
+      #   data.errors.messages[:node]
+      #
+      # Returns HashWithIndifferentAccess.
       def messages
         return @messages if defined? @messages
 
@@ -62,6 +86,11 @@ module GraphQL
       end
 
       # Public: Access Hash of error objects.
+      #
+      #   data.errors.details["node"]
+      #   data.errors.details[:node]
+      #
+      # Returns HashWithIndifferentAccess.
       def details
         return @details if defined? @details
 
@@ -69,8 +98,8 @@ module GraphQL
 
         @raw_errors.each do |error|
           path = error.fetch("normalizedPath", [])
-          expected_path = @all ? path[0, @ast_path.length] : path[0...-1]
-          next unless @ast_path == expected_path
+          matched_path = @all ? path[0, @ast_path.length] : path[0...-1]
+          next unless @ast_path == matched_path
 
           field = path[@ast_path.length]
           next unless field
