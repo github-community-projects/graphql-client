@@ -22,7 +22,7 @@ class TestQueryResult < MiniTest::Test
   QueryType = GraphQL::ObjectType.define do
     name "Query"
     field :me, !PersonType do
-      resolve -> (_query, _args, _ctx) {
+      resolve ->(_query, _args, _ctx) {
         OpenStruct.new(
           login: "josh",
           name: "Josh",
@@ -36,7 +36,7 @@ class TestQueryResult < MiniTest::Test
     connection :users, PersonConnection do
       argument :first, types.Int
 
-      resolve -> (_query, _args, _ctx) {
+      resolve ->(_query, _args, _ctx) {
         [
           OpenStruct.new(login: "josh"),
           OpenStruct.new(login: "mislav")

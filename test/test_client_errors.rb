@@ -6,35 +6,35 @@ class TestClientErrors < MiniTest::Test
   FooType = GraphQL::ObjectType.define do
     name "Foo"
     field :nullableError, types.String do
-      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
     field :nonnullableError, !types.String do
-      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
   end
 
   QueryType = GraphQL::ObjectType.define do
     name "Query"
     field :version, !types.Int do
-      resolve -> (_query, _args, _ctx) { 1 }
+      resolve ->(_query, _args, _ctx) { 1 }
     end
     field :node, FooType do
-      resolve -> (_query, _args, _ctx) { GraphQL::ExecutionError.new("missing node") }
+      resolve ->(_query, _args, _ctx) { GraphQL::ExecutionError.new("missing node") }
     end
     field :nodes, !types[FooType] do
-      resolve -> (_query, _args, _ctx) { [GraphQL::ExecutionError.new("missing node"), {}] }
+      resolve ->(_query, _args, _ctx) { [GraphQL::ExecutionError.new("missing node"), {}] }
     end
     field :nullableError, types.String do
-      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
     field :nonnullableError, !types.String do
-      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
     field :foo, !FooType do
-      resolve -> (_query, _args, _ctx) { {} }
+      resolve ->(_query, _args, _ctx) { {} }
     end
     field :foos, types[!FooType] do
-      resolve -> (_query, _args, _ctx) { [{}, {}] }
+      resolve ->(_query, _args, _ctx) { [{}, {}] }
     end
   end
 
