@@ -6,13 +6,13 @@ class TestClientFetch < MiniTest::Test
   QueryType = GraphQL::ObjectType.define do
     name "Query"
     field :version, !types.Int do
-      resolve -> (_query, _args, _ctx) { 1 }
+      resolve ->(_query, _args, _ctx) { 1 }
     end
     field :error, !types.String do
-      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
     field :partial_error, types.String do
-      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "just a little broken" }
+      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "just a little broken" }
     end
   end
 

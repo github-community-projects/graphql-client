@@ -22,6 +22,7 @@ module GraphQL
         node.selections.each do |selection|
           case selection
           when Language::Nodes::FragmentSpread
+            nil
           when Language::Nodes::Field
             field_name = selection.alias || selection.name
             field_klass = selection.selections.any? ? wrap(selection, name: "#{name}[:#{field_name}]") : nil
@@ -115,7 +116,7 @@ module GraphQL
         when Hash
           new(obj, errors)
         when self
-          return obj
+          obj
         when QueryResult
           spreads = Set.new(self.spreads(obj.class.source_node).map(&:name))
 
