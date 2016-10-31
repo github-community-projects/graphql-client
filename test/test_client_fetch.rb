@@ -14,6 +14,13 @@ class TestClientFetch < MiniTest::Test
     field :partial_error, types.String do
       resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "just a little broken" }
     end
+    field :variables, !types.Boolean do
+      argument :foo, !types.Int
+
+      resolve ->(_query, args, _ctx) {
+        args[:foo] == 42
+      }
+    end
   end
 
   Schema = GraphQL::Schema.define(query: QueryType)
@@ -73,5 +80,19 @@ class TestClientFetch < MiniTest::Test
     assert_empty response.errors
     refute_empty response.errors.all
     assert_equal "just a little broken", response.errors.all[:data][0]
+  end
+
+  def test_query_with_string_key_variables
+    Temp.const_set :Query, @client.parse("query($foo: Int!) { variables(foo: $foo) }")
+    assert response = @client.query(Temp::Query, variables: { "foo" => 42 })
+    assert_empty response.errors
+    assert_equal true, response.data.variables
+  end
+
+  def test_query_with_symbol_key_variables
+    Temp.const_set :Query, @client.parse("query($foo: Int!) { variables(foo: $foo) }")
+    assert response = @client.query(Temp::Query, variables: { foo: 42 })
+    assert_empty response.errors
+    assert_equal true, response.data.variables
   end
 end

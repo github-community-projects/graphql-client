@@ -1,3 +1,4 @@
+require "active_support/core_ext/hash/keys"
 require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
@@ -249,6 +250,8 @@ module GraphQL
       unless definition.is_a?(OperationDefinition)
         raise TypeError, "expected definition to be a #{OperationDefinition.name} but was #{document.class.name}"
       end
+
+      variables = variables.deep_stringify_keys
 
       document = definition.document
       operation = definition.definition_node
