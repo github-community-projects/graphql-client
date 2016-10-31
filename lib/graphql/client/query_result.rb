@@ -121,10 +121,7 @@ module GraphQL
           spreads = Set.new(self.spreads(obj.class.source_node).map(&:name))
 
           unless spreads.include?(source_node.name)
-            message = "couldn't cast #{obj.inspect} to #{inspect}\n\n"
-            suggestion = "\n  ...#{name || 'YourFragment'} # SUGGESTION"
-            message << GraphQL::Language::Generation.generate(obj.class.source_node).sub(/\n}$/, "#{suggestion}\n}")
-            raise TypeError, message
+            raise TypeError, "couldn't cast #{obj.inspect} to #{inspect}"
           end
           cast(obj.to_h, obj.errors)
         when Array
