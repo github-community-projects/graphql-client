@@ -2,10 +2,10 @@ require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
 require "graphql/client/error"
+require "graphql/client/errors"
 require "graphql/client/query_result"
 require "graphql/client/response"
 require "graphql/language/nodes/deep_freeze_ext"
-require "graphql/language/operation_slice"
 require "json"
 
 module GraphQL
@@ -193,8 +193,13 @@ module GraphQL
 
         errors = validator.validate(query)
         errors.fetch(:errors).each do |error|
-          validation_line = error["locations"][0]["line"]
-          error = ValidationError.new(error["message"])
+          if error.respond_to?(:message)
+            validation_line = error.line
+            error = ValidationError.new(error.message)
+          else # TODO: Remove when only supporting graphql-ruby 1.x
+            validation_line = error["locations"][0]["line"]
+            error = ValidationError.new(error["message"])
+          end
           error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller) if filename && lineno
           raise error
         end
@@ -203,7 +208,7 @@ module GraphQL
       definitions = {}
       doc.definitions.each do |node|
         node.name = nil if node.name == "__anonymous__"
-        sliced_document = Language::OperationSlice.slice(document_dependencies, node.name)
+        sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
         definition = Definition.for(node: node, document: sliced_document)
         definitions[node.name] = definition
       end
@@ -265,7 +270,21 @@ module GraphQL
         )
       end
 
-      Response.for(definition, result)
+      data, errors, extensions = result.values_at("data", "errors", "extensions")
+
+      errors ||= []
+      GraphQL::Client::Errors.normalize_error_paths(data, errors)
+
+      errors.each do |error|
+        error_payload = payload.merge(message: error["message"], error: error)
+        ActiveSupport::Notifications.instrument("error.graphql", error_payload)
+      end
+
+      Response.new(
+        data: definition.new(data, Errors.new(errors, ["data"])),
+        errors: Errors.new(errors),
+        extensions: extensions
+      )
     end
 
     # Internal: FragmentSpread and FragmentDefinition extension to allow its

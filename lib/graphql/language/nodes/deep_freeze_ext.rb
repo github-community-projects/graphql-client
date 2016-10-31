@@ -12,6 +12,12 @@ module GraphQL
           self.class.child_attributes.each do |attr_name|
             public_send(attr_name).freeze.each(&:deep_freeze)
           end
+
+          self.class.scalar_attributes.each do |attr_name|
+            object = public_send(attr_name)
+            object.freeze if object
+          end
+
           freeze
         end
       end

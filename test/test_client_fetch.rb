@@ -6,13 +6,13 @@ class TestClientFetch < MiniTest::Test
   QueryType = GraphQL::ObjectType.define do
     name "Query"
     field :version, !types.Int do
-      resolve -> (_query, _args, _ctx) { 1 }
+      resolve ->(_query, _args, _ctx) { 1 }
     end
     field :error, !types.String do
-      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
     end
     field :partial_error, types.String do
-      resolve -> (_query, _args, _ctx) { raise GraphQL::ExecutionError, "just a little broken" }
+      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "just a little broken" }
     end
   end
 
@@ -33,33 +33,45 @@ class TestClientFetch < MiniTest::Test
 
   def test_successful_response
     Temp.const_set :Query, @client.parse("{ version }")
-    response = @client.query(Temp::Query)
-    assert_kind_of GraphQL::Client::SuccessfulResponse, response
+    assert response = @client.query(Temp::Query)
     assert_equal 1, response.data.version
+    assert_empty response.errors
+  end
+
+  def test_failed_validation_response
+    @client = GraphQL::Client.new(schema: nil, execute: Schema)
+
+    Temp.const_set :Query, @client.parse("{ err }")
+    assert response = @client.query(Temp::Query)
+    refute response.data
+
+    refute_empty response.errors
+    assert_equal "Field 'err' doesn't exist on type 'Query'", response.errors[:data][0]
+
+    refute_empty response.errors.all
+    assert_equal "Field 'err' doesn't exist on type 'Query'", response.errors[:data][0]
   end
 
   def test_failed_response
     Temp.const_set :Query, @client.parse("{ error }")
-    response = @client.query(Temp::Query)
-    assert_kind_of GraphQL::Client::FailedResponse, response
-    assert_equal GraphQL::Client::ResponseErrors.new(Temp::Query, [
-                                                       {
-                                                         "message" => "b00m",
-                                                         "locations" => [{ "line" => 2, "column" => 3 }]
-                                                       }
-                                                     ]), response.errors
+    assert response = @client.query(Temp::Query)
+    refute response.data
+
+    refute_empty response.errors
+    assert_equal "b00m", response.errors[:data][0]
   end
 
   def test_partial_response
     Temp.const_set :Query, @client.parse("{ partial_error }")
     response = @client.query(Temp::Query)
-    assert_kind_of GraphQL::Client::PartialResponse, response
+
+    assert response.data
     assert_equal nil, response.data.partial_error
-    assert_equal GraphQL::Client::ResponseErrors.new(Temp::Query, [
-                                                       {
-                                                         "message" => "just a little broken",
-                                                         "locations" => [{ "line" => 2, "column" => 3 }]
-                                                       }
-                                                     ]), response.errors
+    refute_empty response.data.errors
+    assert_equal "just a little broken", response.data.errors["partial_error"][0]
+
+    assert_empty response.errors
+    refute_empty response.errors.all
+    assert_equal "just a little broken", response.errors.all[:data][0]
   end
 end

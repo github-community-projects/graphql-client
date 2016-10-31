@@ -25,9 +25,8 @@ module GraphQL
       # defined.
       def self.extract_graphql_section(src)
         query_string = src.scan(/<%graphql([^%]+)%>/).flatten.first
-        if query_string
-          return query_string, Regexp.last_match.pre_match.count("\n") + 1
-        end
+        return nil unless query_string
+        [query_string, Regexp.last_match.pre_match.count("\n") + 1]
       end
 
       # Internal: Extend Rails' Erubis handler to simply ignore <%graphql
