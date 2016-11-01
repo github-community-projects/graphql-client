@@ -1,4 +1,3 @@
-require "active_support/core_ext/hash/keys"
 require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
@@ -251,7 +250,7 @@ module GraphQL
         raise TypeError, "expected definition to be a #{OperationDefinition.name} but was #{document.class.name}"
       end
 
-      variables = variables.deep_stringify_keys
+      variables = deep_stringify_keys(variables)
 
       document = definition.document
       operation = definition.definition_node
@@ -295,6 +294,19 @@ module GraphQL
     module LazyName
       def name
         @name.call
+      end
+    end
+
+    private
+
+    def deep_stringify_keys(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          h[k.to_s] = deep_stringify_keys(v)
+        end
+      else
+        obj
       end
     end
   end
