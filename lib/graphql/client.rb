@@ -4,6 +4,7 @@ require "graphql"
 require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/query_result"
+require "graphql/client/query_typename"
 require "graphql/client/response"
 require "graphql/language/nodes/deep_freeze_ext"
 require "json"
@@ -86,9 +87,10 @@ module GraphQL
         end
       end
 
-      def initialize(node:, document:)
+      def initialize(node:, document:, schema:)
         @definition_node = node
         @document = document
+        @schema = schema
       end
 
       # Internal: Get underlying operation or fragment defintion AST node for
@@ -121,13 +123,18 @@ module GraphQL
       # and any FragmentDefinition dependencies.
       attr_reader :document
 
+      attr_reader :schema
+
       def new(*args)
         type.new(*args)
       end
 
       def type
         # TODO: Fix type indirection
-        @type ||= GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type")
+        @type ||= begin
+          types = schema ? DocumentTypes.analyze_types(schema, document) : {}
+          GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type", types: types)
+        end
       end
     end
 
@@ -205,11 +212,13 @@ module GraphQL
         end
       end
 
+      QueryTypename.insert_typename_fields(doc, schema: @schema)
+
       definitions = {}
       doc.definitions.each do |node|
         node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
-        definition = Definition.for(node: node, document: sliced_document)
+        definition = Definition.for(schema: @schema, node: node, document: sliced_document)
         definitions[node.name] = definition
       end
 
