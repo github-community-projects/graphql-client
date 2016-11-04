@@ -849,7 +849,7 @@ class TestClient < MiniTest::Test
     assert_equal nil, user_query.name
     assert_equal "GraphQL__Client__OperationDefinition_#{user_query.object_id}", user_query.definition_name
 
-    query_string = <<-GRAPHQL.gsub(/^      /, "").chomp
+    query_string = <<-GRAPHQL.gsub(/^      /, "").chomp # rubocop:disable GraphQL/Heredoc
       query GraphQL__Client__OperationDefinition_#{user_query.object_id} {
         viewer {
           id

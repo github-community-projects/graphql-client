@@ -28,6 +28,20 @@ class TestRubocopHeredoc < MiniTest::Test
     assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
   end
 
+  def test_bad_graphql_multiline_heredoc
+    investigate(@cop, <<-RUBY)
+      Query = Client.parse <<-GRAPHQL
+        {
+          version
+        }
+      GRAPHQL
+    RUBY
+
+    assert_equal 1, @cop.offenses.count
+    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+  end
+
+
   private
 
   def investigate(cop, src)
