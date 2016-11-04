@@ -41,7 +41,6 @@ class TestRubocopHeredoc < MiniTest::Test
     assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
   end
 
-
   private
 
   def investigate(cop, src)
