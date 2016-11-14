@@ -17,6 +17,7 @@ module GraphQL
   # Schema object.
   class Client
     class ValidationError < Error; end
+    class NotImplementedError < Error; end
 
     attr_reader :schema, :execute
 
@@ -244,7 +245,7 @@ module GraphQL
     attr_reader :document
 
     def query(definition, variables: {}, context: {})
-      raise Error, "client network execution not configured" unless execute
+      raise NotImplementedError, "client network execution not configured" unless execute
 
       unless definition.is_a?(OperationDefinition)
         raise TypeError, "expected definition to be a #{OperationDefinition.name} but was #{document.class.name}"
