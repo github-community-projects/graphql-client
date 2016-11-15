@@ -95,4 +95,12 @@ class TestClientFetch < MiniTest::Test
     assert_empty response.errors
     assert_equal true, response.data.variables
   end
+
+  def test_dynamic_query_errors
+    query = @client.parse("{ version }")
+
+    assert_raises GraphQL::Client::DynamicQueryError do
+      @client.query(query)
+    end
+  end
 end

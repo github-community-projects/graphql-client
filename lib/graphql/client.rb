@@ -16,8 +16,9 @@ module GraphQL
   # to point at a remote GraphQL HTTP service or execute directly against a
   # Schema object.
   class Client
-    class ValidationError < Error; end
+    class DynamicQueryError < Error; end
     class NotImplementedError < Error; end
+    class ValidationError < Error; end
 
     attr_reader :schema, :execute
 
@@ -249,6 +250,10 @@ module GraphQL
 
       unless definition.is_a?(OperationDefinition)
         raise TypeError, "expected definition to be a #{OperationDefinition.name} but was #{document.class.name}"
+      end
+
+      unless definition.name
+        raise DynamicQueryError, "expected definition to be assigned to a static constant"
       end
 
       variables = deep_stringify_keys(variables)
