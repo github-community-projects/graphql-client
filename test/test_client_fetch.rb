@@ -102,5 +102,8 @@ class TestClientFetch < MiniTest::Test
     assert_raises GraphQL::Client::DynamicQueryError do
       @client.query(query)
     end
+
+    @client.allow_dynamic_queries = true
+    assert @client.query(query)
   end
 end

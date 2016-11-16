@@ -24,6 +24,12 @@ module GraphQL
 
     attr_accessor :document_tracking_enabled
 
+    # Deprecated: Allow dynamically generated queries to be passed to
+    # Client#query.
+    #
+    # This ability will eventually be removed in future versions.
+    attr_accessor :allow_dynamic_queries
+
     def self.load_schema(schema)
       case schema
       when GraphQL::Schema
@@ -69,6 +75,7 @@ module GraphQL
       @execute = execute
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
       @document_tracking_enabled = false
+      @allow_dynamic_queries = false
     end
 
     # Definitions are constructed by Client.parse and wrap a parsed AST of the
@@ -252,7 +259,7 @@ module GraphQL
         raise TypeError, "expected definition to be a #{OperationDefinition.name} but was #{document.class.name}"
       end
 
-      unless definition.name
+      if allow_dynamic_queries == false && definition.name.nil?
         raise DynamicQueryError, "expected definition to be assigned to a static constant https://git.io/vXXSE"
       end
 
