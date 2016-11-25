@@ -203,7 +203,7 @@ module GraphQL
         errors = validator.validate(query)
         errors.fetch(:errors).each do |error|
           error_hash = error.to_h
-          validation_line = error_hash["locations"].first["line"]
+          validation_line = error_hash["locations"][0]["line"]
           error = ValidationError.new(error_hash["message"])
           error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller) if filename && lineno
           raise error
