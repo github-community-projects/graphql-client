@@ -203,8 +203,9 @@ module GraphQL
         errors = validator.validate(query)
         errors.fetch(:errors).each do |error|
           if error.respond_to?(:message)
-            validation_line = error.line
-            error = ValidationError.new(error.message)
+            error_hash = error.to_h
+            validation_line = error_hash["locations"].first["line"]
+            error = ValidationError.new(error_hash["message"])
           else # TODO: Remove when only supporting graphql-ruby 1.x
             validation_line = error["locations"][0]["line"]
             error = ValidationError.new(error["message"])
