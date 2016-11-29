@@ -28,6 +28,9 @@ Metrics/LineLength:
 Style/Lambda:
   EnforcedStyle: literal
 
+Style/NumericPredicate:
+  Enabled: false
+
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
