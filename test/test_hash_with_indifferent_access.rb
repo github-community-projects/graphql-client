@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "graphql/client/hash_with_indifferent_access"
 require "minitest/autorun"
 

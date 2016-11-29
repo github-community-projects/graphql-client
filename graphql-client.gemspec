@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Gem::Specification.new do |s|
   s.name = "graphql-client"
   s.version = "0.2.6"

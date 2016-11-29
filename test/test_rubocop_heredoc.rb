@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "rubocop/cop/graphql/heredoc"
 require "minitest/autorun"
 

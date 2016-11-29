@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "active_support/inflector"
 require "graphql"
 require "graphql/client/erubis"

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "graphql"
 require "graphql/language/nodes/deep_freeze_ext"
 require "minitest/autorun"

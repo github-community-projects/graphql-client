@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "graphql/client/erubis"
 require "rubocop/cop/graphql/overfetch"
 require "minitest/autorun"
