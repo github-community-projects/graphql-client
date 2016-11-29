@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "graphql"
 require "graphql/client/query_typename"
 require "minitest/autorun"
