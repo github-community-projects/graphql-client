@@ -17,7 +17,7 @@ module GraphQL
       # Internal: Get QueryResult class for result of query.
       #
       # Returns subclass of QueryResult or nil.
-      def self.wrap(node, name: nil)
+      def self.wrap(node, name: nil, types: {})
         fields = {}
 
         node.selections.each do |selection|
@@ -26,27 +26,29 @@ module GraphQL
             nil
           when Language::Nodes::Field
             field_name = selection.alias || selection.name
-            field_klass = selection.selections.any? ? wrap(selection, name: "#{name}[:#{field_name}]") : nil
+            field_klass = nil
+            field_klass = wrap(selection, name: "#{name}[:#{field_name}]", types: types) if selection.selections.any?
             fields[field_name] ? fields[field_name] |= field_klass : fields[field_name] = field_klass
           when Language::Nodes::InlineFragment
-            wrap(selection, name: name).fields.each do |fragment_name, klass|
+            wrap(selection, name: name, types: types).fields.each do |fragment_name, klass|
               fields[fragment_name.to_s] ? fields[fragment_name.to_s] |= klass : fields[fragment_name.to_s] = klass
             end
           end
         end
 
-        define(name: name, source_node: node, fields: fields)
+        define(name: name, source_node: node, fields: fields, type: types[node] && types[node].unwrap)
       end
 
       # Internal
-      def self.define(name:, source_node:, fields: {})
+      def self.define(name:, source_node:, fields: {}, type: nil)
         Class.new(self) do
           @name = name
+          @type = type
           @source_node = source_node
           @fields = {}
 
-          fields.each do |field, type|
-            @fields[field.to_sym] = type
+          fields.each do |field, klass|
+            @fields[field.to_sym] = klass
 
             send :attr_reader, field
 
@@ -70,8 +72,8 @@ module GraphQL
             RUBY
           end
 
-          assigns = fields.map do |field, type|
-            if type
+          assigns = fields.map do |field, klass|
+            if klass
               <<-RUBY
                 @#{field} = self.class.fields[:#{field}].cast(@data["#{field}"], @errors.filter_by_path("#{field}"))
               RUBY
@@ -80,6 +82,10 @@ module GraphQL
                 @#{field} = @data["#{field}"]
               RUBY
             end
+          end
+
+          if @type && @type.is_a?(GraphQL::ObjectType)
+            assigns.unshift "@__typename = self.class.type.name"
           end
 
           class_eval <<-RUBY, __FILE__, __LINE__
@@ -95,6 +101,8 @@ module GraphQL
       end
 
       class << self
+        attr_reader :type
+
         attr_reader :source_node
 
         attr_reader :fields
@@ -177,6 +185,9 @@ module GraphQL
 
       attr_reader :data
       alias to_h data
+
+      attr_reader :__typename
+      alias typename __typename
 
       def inspect
         ivars = self.class.fields.keys.map do |sym|

@@ -5,6 +5,7 @@ require "graphql"
 require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/query_result"
+require "graphql/client/query_typename"
 require "graphql/client/response"
 require "graphql/language/nodes/deep_freeze_ext"
 require "json"
@@ -96,9 +97,11 @@ module GraphQL
         end
       end
 
-      def initialize(node:, document:)
+      def initialize(node:, document:, schema:, document_types:)
         @definition_node = node
         @document = document
+        @schema = schema
+        @document_types = document_types
       end
 
       # Internal: Get underlying operation or fragment defintion AST node for
@@ -131,13 +134,15 @@ module GraphQL
       # and any FragmentDefinition dependencies.
       attr_reader :document
 
+      attr_reader :schema
+
       def new(*args)
         type.new(*args)
       end
 
       def type
         # TODO: Fix type indirection
-        @type ||= GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type")
+        @type ||= GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type", types: @document_types)
       end
     end
 
@@ -209,13 +214,24 @@ module GraphQL
           error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller) if filename && lineno
           raise error
         end
+
+        document_types = DocumentTypes.analyze_types(@schema, doc).freeze
+      else
+        document_types = {}.freeze
       end
+
+      QueryTypename.insert_typename_fields(doc, types: document_types)
 
       definitions = {}
       doc.definitions.each do |node|
         node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
-        definition = Definition.for(node: node, document: sliced_document)
+        definition = Definition.for(
+          schema: @schema,
+          node: node,
+          document: sliced_document,
+          document_types: document_types
+        )
         definitions[node.name] = definition
       end
 
