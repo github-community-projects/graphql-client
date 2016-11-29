@@ -35,7 +35,7 @@ module GraphQL
           end
         end
 
-        define(name: name, source_node: node, fields: fields, type: types[node])
+        define(name: name, source_node: node, fields: fields, type: types[node] && types[node].unwrap)
       end
 
       # Internal
@@ -83,7 +83,7 @@ module GraphQL
             end
           end
 
-          if @type.is_a?(GraphQL::ObjectType)
+          if @type && @type.is_a?(GraphQL::ObjectType)
             assigns.unshift "@__typename = self.class.type.name"
           end
 

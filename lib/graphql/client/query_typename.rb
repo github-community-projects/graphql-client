@@ -18,7 +18,7 @@ module GraphQL
 
         on_selections = ->(node, _parent) do
           return unless node.selections.any?
-          return if schema && types[node].is_a?(GraphQL::ObjectType)
+          return if schema && types[node].unwrap.is_a?(GraphQL::ObjectType)
 
           names = node_flatten_selections(node.selections).map { |s| s.respond_to?(:name) ? s.name : nil }
           names = Set.new(names.compact)
