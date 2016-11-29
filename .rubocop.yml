@@ -2,7 +2,7 @@ require:
   - ./lib/rubocop/cop/graphql/heredoc
 
 AllCops:
-  TargetRubyVersion: 2.1
+  TargetRubyVersion: 2.3
 
 Metrics/AbcSize:
   Enabled: false
