@@ -2,7 +2,7 @@ require:
   - ./lib/rubocop/cop/graphql/heredoc
 
 AllCops:
-  TargetRubyVersion: 2.1
+  TargetRubyVersion: 2.3
 
 Metrics/AbcSize:
   Enabled: false
@@ -27,6 +27,9 @@ Metrics/LineLength:
 
 Style/Lambda:
   EnforcedStyle: literal
+
+Style/NumericPredicate:
+  Enabled: false
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes

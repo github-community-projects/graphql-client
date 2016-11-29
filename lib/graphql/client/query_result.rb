@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "active_support/inflector"
 require "graphql"
 require "graphql/client/errors"
@@ -186,7 +187,7 @@ module GraphQL
             "#{sym}=#{value.inspect}"
           end
         end
-        buf = "#<#{self.class.name}"
+        buf = "#<#{self.class.name}".dup
         buf << " " << ivars.join(" ") if ivars.any?
         buf << ">"
         buf
