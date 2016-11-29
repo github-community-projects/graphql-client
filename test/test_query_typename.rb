@@ -190,7 +190,8 @@ class TestQueryTypename < MiniTest::Test
   end
 
   def test_insert_schema_aware_typename
-    GraphQL::Client::QueryTypename.insert_typename_fields(@document, schema: Schema)
+    types = GraphQL::Client::DocumentTypes.analyze_types(Schema, @document)
+    GraphQL::Client::QueryTypename.insert_typename_fields(@document, types: types)
 
     expected = <<-'GRAPHQL'
       query FooQuery {

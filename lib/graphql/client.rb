@@ -96,10 +96,11 @@ module GraphQL
         end
       end
 
-      def initialize(node:, document:, schema:)
+      def initialize(node:, document:, schema:, document_types:)
         @definition_node = node
         @document = document
         @schema = schema
+        @document_types = document_types
       end
 
       # Internal: Get underlying operation or fragment defintion AST node for
@@ -140,10 +141,7 @@ module GraphQL
 
       def type
         # TODO: Fix type indirection
-        @type ||= begin
-          types = schema ? DocumentTypes.analyze_types(schema, document) : {}
-          GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type", types: types)
-        end
+        @type ||= GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type", types: @document_types)
       end
     end
 
@@ -215,15 +213,24 @@ module GraphQL
           error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller) if filename && lineno
           raise error
         end
+
+        document_types = DocumentTypes.analyze_types(@schema, doc).freeze
+      else
+        document_types = {}.freeze
       end
 
-      QueryTypename.insert_typename_fields(doc, schema: @schema)
+      QueryTypename.insert_typename_fields(doc, types: document_types)
 
       definitions = {}
       doc.definitions.each do |node|
         node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
-        definition = Definition.for(schema: @schema, node: node, document: sliced_document)
+        definition = Definition.for(
+          schema: @schema,
+          node: node,
+          document: sliced_document,
+          document_types: document_types
+        )
         definitions[node.name] = definition
       end
 

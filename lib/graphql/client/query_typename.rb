@@ -9,22 +9,23 @@ module GraphQL
       #
       # Skips known types when schema is provided.
       #
-      # document - GraphQL::Language::Document to modify
-      # schema - Optional GraphQL::Schema
+      # document - GraphQL::Language::Nodes::Document to modify
+      # schema - Optional Map of GraphQL::Language::Nodes::Node to GraphQL::Type
       #
       # Returns nothing.
-      def self.insert_typename_fields(document, schema: nil)
-        types = schema ? DocumentTypes.analyze_types(schema, document) : {}
-
+      def self.insert_typename_fields(document, types: {})
         on_selections = ->(node, _parent) do
           return unless node.selections.any?
-          return if schema && types[node].unwrap.is_a?(GraphQL::ObjectType)
 
-          names = node_flatten_selections(node.selections).map { |s| s.respond_to?(:name) ? s.name : nil }
-          names = Set.new(names.compact)
+          type = types[node]
+          case type && type.unwrap
+          when NilClass, GraphQL::InterfaceType, GraphQL::UnionType
+            names = node_flatten_selections(node.selections).map { |s| s.respond_to?(:name) ? s.name : nil }
+            names = Set.new(names.compact)
 
-          unless names.include?("__typename")
-            node.selections = [GraphQL::Language::Nodes::Field.new(name: "__typename")] + node.selections
+            unless names.include?("__typename")
+              node.selections = [GraphQL::Language::Nodes::Field.new(name: "__typename")] + node.selections
+            end
           end
         end
 
