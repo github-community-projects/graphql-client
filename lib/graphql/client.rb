@@ -17,11 +17,19 @@ module GraphQL
   # to point at a remote GraphQL HTTP service or execute directly against a
   # Schema object.
   class Client
+    class DynamicQueryError < Error; end
+    class NotImplementedError < Error; end
     class ValidationError < Error; end
 
     attr_reader :schema, :execute
 
     attr_accessor :document_tracking_enabled
+
+    # Deprecated: Allow dynamically generated queries to be passed to
+    # Client#query.
+    #
+    # This ability will eventually be removed in future versions.
+    attr_accessor :allow_dynamic_queries
 
     def self.load_schema(schema)
       case schema
@@ -68,6 +76,7 @@ module GraphQL
       @execute = execute
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
       @document_tracking_enabled = false
+      @allow_dynamic_queries = false
     end
 
     # Definitions are constructed by Client.parse and wrap a parsed AST of the
@@ -200,13 +209,9 @@ module GraphQL
 
         errors = validator.validate(query)
         errors.fetch(:errors).each do |error|
-          if error.respond_to?(:message)
-            validation_line = error.line
-            error = ValidationError.new(error.message)
-          else # TODO: Remove when only supporting graphql-ruby 1.x
-            validation_line = error["locations"][0]["line"]
-            error = ValidationError.new(error["message"])
-          end
+          error_hash = error.to_h
+          validation_line = error_hash["locations"][0]["line"]
+          error = ValidationError.new(error_hash["message"])
           error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller) if filename && lineno
           raise error
         end
@@ -253,10 +258,14 @@ module GraphQL
     attr_reader :document
 
     def query(definition, variables: {}, context: {})
-      raise Error, "client network execution not configured" unless execute
+      raise NotImplementedError, "client network execution not configured" unless execute
 
       unless definition.is_a?(OperationDefinition)
         raise TypeError, "expected definition to be a #{OperationDefinition.name} but was #{document.class.name}"
+      end
+
+      if allow_dynamic_queries == false && definition.name.nil?
+        raise DynamicQueryError, "expected definition to be assigned to a static constant https://git.io/vXXSE"
       end
 
       variables = deep_stringify_keys(variables)
