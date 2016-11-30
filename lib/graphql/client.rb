@@ -159,8 +159,9 @@ module GraphQL
 
     def parse(str, filename = nil, lineno = nil)
       if filename.nil? || lineno.nil?
-        filename, lineno, = caller(1, 1).first.split(":", 3)
-        lineno = lineno.to_i
+        location = caller_locations(1, 1).first
+        filename = location.path
+        lineno = location.lineno
       end
 
       definition_dependencies = Set.new
