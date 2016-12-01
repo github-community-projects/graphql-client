@@ -255,6 +255,9 @@ class TestQueryResult < MiniTest::Test
     assert_equal %w(josh mislav), data.users.each_node.map(&:login)
   end
 
+  require_relative "foo_helper"
+  include FooHelper
+
   def test_source_location
     Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
       fragment on Person {
@@ -272,10 +275,36 @@ class TestQueryResult < MiniTest::Test
       }
     GRAPHQL
     assert_equal [__FILE__, __LINE__ - 7], Temp::Query.source_location
+  end
+
+  def test_out_of_scope_access
+    Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
+      fragment on Person {
+        name
+        company
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          ...TestQueryResult::Temp::Person
+        }
+      }
+    GRAPHQL
 
     response = @client.query(Temp::Query)
+
     person = Temp::Person.new(response.data.me)
     assert_equal "Josh", person.name
     assert_equal "GitHub", person.company
+
+    assert_raises GraphQL::Client::OutOfScopeAccessError do
+      format_person_info(person)
+    end
+
+    assert_raises GraphQL::Client::OutOfScopeAccessError do
+      person_employed?(person)
+    end
   end
 end
