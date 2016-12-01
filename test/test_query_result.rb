@@ -7,6 +7,16 @@ require "ostruct"
 require_relative "foo_helper"
 
 class TestQueryResult < MiniTest::Test
+  DateTime = GraphQL::ScalarType.define do
+    name "DateTime"
+    coerce_input ->(value) do
+      Time.iso8601(value)
+    end
+    coerce_result ->(value) do
+      value.utc.iso8601
+    end
+  end
+
   PersonType = GraphQL::ObjectType.define do
     name "Person"
     field :login, types.String
@@ -15,6 +25,7 @@ class TestQueryResult < MiniTest::Test
     field :lastName, types.String
     field :company, types.String
     field :homepageURL, types.String
+    field :createdAt, !DateTime
   end
 
   PersonConnection = PersonType.define_connection do
@@ -30,7 +41,8 @@ class TestQueryResult < MiniTest::Test
           name: "Josh",
           firstName: "Joshua",
           lastName: "Peek",
-          company: "GitHub"
+          company: "GitHub",
+          createdAt: Time.at(0)
         )
       }
     end
@@ -254,6 +266,23 @@ class TestQueryResult < MiniTest::Test
     assert_equal "josh", data.users.edges[0].node.login
     assert_equal "mislav", data.users.edges[1].node.login
     assert_equal %w(josh mislav), data.users.each_node.map(&:login)
+  end
+
+  def test_date_scalar_casting
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          name
+          createdAt
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    person = response.data.me
+    assert_equal "Josh", person.name
+    assert_equal Time.at(0), person.created_at
   end
 
   include FooHelper

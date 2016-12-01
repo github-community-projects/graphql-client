@@ -291,7 +291,7 @@ class TestClient < MiniTest::Test
     assert_equal(query_string, @client.document.to_query_string)
 
     user = Temp::UserFragment.new("id" => 1, "firstName" => "Joshua", "lastName" => "Peek")
-    assert_equal 1, user.id
+    assert_equal "1", user.id
     assert_equal "Joshua", user.first_name
     assert_equal "Peek", user.last_name
 

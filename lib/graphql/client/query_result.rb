@@ -41,6 +41,22 @@ module GraphQL
         define(name: name, source_definition: source_definition, source_node: node, fields: fields)
       end
 
+      # :nodoc:
+      class Scalar
+        def initialize(type)
+          @type = type
+        end
+
+        def cast(value, _errors = nil)
+          @type.coerce_input(value)
+        end
+
+        def |(_other)
+          # XXX: How would scalars merge?
+          self
+        end
+      end
+
       # Internal
       def self.define(name:, source_definition:, source_node:, fields: {})
         type = source_definition.document_types[source_node]
@@ -56,6 +72,13 @@ module GraphQL
           field_readers = Set.new
 
           fields.each do |field, klass|
+            if @type.is_a?(GraphQL::ObjectType)
+              field_node = @type.fields[field.to_s]
+              if field_node && field_node.type.unwrap.is_a?(GraphQL::ScalarType)
+                klass = Scalar.new(field_node.type.unwrap)
+              end
+            end
+
             @fields[field.to_sym] = klass
 
             send :attr_reader, field
@@ -84,7 +107,7 @@ module GraphQL
             field_readers << :each_node
           end
 
-          assigns = fields.map do |field, klass|
+          assigns = @fields.map do |field, klass|
             if klass
               <<-RUBY
                 @#{field} = self.class.fields[:#{field}].cast(@data["#{field}"], @errors.filter_by_path("#{field}"))
