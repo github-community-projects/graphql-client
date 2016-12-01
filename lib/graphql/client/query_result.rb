@@ -17,7 +17,7 @@ module GraphQL
       # Internal: Get QueryResult class for result of query.
       #
       # Returns subclass of QueryResult or nil.
-      def self.wrap(node, name: nil, types: {})
+      def self.wrap(source_definition, node, name: nil)
         fields = {}
 
         node.selections.each do |selection|
@@ -27,40 +27,51 @@ module GraphQL
           when Language::Nodes::Field
             field_name = selection.alias || selection.name
             field_klass = nil
-            field_klass = wrap(selection, name: "#{name}[:#{field_name}]", types: types) if selection.selections.any?
+            if selection.selections.any?
+              field_klass = wrap(source_definition, selection, name: "#{name}[:#{field_name}]")
+            end
             fields[field_name] ? fields[field_name] |= field_klass : fields[field_name] = field_klass
           when Language::Nodes::InlineFragment
-            wrap(selection, name: name, types: types).fields.each do |fragment_name, klass|
+            wrap(source_definition, selection, name: name).fields.each do |fragment_name, klass|
               fields[fragment_name.to_s] ? fields[fragment_name.to_s] |= klass : fields[fragment_name.to_s] = klass
             end
           end
         end
 
-        define(name: name, source_node: node, fields: fields, type: types[node] && types[node].unwrap)
+        define(name: name, source_definition: source_definition, source_node: node, fields: fields)
       end
 
       # Internal
-      def self.define(name:, source_node:, fields: {}, type: nil)
+      def self.define(name:, source_definition:, source_node:, fields: {})
+        type = source_definition.document_types[source_node]
+        type = type.unwrap if type
+
         Class.new(self) do
           @name = name
           @type = type
           @source_node = source_node
+          @source_definition = source_definition
           @fields = {}
+
+          field_readers = Set.new
 
           fields.each do |field, klass|
             @fields[field.to_sym] = klass
 
             send :attr_reader, field
+            field_readers << field.to_sym
 
             # Convert GraphQL camelcase to snake case: commitComments -> commit_comments
             field_alias = ActiveSupport::Inflector.underscore(field)
             send :alias_method, field_alias, field if field != field_alias
+            field_readers << field_alias.to_sym
 
             class_eval <<-RUBY, __FILE__, __LINE__
               def #{field_alias}?
                 #{field_alias} ? true : false
               end
             RUBY
+            field_readers << "#{field_alias}?".to_sym
 
             next unless field == "edges"
             class_eval <<-RUBY, __FILE__, __LINE__
@@ -70,6 +81,7 @@ module GraphQL
                 self
               end
             RUBY
+            field_readers << :each_node
           end
 
           assigns = fields.map do |field, klass|
@@ -97,11 +109,17 @@ module GraphQL
               freeze
             end
           RUBY
+
+          if @source_definition.enforce_collocated_callers
+            Client.enforce_collocated_callers(self, field_readers, source_definition.source_location[0])
+          end
         end
       end
 
       class << self
         attr_reader :type
+
+        attr_reader :source_definition
 
         attr_reader :source_node
 
@@ -175,7 +193,7 @@ module GraphQL
           end
         end
         # TODO: Picking first source node seems error prone
-        define(name: self.name, source_node: source_node, fields: new_fields)
+        define(name: self.name, source_definition: source_definition, source_node: source_node, fields: new_fields)
       end
 
       # Public: Return errors associated with data.

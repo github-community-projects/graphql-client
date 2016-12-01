@@ -2,6 +2,7 @@
 require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
+require "graphql/client/collocated_enforcement"
 require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/query_result"
@@ -22,9 +23,14 @@ module GraphQL
     class NotImplementedError < Error; end
     class ValidationError < Error; end
 
+    extend CollocatedEnforcement
+
     attr_reader :schema, :execute
 
     attr_accessor :document_tracking_enabled
+
+    # Public: Check if collocated caller enforcement is enabled.
+    attr_reader :enforce_collocated_callers
 
     # Deprecated: Allow dynamically generated queries to be passed to
     # Client#query.
@@ -72,12 +78,13 @@ module GraphQL
       result
     end
 
-    def initialize(schema: nil, execute: nil)
+    def initialize(schema: nil, execute: nil, enforce_collocated_callers: false)
       @schema = self.class.load_schema(schema)
       @execute = execute
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
       @document_tracking_enabled = false
       @allow_dynamic_queries = false
+      @enforce_collocated_callers = enforce_collocated_callers
     end
 
     # Definitions are constructed by Client.parse and wrap a parsed AST of the
@@ -97,11 +104,13 @@ module GraphQL
         end
       end
 
-      def initialize(node:, document:, schema:, document_types:)
+      def initialize(node:, document:, schema:, document_types:, source_location:, enforce_collocated_callers:)
         @definition_node = node
         @document = document
         @schema = schema
         @document_types = document_types
+        @source_location = source_location
+        @enforce_collocated_callers = enforce_collocated_callers
       end
 
       # Internal: Get underlying operation or fragment defintion AST node for
@@ -134,7 +143,18 @@ module GraphQL
       # and any FragmentDefinition dependencies.
       attr_reader :document
 
+      # Internal: Mapping of document nodes to schema types.
+      attr_reader :document_types
+
       attr_reader :schema
+
+      # Public: Returns the Ruby source filename and line number containing this
+      # definition was not defined in Ruby.
+      #
+      # Returns Array pair of [String, Fixnum].
+      attr_reader :source_location
+
+      attr_reader :enforce_collocated_callers
 
       def new(*args)
         type.new(*args)
@@ -142,7 +162,7 @@ module GraphQL
 
       def type
         # TODO: Fix type indirection
-        @type ||= GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type", types: @document_types)
+        @type ||= GraphQL::Client::QueryResult.wrap(self, definition_node, name: "#{name}.type")
       end
     end
 
@@ -158,10 +178,21 @@ module GraphQL
     end
 
     def parse(str, filename = nil, lineno = nil)
-      if filename.nil? || lineno.nil?
-        filename, lineno, = caller(1, 1).first.split(":", 3)
-        lineno = lineno.to_i
+      if filename.nil? && lineno.nil?
+        location = caller_locations(1, 1).first
+        filename = location.path
+        lineno = location.lineno
       end
+
+      unless filename.is_a?(String)
+        raise TypeError, "expected filename to be a String, but was #{filename.class}"
+      end
+
+      unless lineno.is_a?(Integer)
+        raise TypeError, "expected lineno to be a Integer, but was #{lineno.class}"
+      end
+
+      source_location = [filename, lineno].freeze
 
       definition_dependencies = Set.new
 
@@ -186,9 +217,7 @@ module GraphQL
                     end
 
           error = ValidationError.new(message)
-          if filename && lineno
-            error.set_backtrace(["#{filename}:#{lineno + match.pre_match.count("\n") + 1}"] + caller)
-          end
+          error.set_backtrace(["#{filename}:#{lineno + match.pre_match.count("\n") + 1}"] + caller)
           raise error
         end
       end
@@ -211,7 +240,7 @@ module GraphQL
           error_hash = error.to_h
           validation_line = error_hash["locations"][0]["line"]
           error = ValidationError.new(error_hash["message"])
-          error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller) if filename && lineno
+          error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller)
           raise error
         end
 
@@ -230,7 +259,9 @@ module GraphQL
           schema: @schema,
           node: node,
           document: sliced_document,
-          document_types: document_types
+          document_types: document_types,
+          source_location: source_location,
+          enforce_collocated_callers: enforce_collocated_callers
         )
         definitions[node.name] = definition
       end

@@ -4,6 +4,7 @@ require "graphql/client"
 require "graphql/client/query_result"
 require "minitest/autorun"
 require "ostruct"
+require_relative "foo_helper"
 
 class TestQueryResult < MiniTest::Test
   PersonType = GraphQL::ObjectType.define do
@@ -52,7 +53,7 @@ class TestQueryResult < MiniTest::Test
   end
 
   def setup
-    @client = GraphQL::Client.new(schema: Schema, execute: Schema)
+    @client = GraphQL::Client.new(schema: Schema, execute: Schema, enforce_collocated_callers: true)
   end
 
   def teardown
@@ -253,5 +254,61 @@ class TestQueryResult < MiniTest::Test
     assert_equal "josh", data.users.edges[0].node.login
     assert_equal "mislav", data.users.edges[1].node.login
     assert_equal %w(josh mislav), data.users.each_node.map(&:login)
+  end
+
+  include FooHelper
+
+  def test_source_location
+    Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
+      fragment on Person {
+        name
+        company
+      }
+    GRAPHQL
+    assert_equal [__FILE__, __LINE__ - 6], Temp::Person.source_location
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          ...TestQueryResult::Temp::Person
+        }
+      }
+    GRAPHQL
+    assert_equal [__FILE__, __LINE__ - 7], Temp::Query.source_location
+  end
+
+  def test_non_collocated_caller_error
+    Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
+      fragment on Person {
+        name
+        company
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          ...TestQueryResult::Temp::Person
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    person = Temp::Person.new(response.data.me)
+    assert_equal "Josh", person.name
+    assert_equal "GitHub", person.company
+
+    assert_raises GraphQL::Client::NonCollocatedCallerError do
+      format_person_info(person)
+    end
+
+    GraphQL::Client.allow_noncollocated_callers do
+      assert_equal "Josh works at GitHub", format_person_info(person)
+    end
+
+    GraphQL::Client.allow_noncollocated_callers do
+      assert_equal true, person_employed?(person)
+    end
   end
 end
