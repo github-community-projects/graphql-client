@@ -168,11 +168,21 @@ module GraphQL
     end
 
     def parse(str, filename = nil, lineno = nil)
-      if filename.nil? || lineno.nil?
+      if filename.nil? && lineno.nil?
         location = caller_locations(1, 1).first
         filename = location.path
         lineno = location.lineno
       end
+
+      unless filename.is_a?(String)
+        raise TypeError, "expected filename to be a String, but was #{filename.class}"
+      end
+
+      unless lineno.is_a?(Integer)
+        raise TypeError, "expected lineno to be a Integer, but was #{lineno.class}"
+      end
+
+      source_location = [filename, lineno].freeze
 
       definition_dependencies = Set.new
 
@@ -197,9 +207,7 @@ module GraphQL
                     end
 
           error = ValidationError.new(message)
-          if filename && lineno
-            error.set_backtrace(["#{filename}:#{lineno + match.pre_match.count("\n") + 1}"] + caller)
-          end
+          error.set_backtrace(["#{filename}:#{lineno + match.pre_match.count("\n") + 1}"] + caller)
           raise error
         end
       end
@@ -222,7 +230,7 @@ module GraphQL
           error_hash = error.to_h
           validation_line = error_hash["locations"][0]["line"]
           error = ValidationError.new(error_hash["message"])
-          error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller) if filename && lineno
+          error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller)
           raise error
         end
 
@@ -242,7 +250,7 @@ module GraphQL
           node: node,
           document: sliced_document,
           document_types: document_types,
-          source_location: filename && lineno ? [filename, lineno] : nil
+          source_location: source_location
         )
         definitions[node.name] = definition
       end
