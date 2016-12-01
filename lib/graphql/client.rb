@@ -135,6 +135,9 @@ module GraphQL
       # and any FragmentDefinition dependencies.
       attr_reader :document
 
+      # Internal: Mapping of document nodes to schema types.
+      attr_reader :document_types
+
       attr_reader :schema
 
       # Public: Returns the Ruby source filename and line number containing this
@@ -149,7 +152,7 @@ module GraphQL
 
       def type
         # TODO: Fix type indirection
-        @type ||= GraphQL::Client::QueryResult.wrap(definition_node, name: "#{name}.type", types: @document_types)
+        @type ||= GraphQL::Client::QueryResult.wrap(self, definition_node, name: "#{name}.type")
       end
     end
 
