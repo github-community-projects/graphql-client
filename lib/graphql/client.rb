@@ -80,6 +80,13 @@ module GraphQL
       @allow_dynamic_queries = false
     end
 
+    def self.allow_noncollocated_callers
+      Thread.current[:query_result_caller_location_ignore] = true
+      yield
+    ensure
+      Thread.current[:query_result_caller_location_ignore] = nil
+    end
+
     # Definitions are constructed by Client.parse and wrap a parsed AST of the
     # query string as well as hold references to any external query definition
     # dependencies.

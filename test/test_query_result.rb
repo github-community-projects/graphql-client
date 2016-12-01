@@ -277,7 +277,7 @@ class TestQueryResult < MiniTest::Test
     assert_equal [__FILE__, __LINE__ - 7], Temp::Query.source_location
   end
 
-  def test_out_of_scope_access
+  def test_non_collocated_caller_error
     Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
       fragment on Person {
         name
@@ -299,12 +299,16 @@ class TestQueryResult < MiniTest::Test
     assert_equal "Josh", person.name
     assert_equal "GitHub", person.company
 
-    assert_raises GraphQL::Client::OutOfScopeAccessError do
+    assert_raises GraphQL::Client::NonCollocatedCallerError do
       format_person_info(person)
     end
 
-    assert_raises GraphQL::Client::OutOfScopeAccessError do
-      person_employed?(person)
+    GraphQL::Client.allow_noncollocated_callers do
+      assert_equal "Josh works at GitHub", format_person_info(person)
+    end
+
+    GraphQL::Client.allow_noncollocated_callers do
+      assert_equal true, person_employed?(person)
     end
   end
 end

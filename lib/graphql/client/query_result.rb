@@ -8,7 +8,7 @@ require "set"
 
 module GraphQL
   class Client
-    class OutOfScopeAccessError < Error; end
+    class NonCollocatedCallerError < Error; end
 
     # A QueryResult struct wraps data returned from a GraphQL response.
     #
@@ -123,7 +123,7 @@ module GraphQL
 
                 locations = caller_locations(1)
                 if locations.first.path != self.class.source_path
-                  error = OutOfScopeAccessError.new("#{field_reader} was accessed outside the scope of \#{self.class.source_path}")
+                  error = NonCollocatedCallerError.new("#{field_reader} was accessed outside the scope of \#{self.class.source_path}")
                   error.set_backtrace(locations.map(&:to_s))
                   raise error
                 end
