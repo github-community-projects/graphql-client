@@ -29,6 +29,9 @@ module GraphQL
 
     attr_accessor :document_tracking_enabled
 
+    # Public: Check if collocated caller enforcement is enabled.
+    attr_reader :enforce_collocated_callers
+
     # Deprecated: Allow dynamically generated queries to be passed to
     # Client#query.
     #
@@ -75,12 +78,13 @@ module GraphQL
       result
     end
 
-    def initialize(schema: nil, execute: nil)
+    def initialize(schema: nil, execute: nil, enforce_collocated_callers: false)
       @schema = self.class.load_schema(schema)
       @execute = execute
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
       @document_tracking_enabled = false
       @allow_dynamic_queries = false
+      @enforce_collocated_callers = enforce_collocated_callers
     end
 
     # Definitions are constructed by Client.parse and wrap a parsed AST of the
@@ -100,12 +104,13 @@ module GraphQL
         end
       end
 
-      def initialize(node:, document:, schema:, document_types:, source_location:)
+      def initialize(node:, document:, schema:, document_types:, source_location:, enforce_collocated_callers:)
         @definition_node = node
         @document = document
         @schema = schema
         @document_types = document_types
         @source_location = source_location
+        @enforce_collocated_callers = enforce_collocated_callers
       end
 
       # Internal: Get underlying operation or fragment defintion AST node for
@@ -148,6 +153,8 @@ module GraphQL
       #
       # Returns Array pair of [String, Fixnum].
       attr_reader :source_location
+
+      attr_reader :enforce_collocated_callers
 
       def new(*args)
         type.new(*args)
@@ -253,7 +260,8 @@ module GraphQL
           node: node,
           document: sliced_document,
           document_types: document_types,
-          source_location: source_location
+          source_location: source_location,
+          enforce_collocated_callers: enforce_collocated_callers
         )
         definitions[node.name] = definition
       end

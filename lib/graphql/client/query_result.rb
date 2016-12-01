@@ -110,7 +110,9 @@ module GraphQL
             end
           RUBY
 
-          Client.enforce_collocated_callers(self, field_readers, source_definition.source_location[0])
+          if @source_definition.enforce_collocated_callers
+            Client.enforce_collocated_callers(self, field_readers, source_definition.source_location[0])
+          end
         end
       end
 

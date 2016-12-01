@@ -53,7 +53,7 @@ class TestQueryResult < MiniTest::Test
   end
 
   def setup
-    @client = GraphQL::Client.new(schema: Schema, execute: Schema)
+    @client = GraphQL::Client.new(schema: Schema, execute: Schema, enforce_collocated_callers: true)
   end
 
   def teardown
