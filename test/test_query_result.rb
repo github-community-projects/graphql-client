@@ -4,6 +4,7 @@ require "graphql/client"
 require "graphql/client/query_result"
 require "minitest/autorun"
 require "ostruct"
+require_relative "foo_helper"
 
 class TestQueryResult < MiniTest::Test
   PersonType = GraphQL::ObjectType.define do
@@ -255,7 +256,6 @@ class TestQueryResult < MiniTest::Test
     assert_equal %w(josh mislav), data.users.each_node.map(&:login)
   end
 
-  require_relative "foo_helper"
   include FooHelper
 
   def test_source_location

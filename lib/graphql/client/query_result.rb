@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 require "active_support/inflector"
 require "graphql"
-require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/list"
 require "set"
 
 module GraphQL
   class Client
-    class NonCollocatedCallerError < Error; end
-
     # A QueryResult struct wraps data returned from a GraphQL response.
     #
     # Wrapping the JSON-like Hash allows access with nice Ruby accessor methods
@@ -113,30 +110,7 @@ module GraphQL
             end
           RUBY
 
-          caller_tracing_module = Module.new
-          prepend(caller_tracing_module)
-
-          field_readers.each do |field_reader|
-            caller_tracing_module.class_eval <<-RUBY, __FILE__, __LINE__
-              def #{field_reader}
-                return super if Thread.current[:query_result_caller_location_ignore]
-
-                locations = caller_locations(1)
-                if locations.first.path != self.class.source_path
-                  error = NonCollocatedCallerError.new("#{field_reader} was accessed outside the scope of \#{self.class.source_path}")
-                  error.set_backtrace(locations.map(&:to_s))
-                  raise error
-                end
-
-                begin
-                  Thread.current[:query_result_caller_location_ignore] = true
-                  super
-                ensure
-                  Thread.current[:query_result_caller_location_ignore] = nil
-                end
-              end
-            RUBY
-          end
+          Client.enforce_collocated_callers(self, field_readers, source_definition.source_location[0])
         end
       end
 
@@ -152,10 +126,6 @@ module GraphQL
         def [](name)
           fields[name]
         end
-      end
-
-      def self.source_path
-        source_definition.source_location[0]
       end
 
       def self.name

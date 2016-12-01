@@ -2,6 +2,7 @@
 require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
+require "graphql/client/collocated_enforcement"
 require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/query_result"
@@ -21,6 +22,8 @@ module GraphQL
     class DynamicQueryError < Error; end
     class NotImplementedError < Error; end
     class ValidationError < Error; end
+
+    extend CollocatedEnforcement
 
     attr_reader :schema, :execute
 
@@ -78,13 +81,6 @@ module GraphQL
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
       @document_tracking_enabled = false
       @allow_dynamic_queries = false
-    end
-
-    def self.allow_noncollocated_callers
-      Thread.current[:query_result_caller_location_ignore] = true
-      yield
-    ensure
-      Thread.current[:query_result_caller_location_ignore] = nil
     end
 
     # Definitions are constructed by Client.parse and wrap a parsed AST of the
