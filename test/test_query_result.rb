@@ -254,4 +254,28 @@ class TestQueryResult < MiniTest::Test
     assert_equal "mislav", data.users.edges[1].node.login
     assert_equal %w(josh mislav), data.users.each_node.map(&:login)
   end
+
+  def test_source_location
+    Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
+      fragment on Person {
+        name
+        company
+      }
+    GRAPHQL
+    assert_equal [__FILE__, __LINE__ - 6], Temp::Person.source_location
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          ...TestQueryResult::Temp::Person
+        }
+      }
+    GRAPHQL
+    assert_equal [__FILE__, __LINE__ - 7], Temp::Query.source_location
+
+    response = @client.query(Temp::Query)
+    person = Temp::Person.new(response.data.me)
+    assert_equal "Josh", person.name
+    assert_equal "GitHub", person.company
+  end
 end

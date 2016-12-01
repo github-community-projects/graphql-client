@@ -97,11 +97,12 @@ module GraphQL
         end
       end
 
-      def initialize(node:, document:, schema:, document_types:)
+      def initialize(node:, document:, schema:, document_types:, source_location:)
         @definition_node = node
         @document = document
         @schema = schema
         @document_types = document_types
+        @source_location = source_location
       end
 
       # Internal: Get underlying operation or fragment defintion AST node for
@@ -135,6 +136,12 @@ module GraphQL
       attr_reader :document
 
       attr_reader :schema
+
+      # Public: Returns the Ruby source filename and line number containing this
+      # definition was not defined in Ruby.
+      #
+      # Returns Array pair of [String, Fixnum].
+      attr_reader :source_location
 
       def new(*args)
         type.new(*args)
@@ -231,7 +238,8 @@ module GraphQL
           schema: @schema,
           node: node,
           document: sliced_document,
-          document_types: document_types
+          document_types: document_types,
+          source_location: filename && lineno ? [filename, lineno] : nil
         )
         definitions[node.name] = definition
       end
