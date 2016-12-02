@@ -24,13 +24,36 @@ class TestCollocatedEnforcement < MiniTest::Test
     enforce_collocated_callers(self, %w(name company company?), __FILE__)
   end
 
-  def test_deep_freeze
-    assert_raises GraphQL::Client::NonCollocatedCallerError do
-      format_person_info(Person.new)
+  def test_enforce_collocated_callers
+    person = Person.new
+
+    assert_equal "Josh", person.name
+    assert_equal "GitHub", person.company
+    assert_equal true, person.company?
+    assert_equal "Josh", person.public_send(:name)
+
+    GraphQL::Client.allow_noncollocated_callers do
+      assert_equal "Josh works at GitHub", format_person_info(person)
     end
 
     assert_raises GraphQL::Client::NonCollocatedCallerError do
-      person_employed?(Person.new)
+      format_person_info(person)
+    end
+
+    GraphQL::Client.allow_noncollocated_callers do
+      assert_equal true, person_employed?(person)
+    end
+
+    assert_raises GraphQL::Client::NonCollocatedCallerError do
+      person_employed?(person)
+    end
+
+    GraphQL::Client.allow_noncollocated_callers do
+      assert_equal "Josh works at GitHub", format_person_info_via_send(person)
+    end
+
+    assert_raises GraphQL::Client::NonCollocatedCallerError do
+      format_person_info_via_send(person)
     end
   end
 end
