@@ -210,11 +210,14 @@ module GraphQL
           definition_dependencies.merge(fragment.document.definitions)
           "...#{fragment.definition_name}"
         else
-          message = if fragment
-                      "expected #{const_name} to be a #{FragmentDefinition}, but was a #{fragment.class}"
-                    else
-                      "uninitialized constant #{const_name}"
-                    end
+          if fragment
+            message = "expected #{const_name} to be a #{FragmentDefinition}, but was a #{fragment.class}."
+            if fragment.is_a?(Module) && fragment.constants.any?
+              message += " Did you mean #{fragment}::#{fragment.constants.first}?"
+            end
+          else
+            message = "uninitialized constant #{const_name}"
+          end
 
           error = ValidationError.new(message)
           error.set_backtrace(["#{filename}:#{lineno + match.pre_match.count("\n") + 1}"] + caller)

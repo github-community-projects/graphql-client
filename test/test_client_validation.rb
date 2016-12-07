@@ -53,7 +53,28 @@ class TestClientValidation < MiniTest::Test
   rescue GraphQL::Client::ValidationError => e
     assert_equal "#{__FILE__}:#{__LINE__ - 4}", e.backtrace.first
     assert_equal "expected TestClientValidation::Temp::Answer to be a " \
-      "GraphQL::Client::FragmentDefinition, but was a Fixnum", e.message
+      "GraphQL::Client::FragmentDefinition, but was a Fixnum.", e.message
+  else
+    flunk "GraphQL::Client::ValidationError expected but nothing was raised"
+  end
+
+  def test_client_parse_query_external_fragment_is_module
+    Temp.const_set :UserDocument, @client.parse(<<-'GRAPHQL')
+      fragment UserFragment on User {
+        __typename
+      }
+    GRAPHQL
+
+    Temp.const_set :FooQuery, @client.parse(<<-'GRAPHQL')
+      query {
+        ...TestClientValidation::Temp::UserDocument
+      }
+    GRAPHQL
+  rescue GraphQL::Client::ValidationError => e
+    assert_equal "#{__FILE__}:#{__LINE__ - 4}", e.backtrace.first
+    assert_equal "expected TestClientValidation::Temp::UserDocument to be a " \
+      "GraphQL::Client::FragmentDefinition, but was a Module. Did you mean " \
+      "TestClientValidation::Temp::UserDocument::UserFragment?", e.message
   else
     flunk "GraphQL::Client::ValidationError expected but nothing was raised"
   end
