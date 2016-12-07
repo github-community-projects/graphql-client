@@ -183,7 +183,79 @@ class TestQueryResult < MiniTest::Test
       person.nickname
       flunk
     rescue NoMethodError => e
-      assert_equal "undefined method `nickname' for #<TestQueryResult::Temp::Person.type name=\"Josh\">", e.to_s
+      assert_equal "undefined field `nickname' on Person type", e.to_s
+    end
+  end
+
+  def test_no_method_when_field_exists_but_was_not_fetched
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          __typename
+        }
+      }
+    GRAPHQL
+
+    person = @client.query(Temp::Query).data.me
+
+    begin
+      person.name
+      flunk
+    rescue NoMethodError => e
+      assert_equal "unfetched field `name' on Person type.\n\nme {\n  __typename\n+ name\n}", e.to_s
+    end
+  end
+
+  def test_no_method_error_leaked_from_parent
+    Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
+      fragment on Person {
+        __typename
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          name
+          ...TestQueryResult::Temp::Person
+        }
+      }
+    GRAPHQL
+
+    person = Temp::Person.new(@client.query(Temp::Query).data.me)
+
+    begin
+      person.name
+      flunk
+    rescue NoMethodError => e
+      assert_equal "implicitly fetched field `name' on Person type.\n\n" \
+        "fragment TestQueryResult__Temp__Person on Person {\n  __typename\n+ name\n}", e.to_s
+    end
+  end
+
+  def test_no_method_error_leaked_from_child
+    Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
+      fragment on Person {
+        name
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          ...TestQueryResult::Temp::Person
+        }
+      }
+    GRAPHQL
+
+    person = @client.query(Temp::Query).data.me
+
+    begin
+      person.name
+      flunk
+    rescue NoMethodError => e
+      assert_equal "implicitly fetched field `name' on Person type." \
+        "\n\nme {\n  ...TestQueryResult__Temp__Person\n+ name\n}", e.to_s
     end
   end
 

@@ -248,7 +248,22 @@ module GraphQL
       def method_missing(*args)
         super
       rescue NoMethodError => e
-        raise NoMethodError, "undefined method `#{e.name}' for #{inspect}"
+        type = self.class.type
+        raise e unless type
+
+        unless type.fields[e.name.to_s]
+          raise NoMethodError, "undefined field `#{e.name}' on #{type} type"
+        end
+
+        message = if data[e.name.to_s]
+                    "implicitly fetched field `#{e.name}' on #{type} type."
+                  else
+                    "unfetched field `#{e.name}' on #{type} type."
+                  end
+
+        node = self.class.source_node
+        message += "\n\n" + node.to_query_string.sub(/\}$/, "+ #{e.name}\n}") if node
+        raise NoMethodError, message
       end
 
       def respond_to_missing?(*args)
