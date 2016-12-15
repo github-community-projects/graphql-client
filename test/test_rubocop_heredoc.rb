@@ -10,6 +10,16 @@ class TestRubocopHeredoc < MiniTest::Test
 
   def test_good_graphql_heredoc
     investigate(@cop, <<-RUBY)
+      Query = Client.parse <<'GRAPHQL'
+        { version }
+GRAPHQL
+    RUBY
+
+    assert_empty @cop.offenses.map(&:message)
+  end
+
+  def test_good_graphql_dash_heredoc
+    investigate(@cop, <<-RUBY)
       Query = Client.parse <<-'GRAPHQL'
         { version }
       GRAPHQL
@@ -18,7 +28,28 @@ class TestRubocopHeredoc < MiniTest::Test
     assert_empty @cop.offenses.map(&:message)
   end
 
+  def test_good_graphql_squiggly_heredoc
+    investigate(@cop, <<-RUBY)
+      Query = Client.parse <<~'GRAPHQL'
+        { version }
+      GRAPHQL
+    RUBY
+
+    assert_empty @cop.offenses.map(&:message)
+  end
+
   def test_bad_graphql_heredoc
+    investigate(@cop, <<-RUBY)
+      Query = Client.parse <<GRAPHQL
+        { version }
+GRAPHQL
+    RUBY
+
+    assert_equal 1, @cop.offenses.count
+    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+  end
+
+  def test_bad_graphql_dash_heredoc
     investigate(@cop, <<-RUBY)
       Query = Client.parse <<-GRAPHQL
         { version }
@@ -29,10 +60,21 @@ class TestRubocopHeredoc < MiniTest::Test
     assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
   end
 
+  def test_bad_graphql_squiggly_heredoc
+    investigate(@cop, <<-RUBY)
+      Query = Client.parse <<~GRAPHQL
+        { version }
+      GRAPHQL
+    RUBY
+
+    assert_equal 1, @cop.offenses.count
+    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+  end
+
   def test_bad_graphql_heredoc_with_interpolation
     investigate(@cop, <<-RUBY)
+      field = "version"
       Query = Client.parse <<-GRAPHQL
-        field = "version"
         { \#{field} }
       GRAPHQL
     RUBY
@@ -43,6 +85,45 @@ class TestRubocopHeredoc < MiniTest::Test
   end
 
   def test_bad_graphql_multiline_heredoc
+    investigate(@cop, <<-RUBY)
+      Query = Client.parse <<GRAPHQL
+        {
+          version
+        }
+GRAPHQL
+    RUBY
+
+    assert_equal 1, @cop.offenses.count
+    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+  end
+
+  def test_bad_graphql_multiline_dash_heredoc
+    investigate(@cop, <<-RUBY)
+      Query = Client.parse <<-GRAPHQL
+        {
+          version
+        }
+      GRAPHQL
+    RUBY
+
+    assert_equal 1, @cop.offenses.count
+    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+  end
+
+  def test_bad_graphql_multiline_squiggly_heredoc
+    investigate(@cop, <<-RUBY)
+      Query = Client.parse <<~GRAPHQL
+        {
+          version
+        }
+      GRAPHQL
+    RUBY
+
+    assert_equal 1, @cop.offenses.count
+    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+  end
+
+  def test_bad_graphql_multiline_heredoc_with_interpolation
     investigate(@cop, <<-RUBY)
       field = "version"
       Query = Client.parse <<-GRAPHQL
