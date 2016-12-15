@@ -265,7 +265,7 @@ module GraphQL
           message = "implicitly fetched field `#{e.name}' on #{type} type."
         else
           error_class = UnfetchedFieldError
-          message = "unfetched field `#{e.name}' on #{type} type."
+          message = "unfetched field `#{e.name}' on #{type} type. https://git.io/v1y3U"
         end
 
         node = self.class.source_node

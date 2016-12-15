@@ -202,7 +202,7 @@ class TestQueryResult < MiniTest::Test
       person.name
       flunk
     rescue GraphQL::Client::QueryResult::UnfetchedFieldError => e
-      assert_equal "unfetched field `name' on Person type.\n\nme {\n  __typename\n+ name\n}", e.to_s
+      assert_equal "unfetched field `name' on Person type. https://git.io/v1y3U\n\nme {\n  __typename\n+ name\n}", e.to_s
     end
   end
 
