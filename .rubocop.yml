@@ -1,41 +1,11 @@
+inherit_gem:
+  rubocop-github: config/default.yml
+
 require:
   - ./lib/rubocop/cop/graphql/heredoc
 
 AllCops:
   TargetRubyVersion: 2.3
-
-Metrics/AbcSize:
-  Enabled: false
-
-Metrics/ClassLength:
-  Enabled: false
-
-Metrics/CyclomaticComplexity:
-  Enabled: false
-
-Metrics/BlockLength:
-  Enabled: false
-
-Metrics/MethodLength:
-  Enabled: false
-
-Metrics/ParameterLists:
-  Enabled: false
-
-Metrics/PerceivedComplexity:
-  Enabled: false
-
-Metrics/LineLength:
-  Max: 120
-
-Style/Lambda:
-  EnforcedStyle: literal
-
-Style/NumericPredicate:
-  Enabled: false
-
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
 
 GraphQL/Heredoc:
   Enabled: true
