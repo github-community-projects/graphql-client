@@ -228,7 +228,7 @@ class TestQueryResult < MiniTest::Test
       person.name
       flunk
     rescue GraphQL::Client::QueryResult::ImplicitlyFetchedFieldError => e
-      assert_equal "implicitly fetched field `name' on Person type.\n\n" \
+      assert_equal "implicitly fetched field `name' on Person type. https://git.io/v1yGL\n\n" \
         "fragment TestQueryResult__Temp__Person on Person {\n  __typename\n+ name\n}", e.to_s
     end
   end
@@ -254,7 +254,7 @@ class TestQueryResult < MiniTest::Test
       person.name
       flunk
     rescue GraphQL::Client::QueryResult::ImplicitlyFetchedFieldError => e
-      assert_equal "implicitly fetched field `name' on Person type." \
+      assert_equal "implicitly fetched field `name' on Person type. https://git.io/v1yGL" \
         "\n\nme {\n  ...TestQueryResult__Temp__Person\n+ name\n}", e.to_s
     end
   end

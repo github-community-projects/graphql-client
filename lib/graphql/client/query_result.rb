@@ -262,7 +262,7 @@ module GraphQL
 
         if data[e.name.to_s]
           error_class = ImplicitlyFetchedFieldError
-          message = "implicitly fetched field `#{e.name}' on #{type} type."
+          message = "implicitly fetched field `#{e.name}' on #{type} type. https://git.io/v1yGL"
         else
           error_class = UnfetchedFieldError
           message = "unfetched field `#{e.name}' on #{type} type. https://git.io/v1y3U"
