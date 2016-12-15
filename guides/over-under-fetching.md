@@ -66,3 +66,8 @@ The `Views::Issues::Show::Issue.new` object wraps the raw data hash with accesso
 <%= issue.title %>
 by <%= issue.author.login %>
 ```
+
+## See Also
+
+* [`ImplicitlyFetchedFieldError`](implicitly-fetched-field-error.md)
+* [Relay Data Masking](https://facebook.github.io/relay/docs/thinking-in-relay.html#data-masking)
