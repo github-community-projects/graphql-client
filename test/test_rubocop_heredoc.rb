@@ -61,6 +61,8 @@ GRAPHQL
   end
 
   def test_bad_graphql_squiggly_heredoc
+    skip if RUBY_VERSION < "2.3"
+
     investigate(@cop, <<-RUBY)
       Query = Client.parse <<~GRAPHQL
         { version }
@@ -111,6 +113,8 @@ GRAPHQL
   end
 
   def test_bad_graphql_multiline_squiggly_heredoc
+    skip if RUBY_VERSION < "2.3"
+
     investigate(@cop, <<-RUBY)
       Query = Client.parse <<~GRAPHQL
         {
