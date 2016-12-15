@@ -9,13 +9,13 @@ type User {
 ```
 
 ``` ruby
-UserFragment = SWAPI::Client.parse <<-'GRAPHQL'
+UserFragment = Client.parse <<-'GRAPHQL'
   fragment on User {
     name
   }
 GRAPHQL
 
-user = UserFragment.new(human)
+user = UserFragment.new(user)
 
 # ok
 user.name
