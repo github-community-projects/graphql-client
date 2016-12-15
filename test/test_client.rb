@@ -850,13 +850,15 @@ class TestClient < MiniTest::Test
     assert_equal nil, user_query.name
     assert_equal "GraphQL__Client__OperationDefinition_#{user_query.object_id}", user_query.definition_name
 
-    query_string = <<-GRAPHQL.gsub(/^      /, "").chomp # rubocop:disable GraphQL/Heredoc
+    # rubocop:disable GraphQL/Heredoc
+    query_string = <<-GRAPHQL.gsub(/^      /, "").chomp
       query GraphQL__Client__OperationDefinition_#{user_query.object_id} {
         viewer {
           id
         }
       }
     GRAPHQL
+    # rubocop:enable GraphQL/Heredoc
     assert_equal(query_string, user_query.document.to_query_string)
 
     skip "anonymous definition should not be tracked in document"

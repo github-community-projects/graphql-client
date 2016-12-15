@@ -29,17 +29,32 @@ class TestRubocopHeredoc < MiniTest::Test
     assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
   end
 
-  def test_bad_graphql_multiline_heredoc
+  def test_bad_graphql_heredoc_with_interpolation
     investigate(@cop, <<-RUBY)
       Query = Client.parse <<-GRAPHQL
+        field = "version"
+        { \#{field} }
+      GRAPHQL
+    RUBY
+
+    assert_equal 2, @cop.offenses.count
+    assert_equal "Do not interpolate variables into GraphQL queries, used variables instead.", @cop.offenses[0].message
+    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[1].message
+  end
+
+  def test_bad_graphql_multiline_heredoc
+    investigate(@cop, <<-RUBY)
+      field = "version"
+      Query = Client.parse <<-GRAPHQL
         {
-          version
+          \#{field}
         }
       GRAPHQL
     RUBY
 
-    assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+    assert_equal 2, @cop.offenses.count
+    assert_equal "Do not interpolate variables into GraphQL queries, used variables instead.", @cop.offenses[0].message
+    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[1].message
   end
 
   private
