@@ -16,7 +16,7 @@ module RuboCop
 
         def check_str(node)
           return unless node.location.is_a?(Parser::Source::Map::Heredoc)
-          return unless node.location.expression.source == "<<-GRAPHQL"
+          return unless node.location.expression.source =~ /^<<(-|~)?GRAPHQL/
 
           node.each_child_node(:begin) do |begin_node|
             add_offense(begin_node, :expression, "Do not interpolate variables into GraphQL queries, " \
