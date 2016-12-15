@@ -182,7 +182,7 @@ class TestQueryResult < MiniTest::Test
     begin
       person.nickname
       flunk
-    rescue NoMethodError => e
+    rescue GraphQL::Client::QueryResult::UnimplementedFieldError => e
       assert_equal "undefined field `nickname' on Person type", e.to_s
     end
   end
@@ -201,7 +201,7 @@ class TestQueryResult < MiniTest::Test
     begin
       person.name
       flunk
-    rescue NoMethodError => e
+    rescue GraphQL::Client::QueryResult::UnfetchedFieldError => e
       assert_equal "unfetched field `name' on Person type.\n\nme {\n  __typename\n+ name\n}", e.to_s
     end
   end
@@ -227,7 +227,7 @@ class TestQueryResult < MiniTest::Test
     begin
       person.name
       flunk
-    rescue NoMethodError => e
+    rescue GraphQL::Client::QueryResult::NoFieldError => e
       assert_equal "implicitly fetched field `name' on Person type.\n\n" \
         "fragment TestQueryResult__Temp__Person on Person {\n  __typename\n+ name\n}", e.to_s
     end
@@ -253,7 +253,7 @@ class TestQueryResult < MiniTest::Test
     begin
       person.name
       flunk
-    rescue NoMethodError => e
+    rescue GraphQL::Client::QueryResult::NoFieldError => e
       assert_equal "implicitly fetched field `name' on Person type." \
         "\n\nme {\n  ...TestQueryResult__Temp__Person\n+ name\n}", e.to_s
     end
