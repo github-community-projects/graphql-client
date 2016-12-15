@@ -257,7 +257,7 @@ module GraphQL
         raise e unless type
 
         unless type.fields[e.name.to_s]
-          raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type} type"
+          raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type} type. https://git.io/v1y3m"
         end
 
         if data[e.name.to_s]

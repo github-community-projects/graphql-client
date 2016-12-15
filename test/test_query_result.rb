@@ -183,7 +183,7 @@ class TestQueryResult < MiniTest::Test
       person.nickname
       flunk
     rescue GraphQL::Client::QueryResult::UnimplementedFieldError => e
-      assert_equal "undefined field `nickname' on Person type", e.to_s
+      assert_equal "undefined field `nickname' on Person type. https://git.io/v1y3m", e.to_s
     end
   end
 
