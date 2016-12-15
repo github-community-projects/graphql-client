@@ -19,7 +19,7 @@ If the fragment is not updated along with this changed, the property will still 
 
 ## Under-fetching
 
-Under-fetching occurs when fields are not declared in a fragment but are used in the template. This missing data will likely surface as a `NoMethodError` or `nil` value.
+Under-fetching occurs when fields are not declared in a fragment but are used in the template. This missing data will likely surface as a `NoFieldError` or `nil` value.
 
 Worse, there may be a latent under-fetch bug when a template does not declare a data dependency but appears to be working because its caller happens to fetch the correct data upstream. But when this same template is rendered from a different path, it errors on missing data.
 
@@ -59,10 +59,15 @@ The parent view in this case may drop its `author` dependency and break the chil
 
 To avoid this under-fetching issue, views do not access raw JSON data directly. Instead they use a Ruby struct-like object derived from the fragment.
 
-The `Views::Issues::Show::Issue.new` object wraps the raw data hash with accessors that are explicitly declared by the current view. Even though `issue["number"]` is fetched and exposed to the parent view, `issue.number` here will raise `NoMethodError`.
+The `Views::Issues::Show::Issue.new` object wraps the raw data hash with accessors that are explicitly declared by the current view. Even though `issue["number"]` is fetched and exposed to the parent view, `issue.number` here will raise `NoFieldError`.
 
 ``` erb
 <% issue = Views::Issues::Show::Issue.new(issue) %>
 <%= issue.title %>
 by <%= issue.author.login %>
 ```
+
+## See Also
+
+* [`ImplicitlyFetchedFieldError`](implicitly-fetched-field-error.md)
+* [Relay Data Masking](https://facebook.github.io/relay/docs/thinking-in-relay.html#data-masking)

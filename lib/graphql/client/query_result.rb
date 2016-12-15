@@ -14,6 +14,11 @@ module GraphQL
     #
     # Wrappers also limit field visibility to fragment definitions.
     class QueryResult
+      class NoFieldError < Error; end
+      class ImplicitlyFetchedFieldError < NoFieldError; end
+      class UnfetchedFieldError < NoFieldError; end
+      class UnimplementedFieldError < NoFieldError; end
+
       # Internal: Get QueryResult class for result of query.
       #
       # Returns subclass of QueryResult or nil.
@@ -252,18 +257,20 @@ module GraphQL
         raise e unless type
 
         unless type.fields[e.name.to_s]
-          raise NoMethodError, "undefined field `#{e.name}' on #{type} type"
+          raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type} type. https://git.io/v1y3m"
         end
 
-        message = if data[e.name.to_s]
-                    "implicitly fetched field `#{e.name}' on #{type} type."
-                  else
-                    "unfetched field `#{e.name}' on #{type} type."
-                  end
+        if data[e.name.to_s]
+          error_class = ImplicitlyFetchedFieldError
+          message = "implicitly fetched field `#{e.name}' on #{type} type. https://git.io/v1yGL"
+        else
+          error_class = UnfetchedFieldError
+          message = "unfetched field `#{e.name}' on #{type} type. https://git.io/v1y3U"
+        end
 
         node = self.class.source_node
         message += "\n\n" + node.to_query_string.sub(/\}$/, "+ #{e.name}\n}") if node
-        raise NoMethodError, message
+        raise error_class, message
       end
 
       def respond_to_missing?(*args)
