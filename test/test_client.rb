@@ -847,7 +847,7 @@ class TestClient < MiniTest::Test
       }
     GRAPHQL
 
-    assert_equal nil, user_query.name
+    assert_nil user_query.name
     assert_equal "GraphQL__Client__OperationDefinition_#{user_query.object_id}", user_query.definition_name
 
     # rubocop:disable GraphQL/Heredoc
