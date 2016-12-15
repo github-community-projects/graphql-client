@@ -74,7 +74,7 @@ class TestClientFetch < MiniTest::Test
     response = @client.query(Temp::Query)
 
     assert response.data
-    assert_equal nil, response.data.partial_error
+    assert_nil response.data.partial_error
     refute_empty response.data.errors
     assert_equal "just a little broken", response.data.errors["partial_error"][0]
 

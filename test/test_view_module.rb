@@ -24,7 +24,7 @@ class TestViewModule < MiniTest::Test
     assert_equal "#{Root}/views/users/show.html.erb", Views::Users.const_path(:Show)
     assert_equal "#{Root}/views/users/_profile.html.erb", Views::Users.const_path(:Profile)
 
-    assert_equal nil, Views.const_path(:Missing)
+    assert_nil Views.const_path(:Missing)
   end
 
   def test_const_missing

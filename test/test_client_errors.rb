@@ -226,7 +226,7 @@ class TestClientErrors < MiniTest::Test
     Temp.const_set :Query, @client.parse("{ nullableError }")
     assert response = @client.query(Temp::Query)
 
-    assert_equal nil, response.data.nullable_error
+    assert_nil response.data.nullable_error
 
     assert_equal false, response.data.errors.empty?
     assert_equal false, response.data.errors.blank?
@@ -274,7 +274,7 @@ class TestClientErrors < MiniTest::Test
     assert_empty response.data.errors
     assert_equal "b00m", response.data.errors.all["foo"][0]
 
-    assert_equal nil, response.data.foo.nullable_error
+    assert_nil response.data.foo.nullable_error
     assert_equal "b00m", response.data.foo.errors["nullableError"][0]
     assert_equal "b00m", response.data.foo.errors.all["nullableError"][0]
   end
@@ -283,7 +283,7 @@ class TestClientErrors < MiniTest::Test
     Temp.const_set :Query, @client.parse("{ version, nonnullableError }")
     assert response = @client.query(Temp::Query)
 
-    assert_equal nil, response.data
+    assert_nil response.data
     refute_empty response.errors
     assert_equal "b00m", response.errors[:data][0]
     assert_equal "b00m", response.errors.all[:data][0]
@@ -293,7 +293,7 @@ class TestClientErrors < MiniTest::Test
     Temp.const_set :Query, @client.parse("{ version, foo { nonnullableError } }")
     assert response = @client.query(Temp::Query)
 
-    assert_equal nil, response.data
+    assert_nil response.data
     refute_empty response.errors
     assert_equal "b00m", response.errors[:data][0]
     assert_equal "b00m", response.errors.all[:data][0]
@@ -308,7 +308,7 @@ class TestClientErrors < MiniTest::Test
     assert_equal "b00m", response.data.errors.all["foos"][0]
     assert_equal "b00m", response.data.errors.all["foos"][1]
 
-    assert_equal nil, response.data.foos[0].nullable_error
+    assert_nil response.data.foos[0].nullable_error
     assert_equal "b00m", response.data.foos[0].errors["nullableError"][0]
     assert_equal "b00m", response.data.foos[0].errors.all["nullableError"][0]
   end
@@ -317,8 +317,8 @@ class TestClientErrors < MiniTest::Test
     Temp.const_set :Query, @client.parse("{ node { __typename } nodes { __typename } }")
     assert response = @client.query(Temp::Query)
 
-    assert_equal nil, response.data.node
-    assert_equal nil, response.data.nodes[0]
+    assert_nil response.data.node
+    assert_nil response.data.nodes[0]
     assert response.data.nodes[1]
     assert_equal "Foo", response.data.nodes[1].__typename
 
