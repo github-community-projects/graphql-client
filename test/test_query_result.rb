@@ -26,6 +26,7 @@ class TestQueryResult < MiniTest::Test
     field :company, types.String
     field :homepageURL, types.String
     field :createdAt, !DateTime
+    field :hobbies, types[types.String]
   end
 
   PersonConnection = PersonType.define_connection do
@@ -42,7 +43,8 @@ class TestQueryResult < MiniTest::Test
           firstName: "Joshua",
           lastName: "Peek",
           company: "GitHub",
-          createdAt: Time.at(0)
+          createdAt: Time.at(0),
+          hobbies: ["soccer", "coding"]
         )
       }
     end
@@ -411,5 +413,20 @@ class TestQueryResult < MiniTest::Test
     GraphQL::Client.allow_noncollocated_callers do
       assert_equal true, person_employed?(person)
     end
+  end
+
+  def test_list_of_string_scalar_casting
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          hobbies
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    person = response.data.me
+    assert_equal ["soccer", "coding"], person.hobbies
   end
 end
