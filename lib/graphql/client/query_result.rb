@@ -53,7 +53,11 @@ module GraphQL
         end
 
         def cast(value, _errors = nil)
-          @type.coerce_input(value)
+          if value.is_a? Array
+            value.map { |item|  @type.coerce_input(item) }
+          else
+            @type.coerce_input(value)
+          end
         end
 
         def |(_other)
