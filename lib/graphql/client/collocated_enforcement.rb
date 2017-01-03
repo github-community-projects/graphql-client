@@ -29,10 +29,10 @@ module GraphQL
             define_method(method) do |*args, &block|
               return super(*args, &block) if Thread.current[:query_result_caller_location_ignore]
 
-              locations = caller_locations(1)
+              locations = caller_locations(1, 1)
               if locations.first.path != path
                 error = NonCollocatedCallerError.new("#{method} was called outside of '#{path}' https://git.io/v1syX")
-                error.set_backtrace(locations.map(&:to_s))
+                error.set_backtrace(caller(1))
                 raise error
               end
 
