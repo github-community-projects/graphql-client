@@ -56,4 +56,16 @@ class TestCollocatedEnforcement < MiniTest::Test
       format_person_info_via_send(person)
     end
   end
+
+  def test_exception_backtrace_excludes_enforce_collocated_callers
+    person = Person.new
+    begin
+      format_person_info(person)
+    rescue GraphQL::Client::NonCollocatedCallerError => e
+      exception = e
+    end
+
+    assert_includes exception.backtrace[0], "in `format_person_info'"
+    assert_includes exception.backtrace[1], "in `test_exception_backtrace_excludes_enforce_collocated_callers'"
+  end
 end
