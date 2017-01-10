@@ -58,6 +58,8 @@ module GraphQL
       def execute(document:, operation_name: nil, variables: {}, context: {})
         request = Net::HTTP::Post.new(uri.request_uri)
 
+        request.basic_auth(uri.user, uri.password) if uri.user || uri.password
+
         request["Accept"] = "application/json"
         request["Content-Type"] = "application/json"
         headers(context).each { |name, value| request[name] = value }
