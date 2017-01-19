@@ -78,7 +78,7 @@ module GraphQL
       result
     end
 
-    def initialize(schema: nil, execute: nil, enforce_collocated_callers: false)
+    def initialize(schema:, execute: nil, enforce_collocated_callers: false)
       @schema = self.class.load_schema(schema)
       @execute = execute
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
@@ -233,24 +233,20 @@ module GraphQL
 
       document_dependencies = Language::Nodes::Document.new(definitions: doc.definitions + definition_dependencies.to_a)
 
-      if @schema
-        rules = GraphQL::StaticValidation::ALL_RULES - [GraphQL::StaticValidation::FragmentsAreUsed]
-        validator = GraphQL::StaticValidation::Validator.new(schema: @schema, rules: rules)
-        query = GraphQL::Query.new(@schema, document: document_dependencies)
+      rules = GraphQL::StaticValidation::ALL_RULES - [GraphQL::StaticValidation::FragmentsAreUsed]
+      validator = GraphQL::StaticValidation::Validator.new(schema: self.schema, rules: rules)
+      query = GraphQL::Query.new(self.schema, document: document_dependencies)
 
-        errors = validator.validate(query)
-        errors.fetch(:errors).each do |error|
-          error_hash = error.to_h
-          validation_line = error_hash["locations"][0]["line"]
-          error = ValidationError.new(error_hash["message"])
-          error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller)
-          raise error
-        end
-
-        document_types = DocumentTypes.analyze_types(@schema, doc).freeze
-      else
-        document_types = {}.freeze
+      errors = validator.validate(query)
+      errors.fetch(:errors).each do |error|
+        error_hash = error.to_h
+        validation_line = error_hash["locations"][0]["line"]
+        error = ValidationError.new(error_hash["message"])
+        error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller)
+        raise error
       end
+
+      document_types = DocumentTypes.analyze_types(self.schema, doc).freeze
 
       QueryTypename.insert_typename_fields(doc, types: document_types)
 
@@ -259,7 +255,7 @@ module GraphQL
         node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
         definition = Definition.for(
-          schema: @schema,
+          schema: self.schema,
           node: node,
           document: sliced_document,
           document_types: document_types,
