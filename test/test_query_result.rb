@@ -339,7 +339,7 @@ class TestQueryResult < MiniTest::Test
     assert_equal 2, data.users.edges.length
     assert_equal "josh", data.users.edges[0].node.login
     assert_equal "mislav", data.users.edges[1].node.login
-    assert_equal %w(josh mislav), data.users.each_node.map(&:login)
+    assert_equal %w(josh mislav), data.users.edges.map(&:node).map(&:login)
   end
 
   def test_date_scalar_casting
