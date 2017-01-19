@@ -103,7 +103,7 @@ If an execution error occurs loading a collection of data, an empty list may be 
 <% if repository.errors[:search_results].any? %>
   <p>Search is down</p>
 <% else %>
-  <% repository.search_results.each_node do |result| %>
+  <% repository.search_results.nodes.each do |result| %>
     <%= result.title %>
   <% end %>
 <% end %>
@@ -112,7 +112,7 @@ If an execution error occurs loading a collection of data, an empty list may be 
 The list could also be partial populated and truncated because of a timeout.
 
 ``` erb
-<% pull.diff_entries.each_node do |diff_entry| %>
+<% pull.diff_entries.nodes.each do |diff_entry| %>
   <%= diff_entry.path %>
 <% end %>
 

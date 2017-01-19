@@ -54,8 +54,6 @@ module RuboCop
           names << underscore_name = ActiveSupport::Inflector.underscore(name)
           names << "#{underscore_name}?"
 
-          names << "each_node" if name == "edges" || name == "node"
-
           names
         end
       end

@@ -104,16 +104,6 @@ module GraphQL
               end
             RUBY
             field_readers << "#{field_alias}?".to_sym
-
-            next unless field == "edges"
-            class_eval <<-RUBY, __FILE__, __LINE__
-              def each_node
-                return enum_for(:each_node) unless block_given?
-                edges.each { |edge| yield edge.node }
-                self
-              end
-            RUBY
-            field_readers << :each_node
           end
 
           assigns = @fields.map do |field, klass|
