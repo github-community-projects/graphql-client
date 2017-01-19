@@ -47,7 +47,15 @@ class TestClientFetch < MiniTest::Test
   end
 
   def test_failed_validation_response
-    @client = GraphQL::Client.new(schema: nil, execute: Schema)
+    query = GraphQL::ObjectType.define do
+      name "Query"
+      field :err, types.String
+    end
+    outdated_schema = GraphQL::Schema.define(query: query) do
+      resolve_type ->(_obj, _ctx) { raise NotImplementedError }
+    end
+
+    @client = GraphQL::Client.new(schema: outdated_schema, execute: Schema)
 
     Temp.const_set :Query, @client.parse("{ err }")
     assert response = @client.query(Temp::Query)

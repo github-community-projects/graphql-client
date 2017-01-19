@@ -6,7 +6,22 @@ require "minitest/autorun"
 
 class TestViewModule < MiniTest::Test
   Root = File.expand_path("..", __FILE__)
-  Client = GraphQL::Client.new
+
+  UserType = GraphQL::ObjectType.define do
+    name "User"
+    field :login, !types.String
+  end
+
+  QueryType = GraphQL::ObjectType.define do
+    name "Query"
+    field :viewer, !UserType
+  end
+
+  Schema = GraphQL::Schema.define(query: QueryType) do
+    resolve_type ->(_obj, _ctx) { raise NotImplementedError }
+  end
+
+  Client = GraphQL::Client.new(schema: Schema)
 
   module Views
     extend GraphQL::Client::ViewModule
@@ -37,7 +52,6 @@ class TestViewModule < MiniTest::Test
     assert_kind_of GraphQL::Client::FragmentDefinition, Views::Users::Show::User
     assert_equal(<<-'GRAPHQL'.gsub("      ", "").chomp, Views::Users::Show::User.document.to_query_string)
       fragment TestViewModule__Views__Users__Show__User on User {
-        __typename
         login
       }
     GRAPHQL
