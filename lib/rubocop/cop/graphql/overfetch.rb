@@ -9,7 +9,7 @@ module RuboCop
     module GraphQL
       # Public: Rubocop for catching overfetched fields in ERB templates.
       class Overfetch < Cop
-        def_node_search :send_methods, "(send ...)"
+        def_node_search :send_methods, "({send csend} ...)"
 
         def investigate(processed_source)
           erb = File.read(processed_source.buffer.name)

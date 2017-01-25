@@ -17,6 +17,14 @@ class TestRubocopOverfetch < MiniTest::Test
     assert_empty @cop.offenses.map(&:message)
   end
 
+  def test_all_fields_used_with_safe_navigation_operator
+    skip if RUBY_VERSION < "2.3"
+
+    investigate(@cop, "#{Root}/views/users/show-2-3.html.erb")
+
+    assert_empty @cop.offenses.map(&:message)
+  end
+
   def test_field_unused
     investigate(@cop, "#{Root}/views/users/overfetch.html.erb")
 
