@@ -147,6 +147,10 @@ module GraphQL
 
         attr_reader :fields
 
+        def schema
+          source_definition.schema
+        end
+
         def [](name)
           fields[name]
         end
@@ -228,6 +232,14 @@ module GraphQL
 
       attr_reader :__typename
       alias typename __typename
+
+      def type_of?(type)
+        if type = self.class.schema.types.fetch(type.to_s, nil)
+          self.class.schema.possible_types(type).any? { |t| __typename == t.name }
+        else
+          false
+        end
+      end
 
       def inspect
         ivars = self.class.fields.keys.map do |sym|
