@@ -235,7 +235,7 @@ module GraphQL
 
       def type_of?(type)
         if type = self.class.schema.types.fetch(type.to_s, nil)
-          self.class.schema.possible_types(type).any? { |t| __typename == t.name }
+          self.class.schema.possible_types(type).any? { |t| @__typename == t.name }
         else
           false
         end
