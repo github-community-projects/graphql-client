@@ -17,8 +17,14 @@ class TestQueryResult < MiniTest::Test
     end
   end
 
+  HumanLike = GraphQL::InterfaceType.define do
+    name "HumanLike"
+    field :updatedAt, !DateTime
+  end
+
   PersonType = GraphQL::ObjectType.define do
     name "Person"
+    interfaces [HumanLike]
     field :login, types.String
     field :name, types.String
     field :firstName, types.String
@@ -44,6 +50,7 @@ class TestQueryResult < MiniTest::Test
           lastName: "Peek",
           company: "GitHub",
           createdAt: Time.at(0),
+          updatedAt: Time.at(1),
           hobbies: ["soccer", "coding"]
         )
       }
@@ -61,7 +68,9 @@ class TestQueryResult < MiniTest::Test
     end
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType)
+  Schema = GraphQL::Schema.define(query: QueryType) do
+    resolve_type -> (_object, _ctx) { PersonType }
+  end
 
   module Temp
   end
@@ -348,6 +357,7 @@ class TestQueryResult < MiniTest::Test
         me {
           name
           createdAt
+          updatedAt
         }
       }
     GRAPHQL
@@ -357,6 +367,7 @@ class TestQueryResult < MiniTest::Test
     person = response.data.me
     assert_equal "Josh", person.name
     assert_equal Time.at(0), person.created_at
+    assert_equal Time.at(1), person.updated_at
   end
 
   include FooHelper
