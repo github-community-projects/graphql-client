@@ -82,7 +82,7 @@ module GraphQL
 
           fields.each do |field, klass|
             if @type.is_a?(GraphQL::ObjectType)
-              field_node = @type.fields[field.to_s]
+              field_node = @type.get_field(field.to_s)
               if field_node && field_node.type.unwrap.is_a?(GraphQL::ScalarType)
                 klass = Scalar.new(field_node.type.unwrap)
               end
