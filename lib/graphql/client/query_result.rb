@@ -262,20 +262,24 @@ module GraphQL
         type = self.class.type
         raise e unless type
 
-        unless type.fields[e.name.to_s]
+        field = type.all_fields.find do |f|
+          f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
+        end
+
+        unless field
           raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type} type. https://git.io/v1y3m"
         end
 
-        if data[e.name.to_s]
+        if data[field.name]
           error_class = ImplicitlyFetchedFieldError
-          message = "implicitly fetched field `#{e.name}' on #{type} type. https://git.io/v1yGL"
+          message = "implicitly fetched field `#{field.name}' on #{type} type. https://git.io/v1yGL"
         else
           error_class = UnfetchedFieldError
-          message = "unfetched field `#{e.name}' on #{type} type. https://git.io/v1y3U"
+          message = "unfetched field `#{field.name}' on #{type} type. https://git.io/v1y3U"
         end
 
         node = self.class.source_node
-        message += "\n\n" + node.to_query_string.sub(/\}$/, "+ #{e.name}\n}") if node
+        message += "\n\n" + node.to_query_string.sub(/\}$/, "+ #{field.name}\n}") if node
         raise error_class, message
       end
 

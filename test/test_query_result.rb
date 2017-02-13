@@ -217,6 +217,25 @@ class TestQueryResult < MiniTest::Test
     end
   end
 
+  def test_no_method_when_snakecase_field_exists_but_was_not_fetched
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          __typename
+        }
+      }
+    GRAPHQL
+
+    person = @client.query(Temp::Query).data.me
+
+    begin
+      person.first_name
+      flunk
+    rescue GraphQL::Client::QueryResult::UnfetchedFieldError => e
+      assert_equal "unfetched field `firstName' on Person type. https://git.io/v1y3U\n\nme {\n  __typename\n+ firstName\n}", e.to_s
+    end
+  end
+
   def test_no_method_error_leaked_from_parent
     Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
       fragment on Person {
@@ -241,6 +260,33 @@ class TestQueryResult < MiniTest::Test
     rescue GraphQL::Client::QueryResult::ImplicitlyFetchedFieldError => e
       assert_equal "implicitly fetched field `name' on Person type. https://git.io/v1yGL\n\n" \
         "fragment TestQueryResult__Temp__Person on Person {\n  __typename\n+ name\n}", e.to_s
+    end
+  end
+
+  def test_no_method_error_snakecase_field_leaked_from_parent
+    Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
+      fragment on Person {
+        __typename
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          firstName
+          ...TestQueryResult::Temp::Person
+        }
+      }
+    GRAPHQL
+
+    person = Temp::Person.new(@client.query(Temp::Query).data.me)
+
+    begin
+      person.first_name
+      flunk
+    rescue GraphQL::Client::QueryResult::ImplicitlyFetchedFieldError => e
+      assert_equal "implicitly fetched field `firstName' on Person type. https://git.io/v1yGL\n\n" \
+        "fragment TestQueryResult__Temp__Person on Person {\n  __typename\n+ firstName\n}", e.to_s
     end
   end
 
