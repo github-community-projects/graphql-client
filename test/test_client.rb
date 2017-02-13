@@ -833,8 +833,11 @@ class TestClient < MiniTest::Test
     assert_equal "TestClient::Temp::RepositoryFragment.type", repo.class.name
     assert_equal "TestClient::Temp::RepositoryFragment.type[:owner]", repo.owner.class.name
 
-    assert_raises TypeError do
+    begin
       Temp::UserFragment.new(repo.owner)
+      flunk
+    rescue TypeError => e
+      assert_equal "TestClient::Temp::UserFragment is not included in TestClient::Temp::RepositoryFragment", e.message
     end
   end
 

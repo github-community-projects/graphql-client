@@ -174,7 +174,7 @@ module GraphQL
           spreads = Set.new(self.spreads(obj.class.source_node).map(&:name))
 
           unless spreads.include?(source_node.name)
-            raise TypeError, "couldn't cast #{obj.inspect} to #{inspect}"
+            raise TypeError, "#{self.source_definition.name} is not included in #{obj.class.source_definition.name}"
           end
           cast(obj.to_h, obj.errors)
         when Array
