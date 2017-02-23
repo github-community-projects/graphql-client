@@ -62,6 +62,9 @@ class TestDefinitionVariables < MiniTest::Test
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
     assert_kind_of GraphQL::NonNullType, variables[:name]
     assert_equal GraphQL::STRING_TYPE, variables[:name].unwrap
+
+    variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
+    assert_equal ["$name: String!"], variables.map(&:to_query_string)
   end
 
   def test_query_with_one_nested_variable
@@ -79,6 +82,9 @@ class TestDefinitionVariables < MiniTest::Test
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
     assert_kind_of GraphQL::NonNullType, variables[:name]
     assert_equal GraphQL::STRING_TYPE, variables[:name].unwrap
+
+    variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
+    assert_equal ["$name: String!"], variables.map(&:to_query_string)
   end
 
   def test_query_with_unused_nested_variable
@@ -101,6 +107,9 @@ class TestDefinitionVariables < MiniTest::Test
     assert_kind_of GraphQL::NonNullType, variables[:one]
     assert_equal GraphQL::STRING_TYPE, variables[:one].unwrap
     assert_equal false, variables.key?(:two)
+
+    variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
+    assert_equal ["$one: String!"], variables.map(&:to_query_string)
   end
 
   def test_fragment_with_unused_nested_variable
@@ -123,6 +132,9 @@ class TestDefinitionVariables < MiniTest::Test
     assert_kind_of GraphQL::NonNullType, variables[:one]
     assert_equal GraphQL::STRING_TYPE, variables[:one].unwrap
     assert_equal false, variables.key?(:two)
+
+    variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
+    assert_equal ["$one: String!"], variables.map(&:to_query_string)
   end
 
   def test_mutation_with_input_type_variable
@@ -136,6 +148,9 @@ class TestDefinitionVariables < MiniTest::Test
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
     assert_kind_of GraphQL::NonNullType, variables[:input]
     assert_equal UserInput, variables[:input].unwrap
+
+    variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
+    assert_equal ["$input: CreateUserInput!"], variables.map(&:to_query_string)
   end
 
   def test_mutation_with_nested_input_type_variable
@@ -149,6 +164,9 @@ class TestDefinitionVariables < MiniTest::Test
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
     assert_kind_of GraphQL::NonNullType, variables[:name]
     assert_equal GraphQL::STRING_TYPE, variables[:name].unwrap
+
+    variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
+    assert_equal ["$name: String!"], variables.map(&:to_query_string)
   end
 
   def test_query_with_one_directive_variables
@@ -162,5 +180,8 @@ class TestDefinitionVariables < MiniTest::Test
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
     assert_kind_of GraphQL::NonNullType, variables[:should_skip]
     assert_equal GraphQL::BOOLEAN_TYPE, variables[:should_skip].unwrap
+
+    variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
+    assert_equal ["$should_skip: Boolean!"], variables.map(&:to_query_string)
   end
 end

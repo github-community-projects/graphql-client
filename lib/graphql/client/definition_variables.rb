@@ -38,6 +38,36 @@ module GraphQL
 
         variables
       end
+
+      # Internal: Detect all variables used in a given operation or fragment
+      # definition.
+      #
+      # schema - A GraphQL::Schema
+      # document - A GraphQL::Language::Nodes::Document to scan
+      # definition_name - A String definition name. Defaults to anonymous definition.
+      #
+      # Returns a Hash[Symbol] to VariableDefinition objects.
+      def self.operation_variables(schema, document, definition_name = nil)
+        variables(schema, document, definition_name).map { |name, type|
+          GraphQL::Language::Nodes::VariableDefinition.new(name: name.to_s, type: variable_node(type))
+        }
+      end
+
+      # Internal: Get AST node for GraphQL type.
+      #
+      # type - A GraphQL::Type
+      #
+      # Returns GraphQL::Language::Nodes::Type.
+      def self.variable_node(type)
+        case type
+        when GraphQL::NonNullType
+          GraphQL::Language::Nodes::NonNullType.new(of_type: variable_node(type.of_type))
+        when GraphQL::ListType
+          GraphQL::Language::Nodes::ListType.new(of_type: variable_node(type.of_type))
+        else
+          GraphQL::Language::Nodes::TypeName.new(name: type.name)
+        end
+      end
     end
   end
 end
