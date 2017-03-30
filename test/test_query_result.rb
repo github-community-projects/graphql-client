@@ -486,4 +486,15 @@ class TestQueryResult < MiniTest::Test
     person = response.data.me
     assert_equal ["soccer", "coding"], person.hobbies
   end
+
+  def test_empty_selection_existence
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+    refute response.data.me.nil?
+  end
 end

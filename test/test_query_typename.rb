@@ -243,4 +243,24 @@ class TestQueryTypename < MiniTest::Test
     GRAPHQL
     assert_equal expected.gsub(/^      /, "").chomp, @document.to_query_string
   end
+
+  def test_insert_typename_on_empty_selections
+    document = GraphQL.parse(<<-'GRAPHQL')
+      query FooQuery {
+        me
+      }
+    GRAPHQL
+
+    types = GraphQL::Client::DocumentTypes.analyze_types(Schema, document)
+    GraphQL::Client::QueryTypename.insert_typename_fields(document, types: types)
+
+    expected = <<-'GRAPHQL'
+      query FooQuery {
+        me {
+          __typename
+        }
+      }
+    GRAPHQL
+    assert_equal expected.gsub(/^      /, "").chomp, document.to_query_string
+  end
 end
