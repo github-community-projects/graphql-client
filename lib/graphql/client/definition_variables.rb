@@ -30,8 +30,15 @@ module GraphQL
         variables = {}
 
         visitor[GraphQL::Language::Nodes::VariableIdentifier] << ->(node, parent) do
-          definition = type_stack.argument_definitions.last
-          variables[node.name.to_sym] = definition.type if definition
+          if definition = type_stack.argument_definitions.last
+            existing_type = variables[node.name.to_sym]
+
+            if existing_type && existing_type.unwrap != definition.type.unwrap
+              raise GraphQL::Client::ValidationError, "$#{node.name} was already declared as #{existing_type.unwrap}, but was #{definition.type.unwrap}"
+            elsif !existing_type.is_a?(GraphQL::NonNullType)
+              variables[node.name.to_sym] = definition.type
+            end
+          end
         end
 
         visitor.visit
