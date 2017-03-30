@@ -5,6 +5,7 @@ cache: bundler
 rvm:
   - 2.1.10
   - 2.3.1
+  - 2.4.1
 
 env:
   - GRAPHQL_VERSION=1.2.0 RAILS_VERSION=3.2.22
