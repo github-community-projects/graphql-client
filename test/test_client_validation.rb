@@ -53,7 +53,7 @@ class TestClientValidation < MiniTest::Test
   rescue GraphQL::Client::ValidationError => e
     assert_equal "#{__FILE__}:#{__LINE__ - 4}", e.backtrace.first
     assert_equal "expected TestClientValidation::Temp::Answer to be a " \
-      "GraphQL::Client::FragmentDefinition, but was a Fixnum.", e.message
+      "GraphQL::Client::FragmentDefinition, but was a #{42.class}.", e.message
   else
     flunk "GraphQL::Client::ValidationError expected but nothing was raised"
   end
