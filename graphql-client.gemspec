@@ -13,6 +13,8 @@ Gem::Specification.new do |s|
   s.add_dependency "graphql", "~> 1.2"
 
   s.add_development_dependency "actionpack", ">= 3.2.22", "< 6.0"
+  s.add_development_dependency "erubi", "~> 1.6"
+  s.add_development_dependency "erubis", "~> 2.7"
   s.add_development_dependency "minitest", "~> 5.9"
   s.add_development_dependency "rake", "~> 11.2"
   s.add_development_dependency "rubocop-github", "~> 0.3"

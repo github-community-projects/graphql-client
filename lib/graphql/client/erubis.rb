@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require "action_view"
+require "graphql/client/erubis_enhancer"
 
 module GraphQL
   class Client
@@ -18,24 +19,12 @@ module GraphQL
     #   ActionView::Template::Handlers::ERB.erb_implementation = GraphQL::Client::Erubis
     #
     class Erubis < ActionView::Template::Handlers::Erubis
-      # Public: Extract GraphQL section from ERB template.
-      #
-      # src - String ERB text
-      #
-      # Returns String GraphQL query and line number or nil or no section was
-      # defined.
+      # Deprecated: Use ViewModule.extract_graphql_section.
       def self.extract_graphql_section(src)
-        query_string = src.scan(/<%graphql([^%]+)%>/).flatten.first
-        return nil unless query_string
-        [query_string, Regexp.last_match.pre_match.count("\n") + 1]
+        ViewModule.extract_graphql_section(src)
       end
 
-      # Internal: Extend Rails' Erubis handler to simply ignore <%graphql
-      # sections.
-      def convert_input(src, input)
-        input = input.gsub(/<%graphql/, "<%#")
-        super(src, input)
-      end
+      include ErubisEnhancer
     end
   end
 end
