@@ -55,11 +55,8 @@ class TestClientCreateOperation < MiniTest::Test
       }
     GRAPHQL
 
-    begin
+    assert_raises GraphQL::Client::Error, "Fragment must be defined on Query, Mutation" do
       @client.create_operation(Temp::Fragment)
-      flunk
-    rescue GraphQL::Client::Error => e
-      assert_equal "Fragment must be defined on Query, Mutation", e.message
     end
   end
 
