@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "active_support/inflector"
 require "graphql"
-require "graphql/client/erubis"
+require "graphql/client/view_module"
 require "rubocop"
 
 module RuboCop
@@ -13,7 +13,7 @@ module RuboCop
 
         def investigate(processed_source)
           erb = File.read(processed_source.buffer.name)
-          query, = ::GraphQL::Client::Erubis.extract_graphql_section(erb)
+          query, = ::GraphQL::Client::ViewModule.extract_graphql_section(erb)
           return unless query
 
           aliases = {}

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "active_support/dependencies"
 require "active_support/inflector"
-require "graphql/client/erubis"
+require "graphql/client/erubis_enhancer"
 
 module GraphQL
   class Client
@@ -18,6 +18,18 @@ module GraphQL
     #
     module ViewModule
       attr_accessor :client
+
+      # Public: Extract GraphQL section from ERB template.
+      #
+      # src - String ERB text
+      #
+      # Returns String GraphQL query and line number or nil or no section was
+      # defined.
+      def self.extract_graphql_section(src)
+        query_string = src.scan(/<%graphql([^%]+)%>/).flatten.first
+        return nil unless query_string
+        [query_string, Regexp.last_match.pre_match.count("\n") + 1]
+      end
 
       # Public: Eager load module and all subdependencies.
       #
@@ -124,7 +136,7 @@ module GraphQL
 
         if File.extname(path) == ".erb"
           contents = File.read(path)
-          query, lineno = GraphQL::Client::Erubis.extract_graphql_section(contents)
+          query, lineno = ViewModule.extract_graphql_section(contents)
           mod = client.parse(query, path, lineno) if query
         end
 
