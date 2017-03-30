@@ -233,11 +233,13 @@ module GraphQL
       attr_reader :__typename
       alias typename __typename
 
-      def type_of?(type)
-        if type = self.class.schema.types.fetch(type.to_s, nil)
-          self.class.schema.possible_types(type).any? { |t| @__typename == t.name }
-        else
-          false
+      def type_of?(*types)
+        types.any? do |type|
+          if type = self.class.schema.types.fetch(type.to_s, nil)
+            self.class.schema.possible_types(type).any? { |t| @__typename == t.name }
+          else
+            false
+          end
         end
       end
 

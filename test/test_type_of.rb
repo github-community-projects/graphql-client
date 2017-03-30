@@ -57,6 +57,7 @@ class TestTypeOf < MiniTest::Test
     assert response.data.type_of?(:Query)
     assert response.data.type_of?("Query")
     assert response.data.type_of?(QueryType)
+    assert response.data.type_of?(:Query, :Me)
     refute response.data.type_of?(:Me)
     refute response.data.type_of?(:Node)
     refute response.data.type_of?(:Null)
@@ -84,5 +85,6 @@ class TestTypeOf < MiniTest::Test
     refute response.data.me.type_of?("Result")
     refute response.data.me.type_of?(QueryType)
     refute response.data.me.type_of?(ResultType)
+    refute response.data.me.type_of?(QueryType, ResultType)
   end
 end
