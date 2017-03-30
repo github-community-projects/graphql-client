@@ -234,7 +234,10 @@ module GraphQL
 
       document_dependencies = Language::Nodes::Document.new(definitions: doc.definitions + definition_dependencies.to_a)
 
-      rules = GraphQL::StaticValidation::ALL_RULES - [GraphQL::StaticValidation::FragmentsAreUsed]
+      rules = GraphQL::StaticValidation::ALL_RULES - [
+        GraphQL::StaticValidation::FragmentsAreUsed,
+        GraphQL::StaticValidation::FieldsHaveAppropriateSelections
+      ]
       validator = GraphQL::StaticValidation::Validator.new(schema: self.schema, rules: rules)
       query = GraphQL::Query.new(self.schema, document: document_dependencies)
 

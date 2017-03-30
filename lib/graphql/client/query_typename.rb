@@ -16,17 +16,20 @@ module GraphQL
       # Returns nothing.
       def self.insert_typename_fields(document, types: {})
         on_selections = ->(node, _parent) do
-          return unless node.selections.any?
-
           type = types[node]
-          case type && type.unwrap
-          when NilClass, GraphQL::InterfaceType, GraphQL::UnionType
-            names = node_flatten_selections(node.selections).map { |s| s.respond_to?(:name) ? s.name : nil }
-            names = Set.new(names.compact)
 
-            unless names.include?("__typename")
-              node.selections = [GraphQL::Language::Nodes::Field.new(name: "__typename")] + node.selections
+          if node.selections.any?
+            case type && type.unwrap
+            when NilClass, GraphQL::InterfaceType, GraphQL::UnionType
+              names = node_flatten_selections(node.selections).map { |s| s.respond_to?(:name) ? s.name : nil }
+              names = Set.new(names.compact)
+
+              unless names.include?("__typename")
+                node.selections = [GraphQL::Language::Nodes::Field.new(name: "__typename")] + node.selections
+              end
             end
+          elsif type && type.unwrap.is_a?(GraphQL::ObjectType)
+            node.selections = [GraphQL::Language::Nodes::Field.new(name: "__typename")]
           end
         end
 
