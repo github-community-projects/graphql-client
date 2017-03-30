@@ -496,5 +496,32 @@ class TestQueryResult < MiniTest::Test
 
     response = @client.query(Temp::Query)
     refute response.data.me.nil?
+    assert_equal "Person", response.data.me.typename
+    assert response.data.me.type_of?(:Person)
+  end
+
+  def test_empty_selection_existence_with_fragment
+    Temp.const_set :Fragment, @client.parse(<<-'GRAPHQL')
+      fragment on Query {
+        me {
+          name
+        }
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me
+        ...TestQueryResult::Temp::Fragment
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+    refute response.data.me.nil?
+    assert_equal "Person", response.data.me.typename
+    assert response.data.me.type_of?(:Person)
+
+    person = Temp::Fragment.new(response.data).me
+    assert_equal "Josh", person.name
   end
 end
