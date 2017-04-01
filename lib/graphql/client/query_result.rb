@@ -227,11 +227,15 @@ module GraphQL
       # Returns Errors collection.
       attr_reader :errors
 
-      attr_reader :data
-      alias to_h data
-
       attr_reader :__typename
       alias typename __typename
+
+      # Public: Returns the raw response data
+      #
+      # Returns Hash
+      def to_h
+        @data
+      end
 
       def type_of?(*types)
         types.any? do |type|
@@ -272,7 +276,7 @@ module GraphQL
           raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type} type. https://git.io/v1y3m"
         end
 
-        if data[field.name]
+        if @data[field.name]
           error_class = ImplicitlyFetchedFieldError
           message = "implicitly fetched field `#{field.name}' on #{type} type. https://git.io/v1yGL"
         else
