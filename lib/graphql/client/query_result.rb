@@ -233,10 +233,9 @@ module GraphQL
       # Public: Returns the raw response data
       #
       # Returns Hash
-      def __raw_data
+      def to_h
         @data
       end
-      alias to_h __raw_data
 
       def type_of?(*types)
         types.any? do |type|
