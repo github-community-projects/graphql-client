@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+
+require "graphql/client/definition"
+
 module GraphQL
   class Client
     # Specific operation definition subtype for queries, mutations or
