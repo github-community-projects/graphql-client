@@ -79,16 +79,5 @@ module GraphQL
         @type ||= GraphQL::Client::QueryResult.wrap(self, definition_node, name: "#{name}.type")
       end
     end
-
-    # Specific operation definition subtype for queries, mutations or
-    # subscriptions.
-    class OperationDefinition < Definition
-      # Public: Alias for definition name.
-      alias operation_name definition_name
-    end
-
-    # Specific fragment definition subtype.
-    class FragmentDefinition < Definition
-    end
   end
 end
