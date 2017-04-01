@@ -100,49 +100,39 @@ module GraphQL
         end
       end
 
-      # Public: Source location that defined the Module.
+      # Public: Directory to retrieve nested GraphQL definitions from.
       #
       # Returns absolute String path under app/views.
       attr_accessor :path
 
-      # Internal: Detect source location for constant name.
-      #
-      # name - String or Symbol constant name
-      #
-      # Examples
-      #
-      #   Views.const_path(:Users) #=> "app/views/users"
-      #   Views::Users.const_path(:Show) #=> "app/views/users/show.html.erb"
-      #   Views::Users.const_path(:Profile) #=> "app/views/users/_profile.html.erb"
-      #
-      # Returns String absolute path to file, otherwise nil.
-      def const_path(name)
-        pathname = ActiveSupport::Inflector.underscore(name.to_s)
-        Dir[File.join(path, "{#{pathname},_#{pathname}}{/,.*}")].map { |fn| File.expand_path(fn) }.first
-      end
-
       # Internal: Initialize new module for constant name and load ERB statics.
       #
-      # path - String path of directory or erb file.
+      # name - String or Symbol constant name.
       #
       # Examples
       #
-      #   load_module("app/views/users")
-      #   load_module("app/views/users/show.html.erb")
+      #   Views::Users.load_module(:Profile)
+      #   Views::Users::Profile.load_module(:Show)
       #
       # Returns new Module implementing Loadable concern.
-      def load_module(path)
+      def load_module(name)
         mod = Module.new
 
-        if File.extname(path) == ".erb"
+        pathname = ActiveSupport::Inflector.underscore(name.to_s)
+        path = Dir[File.join(self.path, "{#{pathname},_#{pathname}}{.*}")].map { |fn| File.expand_path(fn) }.first
+        dirname = File.join(self.path, ActiveSupport::Inflector.underscore(name.to_s))
+
+        return unless path || Dir.exist?(dirname)
+
+        if path && File.extname(path) == ".erb"
           contents = File.read(path)
           query, lineno = ViewModule.extract_graphql_section(contents)
           mod = client.parse(query, path, lineno) if query
         end
 
         mod.extend(ViewModule)
+        mod.path = dirname
         mod.client = client
-        mod.path = path
         mod
       end
 
@@ -152,14 +142,13 @@ module GraphQL
       #
       # Returns module or raises NameError if missing.
       def const_missing(name)
-        path = const_path(name)
-
-        if path
-          mod = load_module(path)
+        if mod = load_module(name)
           const_set(name, mod)
           mod.unloadable
           mod
         else
+          puts "Could not find #{name}"
+
           super
         end
       end
