@@ -116,24 +116,31 @@ module GraphQL
       #
       # Returns new Module implementing Loadable concern.
       def load_module(name)
-        mod = Module.new
-
         pathname = ActiveSupport::Inflector.underscore(name.to_s)
         path = Dir[File.join(self.path, "{#{pathname},_#{pathname}}{.*}")].map { |fn| File.expand_path(fn) }.first
-        dirname = File.join(self.path, ActiveSupport::Inflector.underscore(name.to_s))
 
-        return unless path || Dir.exist?(dirname)
+        return if !path || File.extname(path) != ".erb"
 
-        if path && File.extname(path) == ".erb"
-          contents = File.read(path)
-          query, lineno = ViewModule.extract_graphql_section(contents)
-          mod = client.parse(query, path, lineno) if query
-        end
+        contents = File.read(path)
+        query, lineno = ViewModule.extract_graphql_section(contents)
+        return unless query
 
+        mod = client.parse(query, path, lineno)
         mod.extend(ViewModule)
-        mod.path = dirname
+        mod.path = File.join(self.path, pathname)
         mod.client = client
         mod
+      end
+
+      def placeholder_module(name)
+        dirname = File.join(path, ActiveSupport::Inflector.underscore(name.to_s))
+        return nil unless Dir.exist?(dirname)
+
+        Module.new.tap do |mod|
+          mod.extend(ViewModule)
+          mod.path = dirname
+          mod.client = client
+        end
       end
 
       # Public: Implement constant missing hook to autoload View ERB statics.
@@ -142,15 +149,16 @@ module GraphQL
       #
       # Returns module or raises NameError if missing.
       def const_missing(name)
-        if mod = load_module(name)
-          const_set(name, mod)
-          mod.unloadable
-          mod
-        else
-          puts "Could not find #{name}"
+        placeholder = placeholder_module(name)
+        const_set(name, placeholder) if placeholder
 
-          super
-        end
+        mod = load_module(name)
+        return placeholder || super unless mod
+
+        remove_const(name) if placeholder
+        const_set(name, mod)
+        mod.unloadable
+        mod
       end
     end
   end
