@@ -44,14 +44,14 @@ module GraphQL
       #
       # Returns nothing.
       def eager_load!
-        return unless File.directory?(path)
+        return unless File.directory?(load_path)
 
-        Dir.entries(path).each do |entry|
+        Dir.entries(load_path).each do |entry|
           next if entry == "." || entry == ".."
           name = entry.sub(/(\.\w+)+$/, "").camelize.to_sym
-          if ViewModule.valid_constant_name?(name) && loadable_const_defined?(name)
-            mod = const_get(name, false)
-            mod.eager_load!
+          if ViewModule.valid_constant_name?(name)
+            mod = const_defined?(name, false) ? const_get(name) : load_and_set_module(name)
+            mod.eager_load! if mod
           end
         end
 
@@ -73,37 +73,17 @@ module GraphQL
         name.to_s =~ /^[A-Z][a-zA-Z0-9_]*$/
       end
 
-      # Public: Override constant defined to check if constant name matches a
-      # view directory or template namespace.
-      #
-      # name - String or Symbol constant name
-      # inherit - If the lookup will also search the ancestors (default: true)
-      #
-      # Returns true if definition is found, otherwise false.
-      # def const_defined?(name, inherit = true)
-      #   if super(name.to_sym, inherit)
-      #     true
-      #   elsif const_path(name)
-      #     true
-      #   else
-      #     false
-      #   end
-      # end
-
-      def loadable_const_defined?(name)
-        if const_defined?(name.to_sym, false)
-          true
-        elsif const_path(name)
-          true
-        else
-          false
-        end
-      end
-
       # Public: Directory to retrieve nested GraphQL definitions from.
       #
       # Returns absolute String path under app/views.
-      attr_accessor :path
+      attr_accessor :load_path
+      alias_method :path=, :load_path=
+      alias_method :path, :load_path
+
+      # Public: if this module was defined by a view
+      #
+      # Returns absolute String path under app/views.
+      attr_accessor :source_path
 
       # Internal: Initialize new module for constant name and load ERB statics.
       #
@@ -117,7 +97,7 @@ module GraphQL
       # Returns new Module implementing Loadable concern.
       def load_module(name)
         pathname = ActiveSupport::Inflector.underscore(name.to_s)
-        path = Dir[File.join(self.path, "{#{pathname},_#{pathname}}{.*}")].map { |fn| File.expand_path(fn) }.first
+        path = Dir[File.join(load_path, "{#{pathname},_#{pathname}}{.*}")].map { |fn| File.expand_path(fn) }.first
 
         return if !path || File.extname(path) != ".erb"
 
@@ -127,20 +107,34 @@ module GraphQL
 
         mod = client.parse(query, path, lineno)
         mod.extend(ViewModule)
-        mod.path = File.join(self.path, pathname)
+        mod.load_path = File.join(load_path, pathname)
+        mod.source_path = path
         mod.client = client
         mod
       end
 
       def placeholder_module(name)
-        dirname = File.join(path, ActiveSupport::Inflector.underscore(name.to_s))
+        dirname = File.join(load_path, ActiveSupport::Inflector.underscore(name.to_s))
         return nil unless Dir.exist?(dirname)
 
         Module.new.tap do |mod|
           mod.extend(ViewModule)
-          mod.path = dirname
+          mod.load_path = dirname
           mod.client = client
         end
+      end
+
+      def load_and_set_module(name)
+        placeholder = placeholder_module(name)
+        const_set(name, placeholder) if placeholder
+
+        mod = load_module(name)
+        return placeholder unless mod
+
+        remove_const(name) if placeholder
+        const_set(name, mod)
+        mod.unloadable
+        mod
       end
 
       # Public: Implement constant missing hook to autoload View ERB statics.
@@ -149,16 +143,7 @@ module GraphQL
       #
       # Returns module or raises NameError if missing.
       def const_missing(name)
-        placeholder = placeholder_module(name)
-        const_set(name, placeholder) if placeholder
-
-        mod = load_module(name)
-        return placeholder || super unless mod
-
-        remove_const(name) if placeholder
-        const_set(name, mod)
-        mod.unloadable
-        mod
+        load_and_set_module(name) || super
       end
     end
   end
