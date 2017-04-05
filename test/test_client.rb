@@ -674,16 +674,16 @@ class TestClient < MiniTest::Test
                                   "repositories" => [
                                     {
                                       "name" => "github",
-                                      "watchers" => {
+                                      "watchers" => [{
                                         "login" => "josh"
-                                      }
+                                      }]
                                     }
                                   ])
 
     assert_equal "1", user.id
     assert_kind_of Array, user.repositories
     assert_equal "github", user.repositories[0].name
-    assert_equal "josh", user.repositories[0].watchers.login
+    assert_equal "josh", user.repositories[0].watchers[0].login
   end
 
   def test_client_parse_fragment_query_result_with_inline_fragments
@@ -707,16 +707,16 @@ class TestClient < MiniTest::Test
                                   "repositories" => [
                                     {
                                       "name" => "github",
-                                      "watchers" => {
+                                      "watchers" => [{
                                         "login" => "josh"
-                                      }
+                                      }]
                                     }
                                   ])
 
     assert_equal "1", user.id
     assert_kind_of Array, user.repositories
     assert_equal "github", user.repositories[0].name
-    assert_equal "josh", user.repositories[0].watchers.login
+    assert_equal "josh", user.repositories[0].watchers[0].login
   end
 
   def test_client_parse_nested_inline_fragments_on_same_node
@@ -826,7 +826,7 @@ class TestClient < MiniTest::Test
 
     assert_kind_of Temp::RepositoryFragment.type, repo
     assert_equal "rails", repo.name
-    assert_kind_of TestClient::Temp::RepositoryFragment.type[:owner], repo.owner
+    assert_kind_of TestClient::Temp::RepositoryFragment.type[:owner].of_klass, repo.owner
     assert_equal "josh", repo.owner.login
 
     assert_equal "TestClient::Temp::RepositoryFragment", Temp::RepositoryFragment.name
