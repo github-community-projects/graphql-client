@@ -640,6 +640,81 @@ class TestClient < MiniTest::Test
     GRAPHQL
   end
 
+  def test_client_parse_query_external_fragments_document
+    Object.const_set :TopLevelUserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        profilePic(size: 50)
+      }
+    GRAPHQL
+
+    Temp.const_set :FriendFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        id
+        name
+        ...TopLevelUserFragment
+      }
+    GRAPHQL
+
+    Temp.const_set :UserQuery, @client.parse(<<-'GRAPHQL')
+      query {
+        user(id: 4) {
+          friends(first: 10) {
+            ...TestClient::Temp::FriendFragment
+          }
+          mutualFriends(first: 10) {
+            ...TestClient::Temp::FriendFragment
+          }
+        }
+      }
+    GRAPHQL
+
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+      fragment TopLevelUserFragment on User {
+        profilePic(size: 50)
+      }
+
+      fragment TestClient__Temp__FriendFragment on User {
+        id
+        name
+        ...TopLevelUserFragment
+      }
+
+      query TestClient__Temp__UserQuery {
+        user(id: 4) {
+          friends(first: 10) {
+            ...TestClient__Temp__FriendFragment
+          }
+          mutualFriends(first: 10) {
+            ...TestClient__Temp__FriendFragment
+          }
+        }
+      }
+    GRAPHQL
+
+    assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, Temp::UserQuery.document.to_query_string)
+      query TestClient__Temp__UserQuery {
+        user(id: 4) {
+          friends(first: 10) {
+            ...TestClient__Temp__FriendFragment
+          }
+          mutualFriends(first: 10) {
+            ...TestClient__Temp__FriendFragment
+          }
+        }
+      }
+
+      fragment TestClient__Temp__FriendFragment on User {
+        id
+        name
+        ...TopLevelUserFragment
+      }
+
+      fragment TopLevelUserFragment on User {
+        profilePic(size: 50)
+      }
+    GRAPHQL
+  end
+
   def test_client_parse_fragment_query_result_aliases
     Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
       fragment on User {
