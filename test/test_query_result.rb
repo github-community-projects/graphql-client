@@ -75,6 +75,14 @@ class TestQueryResult < MiniTest::Test
       }
     end
 
+    field :userNoHobbies, !PersonType do
+      resolve ->(_query, _args, _ctx) {
+        OpenStruct.new(
+          hobbies: nil
+        )
+      }
+    end
+
     field :currentActor, !ActorUnion do
       resolve ->(_query, _args, _ctx) {
         OpenStruct.new(
@@ -583,6 +591,21 @@ class TestQueryResult < MiniTest::Test
 
     person = response.data.me
     assert_equal ["soccer", "coding"], person.hobbies
+  end
+
+  def test_nullable_list
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        userNoHobbies {
+          hobbies
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    person = response.data.user_no_hobbies
+    assert_nil person.hobbies
   end
 
   def test_empty_selection_existence

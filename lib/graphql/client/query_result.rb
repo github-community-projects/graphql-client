@@ -108,6 +108,8 @@ module GraphQL
             List.new(value.each_with_index.map { |e, idx|
               @of_klass.cast(e, errors.filter_by_path(idx))
             }, errors)
+          when NilClass
+            nil
           else
             raise ArgumentError, "expected list value to be an Array, but was #{value.class}"
           end
