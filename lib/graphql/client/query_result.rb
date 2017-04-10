@@ -32,24 +32,25 @@ module GraphQL
           ScalarWrapper.new(type)
         when GraphQL::EnumType
           EnumWrapper.new(type)
-        when GraphQL::UnionType
-          types = {}
-
-          node.selections.each do |selection|
-            case selection
-            when Language::Nodes::InlineFragment
-              selection_type = source_definition.document_types[selection]
-              selection_wrapper = wrap(source_definition, selection, selection_type, name: name)
-              if types[selection_type]
-                types[selection_type.name] |= selection_wrapper
-              else
-                types[selection_type.name] = selection_wrapper
-              end
-            end
-          end
-
-          UnionWrapper.new(types)
-        when GraphQL::ObjectType, GraphQL::InterfaceType
+        # when GraphQL::UnionType
+        #   types = {}
+        #
+        #   node.selections.each do |selection|
+        #     case selection
+        #     when Language::Nodes::InlineFragment
+        #       selection_type = source_definition.document_types[selection]
+        #       selection_wrapper = wrap(source_definition, selection, selection_type, name: name)
+        #       if types[selection_type]
+        #         p [:merge, selection_type]
+        #         types[selection_type.name] |= selection_wrapper
+        #       else
+        #         types[selection_type.name] = selection_wrapper
+        #       end
+        #     end
+        #   end
+        #
+        #   UnionWrapper.new(types)
+        when GraphQL::ObjectType, GraphQL::InterfaceType, GraphQL::UnionType
           fields = {}
 
           node.selections.each do |selection|

@@ -77,7 +77,13 @@ class TestQueryResult < MiniTest::Test
 
     field :currentActor, !ActorUnion do
       resolve ->(_query, _args, _ctx) {
-        OpenStruct.new(login: "josh")
+        OpenStruct.new(
+          login: "josh",
+          name: "Josh",
+          firstName: "Joshua",
+          lastName: "Peek",
+          updatedAt: Time.at(1),
+        )
       }
     end
 
@@ -459,7 +465,34 @@ class TestQueryResult < MiniTest::Test
     response = @client.query(Temp::Query)
 
     actor = response.data.current_actor
+    assert_equal "Person", actor.typename
     assert_equal "josh", actor.login
+  end
+
+  def test_interface_within_union_values
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        currentActor {
+          ... on Person {
+            login
+          }
+          ... on HumanLike {
+            updatedAt
+          }
+          ... on Person {
+            name
+          }
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    actor = response.data.current_actor
+    assert_equal "Person", actor.typename
+    assert_equal "josh", actor.login
+    assert_equal "Josh", actor.name
+    assert_equal Time.at(1).utc, actor.updatedAt
   end
 
   def test_date_scalar_casting
