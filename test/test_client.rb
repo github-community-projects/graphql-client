@@ -640,7 +640,7 @@ class TestClient < MiniTest::Test
     GRAPHQL
   end
 
-  def test_client_parse_query_external_fragments_document
+  def test_client_parse_query_external_top_level_fragments_document
     Object.const_set :TopLevelUserFragment, @client.parse(<<-'GRAPHQL')
       fragment on User {
         profilePic(size: 50)
