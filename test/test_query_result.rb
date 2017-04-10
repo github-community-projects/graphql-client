@@ -43,6 +43,16 @@ class TestQueryResult < MiniTest::Test
     field :plan, !PlanEnum
   end
 
+  BotType = GraphQL::ObjectType.define do
+    name "Bot"
+    field :login, types.String
+  end
+
+  ActorUnion = GraphQL::UnionType.define do
+    name "Actor"
+    possible_types [PersonType, BotType]
+  end
+
   PersonConnection = PersonType.define_connection do
     name "PersonConnection"
   end
@@ -62,6 +72,12 @@ class TestQueryResult < MiniTest::Test
           hobbies: ["soccer", "coding"],
           plan: "LARGE"
         )
+      }
+    end
+
+    field :currentActor, !ActorUnion do
+      resolve ->(_query, _args, _ctx) {
+        OpenStruct.new(login: "josh")
       }
     end
 
@@ -424,6 +440,26 @@ class TestQueryResult < MiniTest::Test
     person = response.data.me
     assert_equal "Josh", person.name
     assert_equal "LARGE", person.plan
+  end
+
+  def test_union_values
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        currentActor {
+          ... on Person {
+            login
+          }
+          ... on Bot {
+            login
+          }
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    actor = response.data.current_actor
+    assert_equal "josh", actor.login
   end
 
   def test_date_scalar_casting

@@ -32,7 +32,24 @@ module GraphQL
           ScalarWrapper.new(type)
         when GraphQL::EnumType
           EnumWrapper.new(type)
-        when GraphQL::ObjectType, GraphQL::InterfaceType, GraphQL::UnionType
+        when GraphQL::UnionType
+          types = {}
+
+          node.selections.each do |selection|
+            case selection
+            when Language::Nodes::InlineFragment
+              selection_type = source_definition.document_types[selection]
+              selection_wrapper = wrap(source_definition, selection, selection_type, name: name)
+              if types[selection_type]
+                types[selection_type.name] |= selection_wrapper
+              else
+                types[selection_type.name] = selection_wrapper
+              end
+            end
+          end
+
+          UnionWrapper.new(types)
+        when GraphQL::ObjectType, GraphQL::InterfaceType
           fields = {}
 
           node.selections.each do |selection|
@@ -56,6 +73,26 @@ module GraphQL
           define(name: name, type: type, source_definition: source_definition, source_node: node, fields: fields)
         else
           raise TypeError, "unexpected #{type.class}"
+        end
+      end
+
+      class UnionWrapper
+        def initialize(possible_types)
+          @possible_types = possible_types
+        end
+
+        def cast(value, errors = nil)
+          typename = value && value["__typename"]
+          if wrapper = @possible_types[typename]
+            wrapper.cast(value, errors)
+          else
+            raise TypeError, "expected union value to be #{@possible_types.keys.join(", ")}, but was #{typename}"
+          end
+        end
+
+        def |(_other)
+          # XXX: How would union merge?
+          self
         end
       end
 
