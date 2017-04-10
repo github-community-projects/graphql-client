@@ -30,6 +30,8 @@ module GraphQL
           ListWrapper.new(wrap(source_definition, node, type.of_type, name: name))
         when GraphQL::ScalarType
           ScalarWrapper.new(type)
+        when GraphQL::EnumType
+          EnumWrapper.new(type)
         when GraphQL::ObjectType, GraphQL::InterfaceType, GraphQL::UnionType
           fields = {}
 
@@ -106,6 +108,21 @@ module GraphQL
           else
             raise TypeError, "expected other to be a #{self.class}"
           end
+        end
+      end
+
+      class EnumWrapper
+        def initialize(type)
+          @type = type
+        end
+
+        def cast(value, _errors = nil)
+          value
+        end
+
+        def |(_other)
+          # XXX: How would enums merge?
+          self
         end
       end
 

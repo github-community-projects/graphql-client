@@ -17,6 +17,13 @@ class TestQueryResult < MiniTest::Test
     end
   end
 
+  PlanEnum = GraphQL::EnumType.define do
+    name "Plan"
+    value("FREE")
+    value("SMALL")
+    value("LARGE")
+  end
+
   HumanLike = GraphQL::InterfaceType.define do
     name "HumanLike"
     field :updatedAt, !DateTime
@@ -33,6 +40,7 @@ class TestQueryResult < MiniTest::Test
     field :homepageURL, types.String
     field :createdAt, !DateTime
     field :hobbies, types[types.String]
+    field :plan, !PlanEnum
   end
 
   PersonConnection = PersonType.define_connection do
@@ -51,7 +59,8 @@ class TestQueryResult < MiniTest::Test
           company: "GitHub",
           createdAt: Time.at(0),
           updatedAt: Time.at(1),
-          hobbies: ["soccer", "coding"]
+          hobbies: ["soccer", "coding"],
+          plan: "LARGE"
         )
       }
     end
@@ -398,6 +407,23 @@ class TestQueryResult < MiniTest::Test
     assert_equal "josh", data.users.edges[0].node.login
     assert_equal "mislav", data.users.edges[1].node.login
     assert_equal %w(josh mislav), data.users.edges.map(&:node).map(&:login)
+  end
+
+  def test_enum_values
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          name
+          plan
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    person = response.data.me
+    assert_equal "Josh", person.name
+    assert_equal "LARGE", person.plan
   end
 
   def test_date_scalar_casting
