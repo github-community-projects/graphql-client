@@ -117,9 +117,19 @@ module GraphQL
 
         def cast(value, _errors = nil)
           if value.is_a? Array
-            value.map { |item|  @type.coerce_input(item) }
+            value.map { |item|
+              if @type.respond_to?(:coerce_isolated_input)
+                @type.coerce_isolated_input(item)
+              else
+                @type.coerce_input(item)
+              end
+            }
           else
-            @type.coerce_input(value)
+            if @type.respond_to?(:coerce_isolated_input)
+              @type.coerce_isolated_input(value)
+            else
+              @type.coerce_input(value)
+            end
           end
         end
 
