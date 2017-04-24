@@ -98,6 +98,8 @@ module GraphQL
       end
 
       class ListWrapper
+        attr_reader :of_klass
+
         def initialize(type)
           @of_klass = type
         end
