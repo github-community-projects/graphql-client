@@ -4,6 +4,11 @@ require "graphql/client/erubis_enhancer"
 
 module GraphQL
   class Client
+    # Ignore deprecation errors loading AV Erubis
+    ActiveSupport::Deprecation.silence do
+      ActionView::Template::Handlers::Erubis
+    end
+
     # Public: Extended Erubis implementation that supports GraphQL static
     # query sections.
     #
