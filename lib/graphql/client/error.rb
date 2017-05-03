@@ -4,5 +4,14 @@ module GraphQL
     # Public: Abstract base class for all errors raised by GraphQL::Client.
     class Error < StandardError
     end
+
+    class ImplicitlyFetchedFieldError < NoMethodError
+    end
+
+    class UnfetchedFieldError < NoMethodError
+    end
+
+    class UnimplementedFieldError < NoMethodError
+    end
   end
 end

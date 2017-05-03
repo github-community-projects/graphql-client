@@ -1,4 +1,4 @@
-# GraphQL::Client::QueryResult::UnimplementedFieldError
+# GraphQL::Client::UnimplementedFieldError
 
 Raised when trying access a field on a GraphQL response type which isn't defined by the schema.
 

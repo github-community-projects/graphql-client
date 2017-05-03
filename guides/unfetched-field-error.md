@@ -1,4 +1,4 @@
-# GraphQL::Client::QueryResult::UnfetchedFieldError
+# GraphQL::Client::UnfetchedFieldError
 
 Raised when trying access a field on a GraphQL response type which hasn't be explicitly queried.
 

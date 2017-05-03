@@ -1,4 +1,4 @@
-# GraphQL::Client::QueryResult::ImplicitlyFetchedFieldError
+# GraphQL::Client::ImplicitlyFetchedFieldError
 
 Similar to [`UnfetchedFieldError`](unfetched-field-error.md), but raised when trying to access a field on a GraphQL response type that happens to be fetched elsewhere by another fragment but not by the current fragment. The data is available, but isn't safe to rely on until it is explicitly added to the fragment.
 

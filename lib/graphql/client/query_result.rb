@@ -14,11 +14,6 @@ module GraphQL
     #
     # Wrappers also limit field visibility to fragment definitions.
     class QueryResult
-      class NoFieldError < Error; end
-      class ImplicitlyFetchedFieldError < NoFieldError; end
-      class UnfetchedFieldError < NoFieldError; end
-      class UnimplementedFieldError < NoFieldError; end
-
       # Internal: Get QueryResult class for result of query.
       #
       # Returns subclass of QueryResult or nil.
