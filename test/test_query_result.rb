@@ -17,11 +17,46 @@ class TestQueryResult < MiniTest::Test
     end
   end
 
+  NodeType = GraphQL::InterfaceType.define do
+    name "Node"
+    field :id, !types.ID
+  end
+
   PlanEnum = GraphQL::EnumType.define do
     name "Plan"
     value("FREE")
     value("SMALL")
     value("LARGE")
+  end
+
+  AdminUser = GraphQL::InterfaceType.define do
+    name "AdminUser"
+    field :password, !types.String
+  end
+
+  RepositoryType = GraphQL::ObjectType.define do
+    name "Repository"
+    field :name, !types.String
+    field :owner, !UserType
+    field :starCount, !types.Int
+    field :watchers, -> { !types[!UserType] }
+  end
+
+  UserType = GraphQL::ObjectType.define do
+    name "User"
+    interfaces [NodeType, AdminUser]
+    field :id, !types.ID
+    field :firstName, !types.String
+    field :lastName, !types.String
+    field :name, !types.String
+    field :login, !types.String
+    field :login_url, !types.String
+    field :profileName, !types.String
+    field :isCool, !types.Boolean
+    field :profilePic, types.String do
+      argument :size, types.Int
+    end
+    field :repositories, !types[!RepositoryType]
   end
 
   HumanLike = GraphQL::InterfaceType.define do
@@ -41,6 +76,12 @@ class TestQueryResult < MiniTest::Test
     field :createdAt, !DateTime
     field :hobbies, types[types.String]
     field :plan, !PlanEnum
+  end
+
+  OrganizationType = GraphQL::ObjectType.define do
+    name "Organization"
+    interfaces [NodeType]
+    field :name, !types.String
   end
 
   BotType = GraphQL::ObjectType.define do
@@ -86,6 +127,7 @@ class TestQueryResult < MiniTest::Test
     field :currentActor, !ActorUnion do
       resolve ->(_query, _args, _ctx) {
         OpenStruct.new(
+          type: PersonType,
           login: "josh",
           name: "Josh",
           firstName: "Joshua",
@@ -105,10 +147,54 @@ class TestQueryResult < MiniTest::Test
         ]
       }
     end
+
+    field :node, NodeType do
+      argument :id, !types.ID
+
+      resolve ->(_query, args, _ctx) {
+        {
+          "1" => OpenStruct.new({
+            type: UserType,
+            id: "1",
+            login: "josh",
+            password: "secret",
+            login_url: "/login",
+            profileName: "Josh",
+            isCool: true,
+            repositories: [
+              OpenStruct.new(
+                type: RepositoryType,
+                name: "github",
+                watchers: [
+                  OpenStruct.new(login: "josh")
+                ]
+              )
+            ]
+          })
+        }[args[:id]]
+      }
+    end
+
+    field :user, UserType do
+      argument :id, !types.ID
+    end
+
+    field :organization, OrganizationType do
+      argument :id, !types.ID
+    end
+
+    field :repository, RepositoryType do
+      resolve ->(_query, args, _ctx) {
+        OpenStruct.new({
+          name: "rails",
+          owner: OpenStruct.new(type: UserType, login: "josh")
+        })
+      }
+    end
   end
 
   Schema = GraphQL::Schema.define(query: QueryType) do
-    resolve_type -> (_object, _ctx) { PersonType }
+    resolve_type -> (obj, _ctx) { obj.type }
   end
 
   module Temp
@@ -644,5 +730,248 @@ class TestQueryResult < MiniTest::Test
 
     person = Temp::Fragment.new(response.data).me
     assert_equal "Josh", person.name
+  end
+
+  def test_parse_fragment_query_result_with_nested_fields
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        id
+        repositories {
+          name
+          watchers {
+            login
+          }
+        }
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        node(id: "1") {
+          ...TestQueryResult::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    user = Temp::UserFragment.new(response.data.node)
+
+    assert_equal "1", user.id
+    assert_kind_of Array, user.repositories
+    assert_equal "github", user.repositories[0].name
+    assert_equal "josh", user.repositories[0].watchers[0].login
+  end
+
+  def test_parse_fragment_spread_constant
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        login
+      }
+    GRAPHQL
+
+    Temp.const_set :RepositoryFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Repository {
+        name
+        owner {
+          ...TestQueryResult::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        repository {
+          ...TestQueryResult::Temp::RepositoryFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    repo = Temp::RepositoryFragment.new(response.data.repository)
+
+    assert_equal "rails", repo.name
+    refute repo.owner.respond_to?(:login)
+
+    owner = Temp::UserFragment.new(repo.owner)
+    assert_equal "josh", owner.login
+  end
+
+  def test_parse_nested_inline_fragments_on_same_node
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Node {
+        id
+        ... on User {
+          login
+          ... on AdminUser {
+            password
+          }
+        }
+        ... on Organization {
+          name
+        }
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        node(id: "1") {
+          ...TestQueryResult::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    user = Temp::UserFragment.new(response.data.node)
+
+    assert_equal "1", user.id
+    assert_equal "josh", user.login
+    assert_equal "secret", user.password
+  end
+
+  def test_parse_fragment_query_result_aliases
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        login_url
+        profileName
+        name: profileName
+        isCool
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        node(id: "1") {
+          ...TestQueryResult::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    user = Temp::UserFragment.new(response.data.node)
+
+    assert_equal "/login", user.login_url
+    assert_equal "Josh", user.profile_name
+    assert_equal "Josh", user.name
+    assert user.is_cool?
+  end
+
+  def test_parse_fragment_spread_with_inline_fragment
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        login
+      }
+    GRAPHQL
+
+    Temp.const_set :RepositoryFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Repository {
+        name
+        owner {
+          ... on User {
+            ...TestQueryResult::Temp::UserFragment
+          }
+        }
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        repository {
+          ...TestQueryResult::Temp::RepositoryFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    repo = Temp::RepositoryFragment.new(response.data.repository)
+    assert_equal "rails", repo.name
+    refute repo.owner.respond_to?(:login)
+
+    owner = Temp::UserFragment.new(repo.owner)
+    assert_equal "josh", owner.login
+
+    owner = Temp::UserFragment.new(owner)
+    assert_equal "josh", owner.login
+  end
+
+  def test_parse_invalid_fragment_cast
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        login
+      }
+    GRAPHQL
+
+    Temp.const_set :RepositoryFragment, @client.parse(<<-'GRAPHQL')
+      fragment on Repository {
+        name
+        owner {
+          login
+        }
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        repository {
+          ...TestQueryResult::Temp::RepositoryFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    repo = Temp::RepositoryFragment.new(response.data.repository)
+
+    assert_kind_of Temp::RepositoryFragment.type, repo
+    assert_equal "rails", repo.name
+    assert_kind_of Temp::RepositoryFragment.type[:owner].of_klass, repo.owner
+    assert_equal "josh", repo.owner.login
+
+    assert_equal "TestQueryResult::Temp::RepositoryFragment", Temp::RepositoryFragment.name
+    assert_equal "TestQueryResult::Temp::RepositoryFragment.type", repo.class.name
+    assert_equal "TestQueryResult::Temp::RepositoryFragment.type[:owner]", repo.owner.class.name
+
+    assert_raises TypeError,  "TestQueryResult::Temp::UserFragment is not included in TestQueryResult::Temp::RepositoryFragment" do
+      Temp::UserFragment.new(repo.owner)
+    end
+  end
+
+  def test_client_parse_fragment_query_result_with_inline_fragments
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        id
+        repositories {
+          ... on Repository {
+            name
+            watchers {
+              ... on User {
+                login
+              }
+            }
+          }
+        }
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        node(id: "1") {
+          ...TestQueryResult::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    user = Temp::UserFragment.new(response.data.node)
+
+    assert_equal "1", user.id
+    assert_kind_of Array, user.repositories
+    assert_equal "github", user.repositories[0].name
+    assert_equal "josh", user.repositories[0].watchers[0].login
   end
 end
