@@ -398,8 +398,6 @@ module GraphQL
           message = "unfetched field `#{field.name}' on #{type} type. https://git.io/v1y3U"
         end
 
-        node = self.class.source_node
-        message += "\n\n" + node.to_query_string.sub(/\}$/, "+ #{field.name}\n}") if node
         raise error_class, message
       end
 
