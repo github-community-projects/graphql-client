@@ -12,6 +12,7 @@ require "graphql/client/operation_definition"
 require "graphql/client/query_result"
 require "graphql/client/query_typename"
 require "graphql/client/response"
+require "graphql/client/schema"
 require "graphql/language/nodes/deep_freeze_ext"
 require "json"
 
@@ -30,6 +31,8 @@ module GraphQL
     extend CollocatedEnforcement
 
     attr_reader :schema, :execute
+
+    attr_reader :types
 
     attr_accessor :document_tracking_enabled
 
@@ -89,6 +92,8 @@ module GraphQL
       @document_tracking_enabled = false
       @allow_dynamic_queries = false
       @enforce_collocated_callers = enforce_collocated_callers
+
+      @types = Schema.generate(@schema)
     end
 
     def parse(str, filename = nil, lineno = nil)
@@ -174,13 +179,21 @@ module GraphQL
 
       definitions = {}
       doc.definitions.each do |node|
+        irep_node = case node
+        when GraphQL::Language::Nodes::OperationDefinition
+          errors[:irep].operation_definitions[node.name]
+        when GraphQL::Language::Nodes::FragmentDefinition
+          errors[:irep].fragment_definitions[node.name]
+        else
+          raise TypeError, "unexpected #{node.class}"
+        end
+
         node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
         definition = Definition.for(
-          schema: self.schema,
-          node: node,
+          types: self.types,
+          irep_node: irep_node,
           document: sliced_document,
-          document_types: document_types,
           source_location: source_location,
           enforce_collocated_callers: enforce_collocated_callers
         )

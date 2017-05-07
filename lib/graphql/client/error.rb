@@ -5,6 +5,9 @@ module GraphQL
     class Error < StandardError
     end
 
+    class InvariantError < Error
+    end
+
     class ImplicitlyFetchedFieldError < NoMethodError
     end
 

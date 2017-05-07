@@ -133,16 +133,18 @@ class TestObjectTypename < MiniTest::Test
     response = @client.query(Temp::Query)
     assert data = response.data
 
-    assert_equal "Person", data.me.typename
+    GraphQL::Client::Deprecation.silence do
+      assert_equal "Person", data.me.typename
 
-    assert_equal "PersonConnection", data.me.friends.typename
-    assert_equal %w(PersonEdge PersonEdge), data.me.friends.edges.map(&:typename)
-    assert_equal %w(Person Person), data.me.friends.edges.map(&:node).map(&:typename)
+      assert_equal "PersonConnection", data.me.friends.typename
+      assert_equal %w(PersonEdge PersonEdge), data.me.friends.edges.map(&:typename)
+      assert_equal %w(Person Person), data.me.friends.edges.map(&:node).map(&:typename)
 
-    assert_equal "EventConnection", data.me.events.typename
-    assert_equal %w(EventsEdge EventsEdge), data.me.events.edges.map(&:typename)
-    assert_equal %w(PublicEvent PrivateEvent), data.me.events.edges.map(&:node).map(&:typename)
+      assert_equal "EventConnection", data.me.events.typename
+      assert_equal %w(EventsEdge EventsEdge), data.me.events.edges.map(&:typename)
+      assert_equal %w(PublicEvent PrivateEvent), data.me.events.edges.map(&:node).map(&:typename)
 
-    assert_equal "PublicEvent", data.me.next_event.typename
+      assert_equal "PublicEvent", data.me.next_event.typename
+    end
   end
 end

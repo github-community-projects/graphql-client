@@ -1,0 +1,137 @@
+# frozen_string_literal: true
+
+require "active_support/inflector"
+require "graphql/client/deprecation"
+require "graphql/client/error"
+require "graphql/client/errors"
+require "graphql/client/schema/base_type"
+require "graphql/client/schema/possible_types"
+
+module GraphQL
+  class Client
+    module Schema
+      module ObjectType
+        def self.new(type, fields = {})
+          Class.new(ObjectClass) do
+            extend BaseType
+            extend ObjectType
+
+            define_singleton_method(:type) { type }
+            define_singleton_method(:fields) { fields }
+          end
+        end
+
+        def define_fields(fields)
+          fields.each { |name, type| define_field(name, type) }
+        end
+
+        def define_field(name, type)
+          name = name.to_s
+          method_name = ActiveSupport::Inflector.underscore(name)
+
+          define_method(method_name) do
+            @casted_data.fetch(name) do
+              @casted_data[name] = type.cast(@data.fetch(name), @errors.filter_by_path(name))
+            end
+          end
+
+          define_method("#{method_name}?") do
+            @data.fetch(name) ? true : false
+          end
+
+          if name != method_name
+            define_method(name) do
+              @casted_data.fetch(name) do
+                @casted_data[name] = type.cast(@data.fetch(name), @errors.filter_by_path(name))
+              end
+            end
+            Deprecation.deprecate_methods(self, name => "Use ##{method_name} instead")
+          end
+        end
+
+        def cast(value, errors)
+          case value
+          when Hash
+            new(value, errors)
+          when NilClass
+            nil
+          else
+            raise InvariantError, "expected value to be a Hash, but was #{value.class}"
+          end
+        end
+      end
+
+      class ObjectClass
+        def initialize(data = {}, errors = Errors.new)
+          @data = data
+          @casted_data = {}
+          @errors = errors
+        end
+
+        # Public: Returns the raw response data
+        #
+        # Returns Hash
+        def to_h
+          @data
+        end
+
+        # Public: Return errors associated with data.
+        #
+        # Returns Errors collection.
+        attr_reader :errors
+
+        def method_missing(*args)
+          super
+        rescue NoMethodError => e
+          type = self.class.type
+
+          field = type.all_fields.find do |f|
+            f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
+          end
+
+          unless field
+            raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type} type. https://git.io/v1y3m"
+          end
+
+          if @data.key?(field.name)
+            error_class = ImplicitlyFetchedFieldError
+            message = "implicitly fetched field `#{field.name}' on #{type} type. https://git.io/v1yGL"
+          else
+            error_class = UnfetchedFieldError
+            message = "unfetched field `#{field.name}' on #{type} type. https://git.io/v1y3U"
+          end
+
+          raise error_class, message
+        end
+
+        def inspect
+          parent = self.class.ancestors.select { |m| m.is_a?(ObjectType) }.last
+
+          ivars = @data.map { |key, value|
+            if value.is_a?(Hash) || value.is_a?(Array)
+              "#{key}=..."
+            else
+              "#{key}=#{value.inspect}"
+            end
+          }
+
+          buf = "#<#{parent.name}".dup
+          buf << " " << ivars.join(" ") if ivars.any?
+          buf << ">"
+          buf
+        end
+
+        def typename
+          Deprecation.deprecation_warning("typename", "Use #class.type.name instead")
+          self.class.type.name
+        end
+
+        def type_of?(*types)
+          Deprecation.deprecation_warning("type_of?", "Use #is_a? instead")
+          names = ([self.class.type] + self.class.ancestors.select { |m| m.is_a?(InterfaceType) || m.is_a?(UnionType) }.map(&:type)).map(&:name)
+          types.any? { |type| names.include?(type.to_s) }
+        end
+      end
+    end
+  end
+end

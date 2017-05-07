@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+
+require "graphql/client/schema/object_type"
+
 module GraphQL
   class Client
     # Definitions are constructed by Client.parse and wrap a parsed AST of the
@@ -7,22 +10,21 @@ module GraphQL
     #
     # Definitions MUST be assigned to a constant.
     class Definition < Module
-      def self.for(node:, **kargs)
-        case node
+      def self.for(irep_node:, **kargs)
+        case irep_node.ast_node
         when Language::Nodes::OperationDefinition
-          OperationDefinition.new(node: node, **kargs)
+          OperationDefinition.new(irep_node: irep_node, **kargs)
         when Language::Nodes::FragmentDefinition
-          FragmentDefinition.new(node: node, **kargs)
+          FragmentDefinition.new(irep_node: irep_node, **kargs)
         else
-          raise TypeError, "expected node to be a definition type, but was #{node.class}"
+          raise TypeError, "expected node to be a definition type, but was #{irep_node.ast_node.class}"
         end
       end
 
-      def initialize(node:, document:, schema:, document_types:, source_location:, enforce_collocated_callers:)
-        @definition_node = node
+      def initialize(irep_node:, document:, types:, source_location:, enforce_collocated_callers:)
+        @definition_irep_node = irep_node
         @document = document
-        @schema = schema
-        @document_types = document_types
+        @types = types
         @source_location = source_location
         @enforce_collocated_callers = enforce_collocated_callers
       end
@@ -31,7 +33,14 @@ module GraphQL
       # definition.
       #
       # Returns OperationDefinition or FragmentDefinition object.
-      attr_reader :definition_node
+      def definition_node
+        definition_irep_node.ast_node
+      end
+
+      # Internal: Get underlying IRep Node for the definition.
+      #
+      # Returns GraphQL::InternalRepresentation::Node object.
+      attr_reader :definition_irep_node
 
       # Public: Global name of definition in client document.
       #
@@ -57,10 +66,7 @@ module GraphQL
       # and any FragmentDefinition dependencies.
       attr_reader :document
 
-      # Internal: Mapping of document nodes to schema types.
-      attr_reader :document_types
-
-      attr_reader :schema
+      attr_reader :types
 
       # Public: Returns the Ruby source filename and line number containing this
       # definition was not defined in Ruby.
@@ -70,13 +76,28 @@ module GraphQL
 
       attr_reader :enforce_collocated_callers
 
-      def new(*args)
-        type.new(*args)
+      def new(obj, errors = Errors.new)
+        case type
+        when GraphQL::Client::Schema::PossibleTypes
+          type.cast(obj.to_h, obj.errors)
+        when GraphQL::Client::Schema::ObjectType
+          case obj
+          when NilClass, type
+            obj
+          when Hash
+            type.new(obj, errors)
+          else
+            type.validate_cast!(obj)
+            type.cast(obj.to_h, obj.errors)
+          end
+        else
+          raise TypeError, "unexpected #{type.class}"
+        end
       end
 
       def type
         # TODO: Fix type indirection
-        @type ||= GraphQL::Client::QueryResult.wrap(self, definition_node, document_types[definition_node], name: "#{name}.type")
+        @type ||= GraphQL::Client::QueryResult.wrap(self, definition_irep_node, definition_irep_node.return_type, name: "#{name}.type")
       end
     end
   end
