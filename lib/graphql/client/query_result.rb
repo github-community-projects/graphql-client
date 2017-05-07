@@ -261,10 +261,6 @@ module GraphQL
         def schema
           source_definition.schema
         end
-
-        def [](name)
-          fields[name]
-        end
       end
 
       def self.name

@@ -568,7 +568,7 @@ class TestQueryResult < MiniTest::Test
     assert_equal "Person", actor.typename
     assert_equal "josh", actor.login
     assert_equal "Josh", actor.name
-    assert_equal Time.at(1).utc, actor.updatedAt
+    assert_equal Time.at(1).utc, actor.updated_at
   end
 
   def test_date_scalar_casting
@@ -910,7 +910,7 @@ class TestQueryResult < MiniTest::Test
 
     assert_kind_of Temp::RepositoryFragment.type, repo
     assert_equal "rails", repo.name
-    assert_kind_of Temp::RepositoryFragment.type[:owner].of_klass, repo.owner
+    assert_kind_of Temp::RepositoryFragment.type.fields[:owner].of_klass, repo.owner
     assert_equal "josh", repo.owner.login
 
     assert_equal "TestQueryResult::Temp::RepositoryFragment", Temp::RepositoryFragment.name
