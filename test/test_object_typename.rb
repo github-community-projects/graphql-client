@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 require "graphql"
 require "graphql/client"
-require "graphql/client/query_result"
 require "minitest/autorun"
 require "ostruct"
 

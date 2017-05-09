@@ -9,7 +9,6 @@ require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/fragment_definition"
 require "graphql/client/operation_definition"
-require "graphql/client/query_result"
 require "graphql/client/query_typename"
 require "graphql/client/response"
 require "graphql/client/schema"
@@ -191,11 +190,10 @@ module GraphQL
         node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
         definition = Definition.for(
-          types: self.types,
+          client: self,
           irep_node: irep_node,
           document: sliced_document,
-          source_location: source_location,
-          enforce_collocated_callers: enforce_collocated_callers
+          source_location: source_location
         )
         definitions[node.name] = definition
       end

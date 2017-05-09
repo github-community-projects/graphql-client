@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 require "graphql"
 require "graphql/client"
-require "graphql/client/query_result"
 require "minitest/autorun"
 require "ostruct"
 require_relative "foo_helper"
@@ -917,14 +916,8 @@ class TestQueryResult < MiniTest::Test
 
     repo = Temp::RepositoryFragment.new(response.data.repository)
 
-    assert_kind_of Temp::RepositoryFragment.type, repo
     assert_equal "rails", repo.name
-    assert_kind_of Temp::RepositoryFragment.type.fields[:owner].of_klass, repo.owner
     assert_equal "josh", repo.owner.login
-
-    assert_equal "TestQueryResult::Temp::RepositoryFragment", Temp::RepositoryFragment.name
-    assert_equal "TestQueryResult::Temp::RepositoryFragment.type", repo.class.name
-    assert_equal "TestQueryResult::Temp::RepositoryFragment.type[:owner]", repo.owner.class.name
 
     assert_raises TypeError,  "TestQueryResult::Temp::UserFragment is not included in TestQueryResult::Temp::RepositoryFragment" do
       Temp::UserFragment.new(repo.owner)
