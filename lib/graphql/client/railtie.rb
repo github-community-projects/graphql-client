@@ -16,13 +16,6 @@ module GraphQL
       config.graphql = ActiveSupport::OrderedOptions.new
       config.graphql.client = GraphQL::Client.new
 
-      # Eager load leaky dependency to workaround AS::Dependencies unloading issues
-      #   https://github.com/rmosolgo/graphql-ruby/pull/240
-      initializer "graphql.eager_load_hack" do |_app|
-        require "graphql"
-        GraphQL::BOOLEAN_TYPE.name
-      end
-
       initializer "graphql.configure_log_subscriber" do |_app|
         require "graphql/client/log_subscriber"
         GraphQL::Client::LogSubscriber.attach_to :graphql

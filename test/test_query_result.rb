@@ -77,6 +77,20 @@ class TestQueryResult < MiniTest::Test
     field :plan, !PlanEnum
   end
 
+  IssueType = GraphQL::ObjectType.define do
+    name "Issue"
+
+    field :title, !types.String
+    field :assignees, !types[!UserType]
+  end
+
+  PullRequestType = GraphQL::ObjectType.define do
+    name "PullRequest"
+
+    field :title, !types.String
+    field :assignees, !types[!UserType]
+  end
+
   OrganizationType = GraphQL::ObjectType.define do
     name "Organization"
     interfaces [NodeType]
@@ -86,6 +100,11 @@ class TestQueryResult < MiniTest::Test
   BotType = GraphQL::ObjectType.define do
     name "Bot"
     field :login, types.String
+  end
+
+  IssueOrPullRequestUnion = GraphQL::UnionType.define do
+    name "IssueOrPullRequest"
+    possible_types [IssueType, PullRequestType]
   end
 
   ActorUnion = GraphQL::UnionType.define do
@@ -112,6 +131,28 @@ class TestQueryResult < MiniTest::Test
           hobbies: ["soccer", "coding"],
           plan: "LARGE"
         )
+      }
+    end
+
+    field :issueOrPullRequest, !IssueOrPullRequestUnion do
+      resolve -> (_query, _args, _ctx) {
+        OpenStruct.new({
+          type: PullRequestType,
+          title: "Some issue",
+          assignees: [
+            OpenStruct.new(
+              login: "josh",
+              name: "Josh",
+              firstName: "Joshua",
+              lastName: "Peek",
+              company: "GitHub",
+              createdAt: Time.at(0),
+              updatedAt: Time.at(1),
+              hobbies: ["soccer", "coding"],
+              plan: "LARGE"
+            )
+          ]
+        })
       }
     end
 
@@ -886,6 +927,38 @@ class TestQueryResult < MiniTest::Test
 
     owner = Temp::UserFragment.new(owner)
     assert_equal "josh", owner.login
+  end
+
+  def test_supports_unions_with_array_fields
+    Temp.const_set :Fragment, @client.parse(<<-'GRAPHQL')
+      fragment on IssueOrPullRequest {
+        ... on PullRequest {
+          assignees {
+            login
+          }
+        }
+
+        ... on Issue {
+          assignees {
+            login
+          }
+        }
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        issueOrPullRequest {
+          ...TestQueryResult::Temp::Fragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+    obj = Temp::Fragment.new(response.data.issueOrPullRequest)
+
+    assert_equal 1, obj.assignees.size
+    assert_equal "josh", obj.assignees[0].login
   end
 
   def test_parse_invalid_fragment_cast
