@@ -922,25 +922,35 @@ class TestQueryResult < MiniTest::Test
   end
 
   def test_supports_unions_with_array_fields
-    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
-      {
-        issueOrPullRequest {
-          ... on PullRequest {
-            assignees {
-              login
-            }
+    Temp.const_set :Fragment, @client.parse(<<-'GRAPHQL')
+      fragment on IssueOrPullRequest {
+        ... on PullRequest {
+          assignees {
+            login
           }
+        }
 
-          ... on Issue {
-            assignees {
-              login
-            }
+        ... on Issue {
+          assignees {
+            login
           }
         }
       }
     GRAPHQL
 
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        issueOrPullRequest {
+          ...TestQueryResult::Temp::Fragment
+        }
+      }
+    GRAPHQL
+
     response = @client.query(Temp::Query)
+    obj = Temp::Fragment.new(response.data.issueOrPullRequest)
+
+    assert_equal 1, obj.assignees.size
+    assert_equal "josh", obj.assignees[0].login
   end
 
   def test_parse_invalid_fragment_cast
