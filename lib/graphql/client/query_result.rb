@@ -275,6 +275,8 @@ module GraphQL
         case obj
         when Hash
           new(obj, errors)
+        when Array
+          obj.map { |o| new(o, errors) }
         when self
           obj
         when QueryResult
