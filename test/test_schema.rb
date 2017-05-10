@@ -136,6 +136,14 @@ class TestSchemaType < MiniTest::Test
     assert_equal "FREE", Types::Plan::FREE
     assert_equal "SMALL", Types::Plan::SMALL
     assert_equal "LARGE", Types::Plan::LARGE
+
+    assert Types::Plan::FREE.free?
+    refute Types::Plan::FREE.small?
+    refute Types::Plan::FREE.large?
+
+    refute Types::Plan::SMALL.free?
+    assert Types::Plan::SMALL.small?
+    refute Types::Plan::SMALL.large?
   end
 
   def test_to_non_null_type

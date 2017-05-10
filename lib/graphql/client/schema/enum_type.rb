@@ -19,8 +19,16 @@ module GraphQL
 
           @type = type
 
-          type.values.keys.each do |value|
-            const_set(value, value)
+          all_values = type.values.keys
+
+          all_values.each do |value|
+            str = value.dup
+            all_values.each do |v|
+              str.define_singleton_method("#{v.downcase}?") { false }
+            end
+            str.define_singleton_method("#{value.downcase}?") { true }
+            str.freeze
+            const_set(value, str)
           end
         end
 
