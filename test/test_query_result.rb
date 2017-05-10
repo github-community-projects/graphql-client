@@ -955,7 +955,7 @@ class TestQueryResult < MiniTest::Test
     GRAPHQL
 
     response = @client.query(Temp::Query)
-    obj = Temp::Fragment.new(response.data.issueOrPullRequest)
+    obj = Temp::Fragment.new(response.data.issue_or_pull_request)
 
     assert_equal 1, obj.assignees.size
     assert_equal "josh", obj.assignees[0].login
