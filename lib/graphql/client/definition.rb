@@ -90,7 +90,12 @@ module GraphQL
       def new(obj, errors = Errors.new)
         case schema_class
         when GraphQL::Client::Schema::PossibleTypes
-          schema_class.cast(obj.to_h, obj.errors)
+          case obj
+          when NilClass
+            nil
+          else
+            schema_class.cast(obj.to_h, obj.errors)
+          end
         when GraphQL::Client::Schema::ObjectType
           case obj
           when NilClass, schema_class
