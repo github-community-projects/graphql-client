@@ -1031,4 +1031,41 @@ class TestQueryResult < MiniTest::Test
     assert_equal "github", user.repositories[0].name
     assert_equal "josh", user.repositories[0].watchers[0].login
   end
+
+  def test_client_query_result_with_include_and_skip_directives
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      query($includeId: Boolean!, $skipRepositories: Boolean!) {
+        node(id: "1") {
+          ... on User {
+            id @include(if: $includeId)
+            repositories @skip(if: $skipRepositories) {
+              name
+            }
+          }
+        }
+      }
+    GRAPHQL
+
+    assert response = @client.query(Temp::Query, variables: { includeId: true, skipRepositories: false })
+    assert user = response.data.node
+    assert_equal "1", user.id
+    assert_kind_of Array, user.repositories
+    assert_equal "github", user.repositories[0].name
+
+    assert response = @client.query(Temp::Query, variables: { includeId: false, skipRepositories: false })
+    assert user = response.data.node
+    assert_nil user.id
+    assert_kind_of Array, user.repositories
+    assert_equal "github", user.repositories[0].name
+
+    assert response = @client.query(Temp::Query, variables: { includeId: true, skipRepositories: true })
+    assert user = response.data.node
+    assert_equal "1", user.id
+    assert_nil user.repositories
+
+    assert response = @client.query(Temp::Query, variables: { includeId: false, skipRepositories: true })
+    assert user = response.data.node
+    assert_nil user.id
+    assert_nil user.repositories
+  end
 end
