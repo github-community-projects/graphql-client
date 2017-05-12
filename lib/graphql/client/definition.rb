@@ -132,7 +132,13 @@ module GraphQL
         def define_class(irep_node, type)
           case type
           when GraphQL::NonNullType
-            define_class(irep_node, type.of_type).to_non_null_type
+            klass = define_class(irep_node, type.of_type)
+
+            # Skip non-nullable wrapper if field includes a @include or @skip directive
+            directives = irep_node.ast_node.directives.map(&:name)
+            return klass if directives.include?("include") || directives.include?("skip")
+
+            klass.to_non_null_type
           when GraphQL::ListType
             define_class(irep_node, type.of_type).to_list_type
           when GraphQL::EnumType, GraphQL::ScalarType
