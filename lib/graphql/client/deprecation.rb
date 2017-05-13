@@ -4,7 +4,7 @@ require "active_support/deprecation"
 module GraphQL
   class Client
     if ActiveSupport::Deprecation.is_a?(Class)
-      Deprecation = ActiveSupport::Deprecation.new("0.9", "graphql-client")
+      Deprecation = ActiveSupport::Deprecation.new("10.0", "graphql-client")
     else
       module Deprecation
         extend self
