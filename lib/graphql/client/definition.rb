@@ -1,4 +1,11 @@
 # frozen_string_literal: true
+
+require "graphql"
+require "graphql/client/collocated_enforcement"
+require "graphql/client/schema/object_type"
+require "graphql/client/schema/possible_types"
+require "set"
+
 module GraphQL
   class Client
     # Definitions are constructed by Client.parse and wrap a parsed AST of the
@@ -7,31 +14,48 @@ module GraphQL
     #
     # Definitions MUST be assigned to a constant.
     class Definition < Module
-      def self.for(node:, **kargs)
-        case node
+      def self.for(irep_node:, **kargs)
+        case irep_node.ast_node
         when Language::Nodes::OperationDefinition
-          OperationDefinition.new(node: node, **kargs)
+          OperationDefinition.new(irep_node: irep_node, **kargs)
         when Language::Nodes::FragmentDefinition
-          FragmentDefinition.new(node: node, **kargs)
+          FragmentDefinition.new(irep_node: irep_node, **kargs)
         else
-          raise TypeError, "expected node to be a definition type, but was #{node.class}"
+          raise TypeError, "expected node to be a definition type, but was #{irep_node.ast_node.class}"
         end
       end
 
-      def initialize(node:, document:, schema:, document_types:, source_location:, enforce_collocated_callers:)
-        @definition_node = node
+      def initialize(client:, document:, irep_node:, source_location:)
+        @client = client
         @document = document
-        @schema = schema
-        @document_types = document_types
+        @definition_irep_node = irep_node
         @source_location = source_location
-        @enforce_collocated_callers = enforce_collocated_callers
+        @schema_class = client.types.define_class(self, definition_irep_node, definition_irep_node.return_type)
       end
+
+      # Internal: Get associated owner GraphQL::Client instance.
+      attr_reader :client
+
+      # Internal root schema class for defintion. Returns
+      # GraphQL::Client::Schema::ObjectType or
+      # GraphQL::Client::Schema::PossibleTypes.
+      attr_reader :schema_class
+
+      # Deprecated: Use schema_class
+      alias_method :type, :schema_class
+
+      # Internal: Get underlying IRep Node for the definition.
+      #
+      # Returns GraphQL::InternalRepresentation::Node object.
+      attr_reader :definition_irep_node
 
       # Internal: Get underlying operation or fragment defintion AST node for
       # definition.
       #
       # Returns OperationDefinition or FragmentDefinition object.
-      attr_reader :definition_node
+      def definition_node
+        definition_irep_node.ast_node
+      end
 
       # Public: Global name of definition in client document.
       #
@@ -57,27 +81,96 @@ module GraphQL
       # and any FragmentDefinition dependencies.
       attr_reader :document
 
-      # Internal: Mapping of document nodes to schema types.
-      attr_reader :document_types
-
-      attr_reader :schema
-
       # Public: Returns the Ruby source filename and line number containing this
       # definition was not defined in Ruby.
       #
       # Returns Array pair of [String, Fixnum].
       attr_reader :source_location
 
-      attr_reader :enforce_collocated_callers
-
-      def new(*args)
-        type.new(*args)
+      def new(obj, errors = Errors.new)
+        case schema_class
+        when GraphQL::Client::Schema::PossibleTypes
+          case obj
+          when NilClass
+            nil
+          else
+            schema_class.cast(obj.to_h, obj.errors)
+          end
+        when GraphQL::Client::Schema::ObjectType
+          case obj
+          when NilClass, schema_class
+            obj
+          when Hash
+            schema_class.new(obj, errors)
+          else
+            if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
+              unless obj.class._spreads.include?(definition_node.name)
+                raise TypeError, "#{definition_node.name} is not included in #{obj.class.source_definition.name}"
+              end
+              schema_class.cast(obj.to_h, obj.errors)
+            else
+              raise TypeError, "unexpected #{obj.class}"
+            end
+          end
+        else
+          raise TypeError, "unexpected #{schema_class}"
+        end
       end
 
-      def type
-        # TODO: Fix type indirection
-        @type ||= GraphQL::Client::QueryResult.wrap(self, definition_node, document_types[definition_node], name: "#{name}.type")
+      # Internal: Nodes AST indexes.
+      def indexes
+        @indexes ||= begin
+          visitor = GraphQL::Language::Visitor.new(document)
+          definitions = index_node_definitions(visitor)
+          spreads = index_spreads(visitor)
+          visitor.visit
+          { definitions: definitions, spreads: spreads }
+        end
       end
+
+      private
+        def index_spreads(visitor)
+          spreads = {}
+          on_node = ->(node, _parent) { spreads[node] = Set.new(flatten_spreads(node).map(&:name)) }
+
+          visitor[GraphQL::Language::Nodes::Field] << on_node
+          visitor[GraphQL::Language::Nodes::FragmentDefinition] << on_node
+          visitor[GraphQL::Language::Nodes::OperationDefinition] << on_node
+
+          spreads
+        end
+
+        def flatten_spreads(node)
+          node.selections.flat_map do |selection|
+            case selection
+            when Language::Nodes::FragmentSpread
+              selection
+            when Language::Nodes::InlineFragment
+              flatten_spreads(selection)
+            else
+              []
+            end
+          end
+        end
+
+        def index_node_definitions(visitor)
+          current_definition = nil
+          enter_definition = ->(node, _parent) { current_definition = node }
+          leave_definition = ->(node, _parent) { current_definition = nil }
+
+          visitor[GraphQL::Language::Nodes::FragmentDefinition].enter << enter_definition
+          visitor[GraphQL::Language::Nodes::FragmentDefinition].leave << leave_definition
+          visitor[GraphQL::Language::Nodes::OperationDefinition].enter << enter_definition
+          visitor[GraphQL::Language::Nodes::OperationDefinition].leave << leave_definition
+
+          definitions = {}
+          on_node = ->(node, _parent) { definitions[node] = current_definition }
+          visitor[GraphQL::Language::Nodes::Field] << on_node
+          visitor[GraphQL::Language::Nodes::FragmentDefinition] << on_node
+          visitor[GraphQL::Language::Nodes::InlineFragment] << on_node
+          visitor[GraphQL::Language::Nodes::OperationDefinition] << on_node
+          definitions
+        end
     end
   end
 end

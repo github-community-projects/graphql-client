@@ -94,7 +94,7 @@ end
 
 ### Executing queries
 
-Pass the reference of a parsed query definition to `GraphQL::Client#query`. Data is returned back in a wrapped `GraphQL::QueryResult` struct that provides Ruby-ish accessors.
+Pass the reference of a parsed query definition to `GraphQL::Client#query`. Data is returned back in a wrapped `GraphQL::Client::Schema::ObjectType` struct that provides Ruby-ish accessors.
 
 ``` ruby
 result = SWAPI::Client.query(Hero::Query)

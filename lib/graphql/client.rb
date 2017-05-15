@@ -9,9 +9,9 @@ require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/fragment_definition"
 require "graphql/client/operation_definition"
-require "graphql/client/query_result"
 require "graphql/client/query_typename"
 require "graphql/client/response"
+require "graphql/client/schema"
 require "graphql/language/nodes/deep_freeze_ext"
 require "json"
 
@@ -30,6 +30,8 @@ module GraphQL
     extend CollocatedEnforcement
 
     attr_reader :schema, :execute
+
+    attr_reader :types
 
     attr_accessor :document_tracking_enabled
 
@@ -89,6 +91,8 @@ module GraphQL
       @document_tracking_enabled = false
       @allow_dynamic_queries = false
       @enforce_collocated_callers = enforce_collocated_callers
+
+      @types = Schema.generate(@schema)
     end
 
     def parse(str, filename = nil, lineno = nil)
@@ -146,6 +150,9 @@ module GraphQL
 
       doc = GraphQL.parse(str)
 
+      document_types = DocumentTypes.analyze_types(self.schema, doc).freeze
+      QueryTypename.insert_typename_fields(doc, types: document_types)
+
       doc.definitions.each do |node|
         node.name ||= "__anonymous__"
       end
@@ -168,21 +175,24 @@ module GraphQL
         raise error
       end
 
-      document_types = DocumentTypes.analyze_types(self.schema, doc).freeze
-
-      QueryTypename.insert_typename_fields(doc, types: document_types)
-
       definitions = {}
       doc.definitions.each do |node|
+        irep_node = case node
+        when GraphQL::Language::Nodes::OperationDefinition
+          errors[:irep].operation_definitions[node.name]
+        when GraphQL::Language::Nodes::FragmentDefinition
+          errors[:irep].fragment_definitions[node.name]
+        else
+          raise TypeError, "unexpected #{node.class}"
+        end
+
         node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
         definition = Definition.for(
-          schema: self.schema,
-          node: node,
+          client: self,
+          irep_node: irep_node,
           document: sliced_document,
-          document_types: document_types,
-          source_location: source_location,
-          enforce_collocated_callers: enforce_collocated_callers
+          source_location: source_location
         )
         definitions[node.name] = definition
       end

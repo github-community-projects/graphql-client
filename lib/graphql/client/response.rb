@@ -7,11 +7,11 @@ module GraphQL
     #
     #   https://facebook.github.io/graphql/#sec-Response-Format
     class Response
-      # Public: Wrapped QueryResult of data returned from the server.
+      # Public: Wrapped ObjectType of data returned from the server.
       #
       #   https://facebook.github.io/graphql/#sec-Data
       #
-      # Returns instance of QueryResult subclass.
+      # Returns instance of ObjectType subclass.
       attr_reader :data
 
       # Public: Get partial failures from response.
