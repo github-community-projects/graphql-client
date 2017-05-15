@@ -4,7 +4,7 @@ require "active_support/deprecation"
 module GraphQL
   class Client
     if ActiveSupport::Deprecation.is_a?(Class)
-      Deprecation = ActiveSupport::Deprecation.new("10.0", "graphql-client")
+      Deprecation = ActiveSupport::Deprecation.new("11.0", "graphql-client")
     else
       module Deprecation
         extend self
@@ -22,7 +22,7 @@ module GraphQL
         end
 
         def deprecation_warning(deprecated_method_name, message = nil, caller_backtrace = nil)
-          warn "#{deprecated_method_name} is deprecated and will be removed from graphql-client 0.9 (#{message})"
+          warn "#{deprecated_method_name} is deprecated and will be removed from graphql-client 0.11 (#{message})"
         end
       end
     end
