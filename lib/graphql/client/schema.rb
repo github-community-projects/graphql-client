@@ -12,8 +12,29 @@ require "graphql/client/schema/union_type"
 module GraphQL
   class Client
     module Schema
+      module ClassMethods
+        def define_class(definition, irep_node, type)
+          case type
+          when GraphQL::NonNullType
+            klass = define_class(definition, irep_node, type.of_type)
+
+            # Skip non-nullable wrapper if field includes a @include or @skip directive
+            directives = irep_node.ast_node.directives.map(&:name)
+            return klass if directives.include?("include") || directives.include?("skip")
+
+            klass.to_non_null_type
+          when GraphQL::ListType
+            define_class(definition, irep_node, type.of_type).to_list_type
+          else
+            const_get(type.name).define_class(definition, irep_node)
+          end
+        end
+      end
+
       def self.generate(schema)
         mod = Module.new
+        mod.extend ClassMethods
+
         mod.define_singleton_method :schema do
           schema
         end
@@ -21,7 +42,10 @@ module GraphQL
         cache = {}
         schema.types.each do |name, type|
           next if name.start_with?("__")
-          mod.const_set(name, class_for(schema, type, cache))
+          if klass = class_for(schema, type, cache)
+            klass.schema_module = mod
+            mod.const_set(name, klass)
+          end
         end
         mod
       end

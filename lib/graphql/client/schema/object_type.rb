@@ -21,6 +21,31 @@ module GraphQL
           end
         end
 
+        def define_class(definition, irep_node)
+          fields = irep_node.typed_children[type].inject({}) { |h, (field_name, field_irep_node)|
+            if definition.indexes[:definitions][field_irep_node.ast_node] == definition.definition_node
+              h[field_name.to_sym] = schema_module.define_class(definition, field_irep_node, field_irep_node.definition.type)
+            end
+            h
+          }
+
+          Class.new(self) do
+            define_fields(fields)
+
+            if definition.client.enforce_collocated_callers
+              Client.enforce_collocated_callers(self, fields.keys, definition.source_location[0])
+            end
+
+            class << self
+              attr_reader :source_definition
+              attr_reader :_spreads
+            end
+
+            @source_definition = definition
+            @_spreads = definition.indexes[:spreads][irep_node.ast_node]
+          end
+        end
+
         def define_fields(fields)
           fields.each { |name, type| define_field(name, type) }
         end

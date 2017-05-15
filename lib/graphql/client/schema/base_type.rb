@@ -7,6 +7,9 @@ module GraphQL
         # Public: Get associated GraphQL::BaseType with for this class.
         attr_reader :type
 
+        # Internal: Get owner schema Module container.
+        attr_accessor :schema_module
+
         # Internal: Cast JSON value to wrapped value.
         #
         # value - JSON value

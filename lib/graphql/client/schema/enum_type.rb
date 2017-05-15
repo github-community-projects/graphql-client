@@ -32,6 +32,10 @@ module GraphQL
           end
         end
 
+        def define_class(definition, irep_node)
+          self
+        end
+
         # Internal: Cast JSON value to wrapped value.
         #
         # values - JSON value

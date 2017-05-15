@@ -19,6 +19,12 @@ module GraphQL
         def new(types)
           PossibleTypes.new(type, types)
         end
+
+        def define_class(definition, irep_node)
+          new(irep_node.typed_children.keys.map { |ctype|
+            schema_module.const_get(ctype.name).define_class(definition, irep_node)
+          })
+        end
       end
     end
   end

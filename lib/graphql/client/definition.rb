@@ -30,7 +30,7 @@ module GraphQL
         @document = document
         @definition_irep_node = irep_node
         @source_location = source_location
-        @schema_class = define_class(definition_irep_node, definition_irep_node.return_type)
+        @schema_class = client.types.define_class(self, definition_irep_node, definition_irep_node.return_type)
       end
 
       # Internal: Get associated owner GraphQL::Client instance.
@@ -129,61 +129,6 @@ module GraphQL
       end
 
       private
-        def define_class(irep_node, type)
-          case type
-          when GraphQL::NonNullType
-            klass = define_class(irep_node, type.of_type)
-
-            # Skip non-nullable wrapper if field includes a @include or @skip directive
-            directives = irep_node.ast_node.directives.map(&:name)
-            return klass if directives.include?("include") || directives.include?("skip")
-
-            klass.to_non_null_type
-          when GraphQL::ListType
-            define_class(irep_node, type.of_type).to_list_type
-          when GraphQL::EnumType, GraphQL::ScalarType
-            client.types.const_get(type.name)
-          when GraphQL::InterfaceType, GraphQL::UnionType
-            possible_types = irep_node.typed_children.map { |ctype, fields|
-              define_object_class(irep_node, ctype, fields)
-            }
-            client.types.const_get(type.name).new(possible_types)
-          when GraphQL::ObjectType
-            define_object_class(irep_node, type, irep_node.typed_children[type])
-          else
-            raise TypeError, "unexpected #{type.class} for #{irep_node.inspect}"
-          end
-        end
-
-        def define_object_class(irep_node, type, fields)
-          type_module = client.types.const_get(type.name)
-
-          fields = fields.inject({}) { |h, (field_name, field_irep_node)|
-            if indexes[:definitions][field_irep_node.ast_node] == definition_node
-              h[field_name.to_sym] = define_class(field_irep_node, field_irep_node.definition.type)
-            end
-            h
-          }
-
-          source_definition = self
-
-          Class.new(type_module) do
-            define_fields(fields)
-
-            if source_definition.client.enforce_collocated_callers
-              Client.enforce_collocated_callers(self, fields.keys, source_definition.source_location[0])
-            end
-
-            class << self
-              attr_reader :source_definition
-              attr_reader :_spreads
-            end
-
-            @source_definition = source_definition
-            @_spreads = source_definition.indexes[:spreads][irep_node.ast_node]
-          end
-        end
-
         def index_spreads(visitor)
           spreads = {}
           on_node = ->(node, _parent) { spreads[node] = Set.new(flatten_spreads(node).map(&:name)) }

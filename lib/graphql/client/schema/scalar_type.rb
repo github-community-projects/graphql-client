@@ -19,6 +19,10 @@ module GraphQL
           @type = type
         end
 
+        def define_class(definition, irep_node)
+          self
+        end
+
         # Internal: Cast raw JSON value to Ruby scalar object.
         #
         # value - JSON value
