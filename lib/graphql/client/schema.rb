@@ -2,11 +2,13 @@
 
 require "graphql"
 require "graphql/client/schema/enum_type"
+require "graphql/client/schema/include_directive"
 require "graphql/client/schema/interface_type"
 require "graphql/client/schema/list_type"
 require "graphql/client/schema/non_null_type"
 require "graphql/client/schema/object_type"
 require "graphql/client/schema/scalar_type"
+require "graphql/client/schema/skip_directive"
 require "graphql/client/schema/union_type"
 
 module GraphQL
@@ -14,19 +16,21 @@ module GraphQL
     module Schema
       module ClassMethods
         def define_class(definition, irep_node, type)
-          case type
+          type_klass = case type
           when GraphQL::NonNullType
-            klass = define_class(definition, irep_node, type.of_type)
-
-            # Skip non-nullable wrapper if field includes a @include or @skip directive
-            directives = irep_node.ast_node.directives.map(&:name)
-            return klass if directives.include?("include") || directives.include?("skip")
-
-            klass.to_non_null_type
+            define_class(definition, irep_node, type.of_type).to_non_null_type
           when GraphQL::ListType
             define_class(definition, irep_node, type.of_type).to_list_type
           else
             const_get(type.name).define_class(definition, irep_node)
+          end
+
+          irep_node.ast_node.directives.inject(type_klass) do |klass, directive|
+            if directive = self.directives[directive.name.to_sym]
+              directive.new(klass)
+            else
+              klass
+            end
           end
         end
       end
@@ -47,6 +51,12 @@ module GraphQL
             mod.const_set(name, klass)
           end
         end
+
+        directives = {}
+        mod.define_singleton_method(:directives) { directives }
+        directives[:include] = IncludeDirective
+        directives[:skip] = SkipDirective
+
         mod
       end
 
