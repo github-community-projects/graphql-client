@@ -1068,4 +1068,20 @@ class TestQueryResult < MiniTest::Test
     assert_nil user.id
     assert_nil user.repositories
   end
+
+  def test_client_query_result_with_type_mismatch
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        node(id: "1") {
+          ... on Organization {
+            id
+          }
+        }
+      }
+    GRAPHQL
+
+    assert response = @client.query(Temp::Query)
+    assert user = response.data.node
+    assert_kind_of @client.types::User, user
+  end
 end

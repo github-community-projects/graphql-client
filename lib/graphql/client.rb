@@ -150,6 +150,9 @@ module GraphQL
 
       doc = GraphQL.parse(str)
 
+      document_types = DocumentTypes.analyze_types(self.schema, doc).freeze
+      QueryTypename.insert_typename_fields(doc, types: document_types)
+
       doc.definitions.each do |node|
         node.name ||= "__anonymous__"
       end
@@ -171,10 +174,6 @@ module GraphQL
         error.set_backtrace(["#{filename}:#{lineno + validation_line}"] + caller)
         raise error
       end
-
-      document_types = DocumentTypes.analyze_types(self.schema, doc).freeze
-
-      QueryTypename.insert_typename_fields(doc, types: document_types)
 
       definitions = {}
       doc.definitions.each do |node|

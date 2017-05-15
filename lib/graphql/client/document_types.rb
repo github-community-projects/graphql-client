@@ -40,6 +40,9 @@ module GraphQL
         visitor.visit
 
         fields
+      rescue StandardError
+        # FIXME: TypeStack my crash on invalid documents
+        fields
       end
     end
   end
