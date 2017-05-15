@@ -357,4 +357,20 @@ class TestSchemaType < MiniTest::Test
     assert_kind_of person_klass, query.first_search_result
     assert_equal "1", query.first_search_result.id
   end
+
+  def test_skip_directive
+    assert klass = Types.directives[:skip]
+    assert maybe_plan = klass.new(Types::Plan)
+
+    assert_nil maybe_plan.cast(nil, nil)
+    assert_equal Types::Plan::FREE, maybe_plan.cast("FREE", nil)
+  end
+
+  def test_include_directive
+    assert klass = Types.directives[:include]
+    assert maybe_plan = klass.new(Types::Plan)
+
+    assert_nil maybe_plan.cast(nil, nil)
+    assert_equal Types::Plan::FREE, maybe_plan.cast("FREE", nil)
+  end
 end
