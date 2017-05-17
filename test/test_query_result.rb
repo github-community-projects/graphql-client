@@ -726,9 +726,7 @@ class TestQueryResult < MiniTest::Test
     response = @client.query(Temp::Query)
     refute response.data.me.nil?
     assert_equal "Person", response.data.me.class.type.name
-      GraphQL::Client::Deprecation.silence do
-      assert response.data.me.type_of?(:Person)
-      end
+    assert response.data.me.is_a?(@client.types::Person)
   end
 
   def test_empty_selection_existence_with_fragment
@@ -751,9 +749,7 @@ class TestQueryResult < MiniTest::Test
     refute response.data.me.nil?
     assert_kind_of @client.types::Person, response.data.me
     assert_equal "Person", response.data.me.class.type.name
-    GraphQL::Client::Deprecation.silence do
-      assert response.data.me.type_of?(:Person)
-    end
+    assert response.data.me.is_a?(@client.types::Person)
 
     person = Temp::Fragment.new(response.data).me
     assert_equal "Josh", person.name

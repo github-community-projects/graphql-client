@@ -293,11 +293,9 @@ class TestSchemaType < MiniTest::Test
 
     assert_equal "Person", person.class.type.name
 
-    GraphQL::Client::Deprecation.silence do
-      assert person.type_of?(:Person)
-      assert person.type_of?(:Node)
-      refute person.type_of?(:Photo)
-    end
+    assert person.is_a?(Types::Person)
+    assert person.is_a?(Types::Node)
+    refute person.is_a?(Types::Photo)
 
     assert_equal "Joshua", person.first_name
   end
