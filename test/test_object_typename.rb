@@ -132,18 +132,16 @@ class TestObjectTypename < MiniTest::Test
     response = @client.query(Temp::Query)
     assert data = response.data
 
-    GraphQL::Client::Deprecation.silence do
-      assert_equal "Person", data.me.typename
+    assert_equal "Person", data.me.class.type.name
 
-      assert_equal "PersonConnection", data.me.friends.typename
-      assert_equal %w(PersonEdge PersonEdge), data.me.friends.edges.map(&:typename)
-      assert_equal %w(Person Person), data.me.friends.edges.map(&:node).map(&:typename)
+    assert_equal "PersonConnection", data.me.friends.class.type.name
+    assert_equal %w(PersonEdge PersonEdge), data.me.friends.edges.map { |obj| obj.class.type.name }
+    assert_equal %w(Person Person), data.me.friends.edges.map(&:node).map { |obj| obj.class.type.name }
 
-      assert_equal "EventConnection", data.me.events.typename
-      assert_equal %w(EventsEdge EventsEdge), data.me.events.edges.map(&:typename)
-      assert_equal %w(PublicEvent PrivateEvent), data.me.events.edges.map(&:node).map(&:typename)
+    assert_equal "EventConnection", data.me.events.class.type.name
+    assert_equal %w(EventsEdge EventsEdge), data.me.events.edges.map { |obj| obj.class.type.name }
+    assert_equal %w(PublicEvent PrivateEvent), data.me.events.edges.map(&:node).map { |obj| obj.class.type.name }
 
-      assert_equal "PublicEvent", data.me.next_event.typename
-    end
+    assert_equal "PublicEvent", data.me.next_event.class.type.name
   end
 end
