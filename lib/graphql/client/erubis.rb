@@ -24,11 +24,6 @@ module GraphQL
     #   ActionView::Template::Handlers::ERB.erb_implementation = GraphQL::Client::Erubis
     #
     class Erubis < ActionView::Template::Handlers::Erubis
-      # Deprecated: Use ViewModule.extract_graphql_section.
-      def self.extract_graphql_section(src)
-        ViewModule.extract_graphql_section(src)
-      end
-
       include ErubisEnhancer
     end
   end
