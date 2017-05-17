@@ -63,15 +63,6 @@ module GraphQL
           define_method("#{method_name}?") do
             @data[name] ? true : false
           end
-
-          if name != method_name
-            define_method(name) do
-              @casted_data.fetch(name) do
-                @casted_data[name] = type.cast(@data[name], @errors.filter_by_path(name))
-              end
-            end
-            Deprecation.deprecate_methods(self, name => "Use ##{method_name} instead")
-          end
         end
 
         def cast(value, errors)
