@@ -110,6 +110,10 @@ module GraphQL
         rescue NoMethodError => e
           type = self.class.type
 
+          if ActiveSupport::Inflector.underscore(e.name.to_s) != e.name.to_s
+            raise e
+          end
+
           field = type.all_fields.find do |f|
             f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
           end

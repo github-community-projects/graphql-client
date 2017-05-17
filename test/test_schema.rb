@@ -238,7 +238,6 @@ class TestSchemaType < MiniTest::Test
     assert_includes person_klass.instance_methods, :name
     assert_includes person_klass.instance_methods, :first_name
     assert_includes person_klass.instance_methods, :last_name
-    assert_includes person_klass.instance_methods, :lastName
     assert_includes person_klass.instance_methods, :plan
 
     assert person = person_klass.new({
@@ -300,9 +299,7 @@ class TestSchemaType < MiniTest::Test
       refute person.type_of?(:Photo)
     end
 
-    GraphQL::Client::Deprecation.silence do
-      assert_equal "Joshua", person.firstName
-    end
+    assert_equal "Joshua", person.first_name
   end
 
   def test_interface_cast
