@@ -41,9 +41,6 @@ module GraphQL
       # GraphQL::Client::Schema::PossibleTypes.
       attr_reader :schema_class
 
-      # Deprecated: Use schema_class
-      alias_method :type, :schema_class
-
       # Internal: Get underlying IRep Node for the definition.
       #
       # Returns GraphQL::InternalRepresentation::Node object.
