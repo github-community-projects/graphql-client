@@ -292,9 +292,7 @@ class TestSchemaType < MiniTest::Test
 
     refute person.respond_to?(:missing)
 
-    GraphQL::Client::Deprecation.silence do
-      assert_equal "Person", person.typename
-    end
+    assert_equal "Person", person.class.type.name
 
     GraphQL::Client::Deprecation.silence do
       assert person.type_of?(:Person)

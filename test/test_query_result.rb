@@ -581,9 +581,7 @@ class TestQueryResult < MiniTest::Test
     response = @client.query(Temp::Query)
 
     actor = response.data.current_actor
-    GraphQL::Client::Deprecation.silence do
-      assert_equal "Person", actor.typename
-    end
+    assert_equal "Person", actor.class.type.name
     assert_equal "josh", actor.login
   end
 
@@ -607,9 +605,7 @@ class TestQueryResult < MiniTest::Test
     response = @client.query(Temp::Query)
 
     actor = response.data.current_actor
-    GraphQL::Client::Deprecation.silence do
-      assert_equal "Person", actor.typename
-    end
+    assert_equal "Person", actor.class.type.name
     assert_equal "josh", actor.login
     assert_equal "Josh", actor.name
     assert_equal Time.at(1).utc, actor.updated_at
@@ -729,10 +725,10 @@ class TestQueryResult < MiniTest::Test
 
     response = @client.query(Temp::Query)
     refute response.data.me.nil?
-    GraphQL::Client::Deprecation.silence do
-      assert_equal "Person", response.data.me.typename
+    assert_equal "Person", response.data.me.class.type.name
+      GraphQL::Client::Deprecation.silence do
       assert response.data.me.type_of?(:Person)
-    end
+      end
   end
 
   def test_empty_selection_existence_with_fragment
@@ -754,8 +750,8 @@ class TestQueryResult < MiniTest::Test
     response = @client.query(Temp::Query)
     refute response.data.me.nil?
     assert_kind_of @client.types::Person, response.data.me
+    assert_equal "Person", response.data.me.class.type.name
     GraphQL::Client::Deprecation.silence do
-      assert_equal "Person", response.data.me.typename
       assert response.data.me.type_of?(:Person)
     end
 
