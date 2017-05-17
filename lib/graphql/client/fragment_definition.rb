@@ -9,7 +9,7 @@ module GraphQL
     class FragmentDefinition < Definition
       def new(obj, *args)
         if obj.is_a?(Hash)
-          GraphQL::Client::Deprecation.warn("constructing fragment wrapper from Hash is deprecated")
+          raise TypeError, "constructing fragment wrapper from Hash is deprecated"
         end
 
         super
