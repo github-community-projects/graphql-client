@@ -16,10 +16,6 @@ module GraphQL
         def warn(*args)
           ActiveSupport::Deprecation.warn(*args)
         end
-
-        def deprecation_warning(deprecated_method_name, message = nil, caller_backtrace = nil)
-          warn "#{deprecated_method_name} is deprecated and will be removed from graphql-client 0.11 (#{message})"
-        end
       end
     end
   end
