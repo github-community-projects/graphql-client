@@ -146,11 +146,6 @@ module GraphQL
           buf
         end
 
-        def typename
-          Deprecation.deprecation_warning("typename", "Use #class.type.name instead")
-          self.class.type.name
-        end
-
         def type_of?(*types)
           Deprecation.deprecation_warning("type_of?", "Use #is_a? instead")
           names = ([self.class.type] + self.class.ancestors.select { |m| m.is_a?(InterfaceType) || m.is_a?(UnionType) }.map(&:type)).map(&:name)
