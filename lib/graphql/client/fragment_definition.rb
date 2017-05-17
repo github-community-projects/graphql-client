@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "graphql/client/definition"
-require "graphql/client/deprecation"
 
 module GraphQL
   class Client

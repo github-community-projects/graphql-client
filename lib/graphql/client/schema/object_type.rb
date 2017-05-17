@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "active_support/inflector"
-require "graphql/client/deprecation"
 require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/schema/base_type"
