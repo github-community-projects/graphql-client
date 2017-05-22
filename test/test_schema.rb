@@ -265,10 +265,12 @@ class TestSchemaType < MiniTest::Test
     assert_equal "Joshua", person.first_name
     assert_equal "Peek", person.last_name
     assert_equal Time.at(0), person.birthday
-    assert_equal Types::Plan::FREE, person.plan
+    assert_equal true, person.plan.free?
     assert_equal 1, person.friends.length
     assert_equal "2", person.friends[0].id
     assert_equal "David", person.friends[0].name
+
+    assert_same Types::Plan::FREE, person.plan
 
     assert_equal({
       "id" => "1",

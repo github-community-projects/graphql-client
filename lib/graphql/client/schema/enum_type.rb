@@ -18,6 +18,7 @@ module GraphQL
           end
 
           @type = type
+          @values = {}
 
           all_values = type.values.keys
 
@@ -29,14 +30,18 @@ module GraphQL
             str.define_singleton_method("#{value.downcase}?") { true }
             str.freeze
             const_set(value, str)
+            @values[str] = str
           end
+
+          @values.freeze
         end
 
         def define_class(definition, irep_node)
           self
         end
 
-        # Internal: Cast JSON value to wrapped value.
+        # Internal: Cast JSON value to the enumeration's corresponding constant string instance
+        #  with the convenience predicate methods.
         #
         # values - JSON value
         # errors - Errors instance
@@ -44,7 +49,10 @@ module GraphQL
         # Returns String or nil.
         def cast(value, _errors = nil)
           case value
-          when String, NilClass
+          when String
+            raise Error, "unexpected enum value #{value}" unless @values.key?(value)
+            @values[value]
+          when NilClass
             value
           else
             raise InvariantError, "expected value to be a String, but was #{value.class}"
