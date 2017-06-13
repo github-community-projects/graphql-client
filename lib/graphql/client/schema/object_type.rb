@@ -32,7 +32,8 @@ module GraphQL
             define_fields(fields)
 
             if definition.client.enforce_collocated_callers
-              Client.enforce_collocated_callers(self, fields.keys, definition.source_location[0])
+              keys = fields.keys.map { |key| ActiveSupport::Inflector.underscore(key) }
+              Client.enforce_collocated_callers(self, keys, definition.source_location[0])
             end
 
             class << self
