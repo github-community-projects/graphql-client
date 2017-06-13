@@ -656,6 +656,8 @@ class TestQueryResult < MiniTest::Test
       fragment on Person {
         name
         company
+        firstName
+        lastName
       }
     GRAPHQL
 
@@ -672,6 +674,8 @@ class TestQueryResult < MiniTest::Test
     person = Temp::Person.new(response.data.me)
     assert_equal "Josh", person.name
     assert_equal "GitHub", person.company
+    assert_equal "Joshua", person.first_name
+    assert_equal "Peek", person.last_name
 
     assert_raises GraphQL::Client::NonCollocatedCallerError do
       format_person_info(person)
@@ -683,6 +687,14 @@ class TestQueryResult < MiniTest::Test
 
     GraphQL::Client.allow_noncollocated_callers do
       assert_equal true, person_employed?(person)
+    end
+
+    GraphQL::Client.allow_noncollocated_callers do
+      assert_equal "Joshua Peek", format_person_name(person)
+    end
+
+    assert_raises GraphQL::Client::NonCollocatedCallerError do
+      format_person_name(person)
     end
   end
 

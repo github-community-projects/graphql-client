@@ -11,4 +11,8 @@ module FooHelper
   def person_employed?(person)
     person.company?
   end
+
+  def format_person_name(person)
+    "#{person.first_name} #{person.last_name}"
+  end
 end
