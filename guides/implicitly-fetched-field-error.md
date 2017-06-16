@@ -6,7 +6,7 @@ This protection is similar to [Relay's Data Masking feature](https://facebook.gi
 
 ## Parent Data Leak
 
-One source of these data leak may come from a parent fragment fetching the data used down in a nested subview.
+One source of these data leaks may come from a parent fragment fetching the data used down in a nested subview.
 
 For instance, a controller may fetch a user and include its `fullName`.
 
@@ -33,7 +33,7 @@ GRAPHQL
 
 user = UserFragment.new(user)
 
-# ok as `age` was explicitly queried
+# ok as `location` was explicitly queried
 user.location
 
 # raises UnfetchedFieldError, missing fullName field in query
