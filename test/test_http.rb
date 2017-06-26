@@ -4,7 +4,7 @@ require "graphql/client/http"
 require "minitest/autorun"
 
 class TestHTTP < MiniTest::Test
-  SWAPI = GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/") do
+  SWAPI = GraphQL::Client::HTTP.new("https://mpjk0plp9.lp.gql.zone/graphql") do
     def headers(_context)
       { "User-Agent" => "GraphQL/1.0" }
     end
@@ -14,19 +14,19 @@ class TestHTTP < MiniTest::Test
     skip "TestHTTP disabled by default" unless __FILE__ == $PROGRAM_NAME
 
     document = GraphQL.parse(<<-'GRAPHQL')
-      query getPerson($id: ID!) {
-        person(personID: $id) {
+      query getCharacter($id: ID!) {
+        character(id: $id) {
           name
         }
       }
     GRAPHQL
 
-    name = "getPerson"
-    variables = { "id" => 4 }
+    name = "getCharacter"
+    variables = { "id" => "1001" }
 
     expected = {
       "data" => {
-        "person" => {
+        "character" => {
           "name" => "Darth Vader"
         }
       }
