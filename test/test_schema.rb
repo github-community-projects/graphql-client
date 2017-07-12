@@ -32,6 +32,7 @@ class TestSchemaType < MiniTest::Test
     value "FREE"
     value "SMALL"
     value "LARGE"
+    value "other"
   end
 
   PersonType = GraphQL::ObjectType.define do
@@ -136,6 +137,10 @@ class TestSchemaType < MiniTest::Test
     assert_equal "FREE", Types::Plan::FREE
     assert_equal "SMALL", Types::Plan::SMALL
     assert_equal "LARGE", Types::Plan::LARGE
+
+    assert_equal "FREE", Types::Plan["FREE"]
+    assert_equal "SMALL", Types::Plan["SMALL"]
+    assert_equal "LARGE", Types::Plan["LARGE"]
 
     assert Types::Plan::FREE.free?
     refute Types::Plan::FREE.small?

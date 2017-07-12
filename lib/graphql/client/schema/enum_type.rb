@@ -29,7 +29,7 @@ module GraphQL
             end
             str.define_singleton_method("#{value.downcase}?") { true }
             str.freeze
-            const_set(value, str)
+            const_set(value, str) if value =~ /^[A-Z]/
             @values[str] = str
           end
 
@@ -38,6 +38,10 @@ module GraphQL
 
         def define_class(definition, irep_node)
           self
+        end
+
+        def [](value)
+          @values[value]
         end
 
         # Internal: Cast JSON value to the enumeration's corresponding constant string instance
