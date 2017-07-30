@@ -20,7 +20,7 @@ module SWAPI
   # Fetch latest schema on init, this will make a network request
   Schema = GraphQL::Client.load_schema(HTTP)
 
-  # However, its smart to dump this to a JSON file and load from disk
+  # However, it's smart to dump this to a JSON file and load from disk
   #
   # Run it from a script or rake task
   #   GraphQL::Client.dump_schema(SWAPI::HTTP, "path/to/schema.json")
