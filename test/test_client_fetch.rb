@@ -44,6 +44,12 @@ class TestClientFetch < MiniTest::Test
     assert response = @client.query(Temp::Query)
     assert_equal 1, response.data.version
     assert_empty response.errors
+
+    assert_equal({
+      "data" => {
+        "version" => 1
+      }
+    }, response.to_h)
   end
 
   def test_failed_validation_response

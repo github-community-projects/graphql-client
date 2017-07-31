@@ -264,6 +264,19 @@ class TestClientErrors < MiniTest::Test
     assert_equal [%w(nullableError b00m)], response.data.errors.each.to_a
     assert_equal ["nullableError"], response.data.errors.keys
     assert_equal [["b00m"]], response.data.errors.values
+
+    assert_equal({
+      "data" => {
+        "nullableError" => nil
+      },
+      "errors" => [
+        {
+          "message" => "b00m",
+          "locations" => [{"line" => 1, "column" => 3}],
+          "path" => ["nullableError"]
+        }
+      ]
+    }, response.to_h)
   end
 
   def test_nested_errors

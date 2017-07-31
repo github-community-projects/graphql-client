@@ -317,9 +317,12 @@ module GraphQL
         )
       end
 
+      deep_freeze_json_object(result)
+
       data, errors, extensions = result.values_at("data", "errors", "extensions")
 
       errors ||= []
+      errors = errors.map(&:dup)
       GraphQL::Client::Errors.normalize_error_paths(data, errors)
 
       errors.each do |error|
@@ -328,6 +331,7 @@ module GraphQL
       end
 
       Response.new(
+        result,
         data: definition.new(data, Errors.new(errors, ["data"])),
         errors: Errors.new(errors),
         extensions: extensions
@@ -343,6 +347,19 @@ module GraphQL
     end
 
     private
+
+    def deep_freeze_json_object(obj)
+      case obj
+      when String
+        obj.freeze
+      when Array
+        obj.each { |v| deep_freeze_json_object(v) }
+        obj.freeze
+      when Hash
+        obj.each { |k, v| k.freeze; deep_freeze_json_object(v) }
+        obj.freeze
+      end
+    end
 
     def deep_stringify_keys(obj)
       case obj
