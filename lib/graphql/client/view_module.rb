@@ -46,7 +46,7 @@ module GraphQL
       def eager_load!
         return unless File.directory?(load_path)
 
-        Dir.entries(load_path).each do |entry|
+        Dir.entries(load_path).sort.each do |entry|
           next if entry == "." || entry == ".."
           name = entry.sub(/(\.\w+)+$/, "").camelize.to_sym
           if ViewModule.valid_constant_name?(name)
@@ -97,7 +97,7 @@ module GraphQL
       # Returns new Module implementing Loadable concern.
       def load_module(name)
         pathname = ActiveSupport::Inflector.underscore(name.to_s)
-        path = Dir[File.join(load_path, "{#{pathname},_#{pathname}}{.*}")].map { |fn| File.expand_path(fn) }.first
+        path = Dir[File.join(load_path, "{#{pathname},_#{pathname}}{.*}")].sort.map { |fn| File.expand_path(fn) }.first
 
         return if !path || File.extname(path) != ".erb"
 
