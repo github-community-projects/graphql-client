@@ -18,7 +18,7 @@ class TestViewModule < MiniTest::Test
   end
 
   Schema = GraphQL::Schema.define(query: QueryType) do
-    resolve_type ->(_obj, _ctx) { raise NotImplementedError }
+    resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
   end
 
   Client = GraphQL::Client.new(schema: Schema)

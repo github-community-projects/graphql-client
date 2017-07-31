@@ -8,10 +8,10 @@ require_relative "foo_helper"
 class TestQueryResult < MiniTest::Test
   DateTime = GraphQL::ScalarType.define do
     name "DateTime"
-    coerce_input ->(value, *) do
+    coerce_input ->(value, ctx) do
       Time.iso8601(value)
     end
-    coerce_result ->(value, *) do
+    coerce_result ->(value, ctx) do
       value.utc.iso8601
     end
   end
@@ -234,7 +234,7 @@ class TestQueryResult < MiniTest::Test
   end
 
   Schema = GraphQL::Schema.define(query: QueryType) do
-    resolve_type -> (obj, _ctx) { obj.type }
+    resolve_type -> (_type, obj, _ctx) { obj.type }
   end
 
   module Temp

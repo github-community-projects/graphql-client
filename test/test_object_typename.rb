@@ -80,7 +80,7 @@ class TestObjectTypename < MiniTest::Test
   end
 
   Schema = GraphQL::Schema.define(query: QueryType) do
-    resolve_type ->(obj, _ctx) {
+    resolve_type ->(_type, obj, _ctx) {
       obj.type
     }
   end

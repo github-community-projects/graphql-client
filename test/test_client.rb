@@ -79,7 +79,7 @@ class TestClient < MiniTest::Test
   end
 
   Schema = GraphQL::Schema.define(query: QueryType, mutation: MutationType) do
-    resolve_type ->(_obj, _ctx) { raise NotImplementedError }
+    resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
   end
 
   module Temp
