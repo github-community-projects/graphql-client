@@ -52,7 +52,7 @@ class TestClientFetch < MiniTest::Test
       field :err, types.String
     end
     outdated_schema = GraphQL::Schema.define(query: query) do
-      resolve_type ->(_obj, _ctx) { raise NotImplementedError }
+      resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
     end
 
     @client = GraphQL::Client.new(schema: outdated_schema, execute: Schema)
