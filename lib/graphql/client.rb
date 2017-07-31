@@ -114,7 +114,7 @@ module GraphQL
 
       definition_dependencies = Set.new
 
-      str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)*)$/) do
+      str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)*)/) do
         match = Regexp.last_match
         const_name = match[1]
 
