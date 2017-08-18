@@ -22,7 +22,7 @@ module GraphQL
 
         def define_class(definition, irep_node)
           new(irep_node.typed_children.keys.map { |ctype|
-            schema_module.const_get(ctype.name).define_class(definition, irep_node)
+            schema_module.get_class(ctype.name).define_class(definition, irep_node)
           })
         end
       end

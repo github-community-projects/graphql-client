@@ -307,6 +307,61 @@ class TestSchemaType < MiniTest::Test
     assert_equal "Joshua", person.first_name
   end
 
+  def test_transform_lowercase_type_name
+    person_type = GraphQL::ObjectType.define do
+      name "person"
+    end
+
+    photo_type = GraphQL::ObjectType.define do
+      name "photo"
+    end
+
+    search_result_union = GraphQL::UnionType.define do
+      name "search_result"
+      possible_types [person_type, photo_type]
+    end
+
+    query_type = GraphQL::ObjectType.define do
+      name "query"
+      field :me, !person_type
+      field :first_search_result, !search_result_union
+    end
+
+    schema = GraphQL::Schema.define(query: query_type) do
+      resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
+    end
+
+    types = GraphQL::Client::Schema.generate(schema)
+
+    assert_equal person_type, types::Person.type
+    assert_equal photo_type, types::Photo.type
+    assert_equal search_result_union, types::SearchResult.type
+  end
+
+  def test_reject_colliding_type_names
+    underscored_type = GraphQL::ObjectType.define do
+      name "search_result"
+    end
+
+    camelcase_type = GraphQL::ObjectType.define do
+      name "SearchResult"
+    end
+
+    query_type = GraphQL::ObjectType.define do
+      name "query"
+      field :result, !underscored_type
+      field :other_result, !camelcase_type
+    end
+
+    schema = GraphQL::Schema.define(query: query_type) do
+      resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
+    end
+
+    assert_raises ArgumentError do
+      GraphQL::Client::Schema.generate(schema)
+    end
+  end
+
   def test_interface_cast
     query_klass = Class.new(Types::Query)
     person_klass = Class.new(Types::Person)
