@@ -1,6 +1,6 @@
 # GraphQL::Client::UnfetchedFieldError
 
-Raised when trying access a field on a GraphQL response type which hasn't be explicitly queried.
+Raised when trying to access a field on a GraphQL response type which hasn't been explicitly queried.
 
 ``` graphql
 type User {
