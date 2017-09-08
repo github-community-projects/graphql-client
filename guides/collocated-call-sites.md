@@ -117,7 +117,7 @@ def page_title_via_more_indirection(human)
 end
 ```
 
-Instead, declare and explicitly include the dependencies for helper methods that many receive GraphQL data objects. This decouples the `page_title` from changes to the ERB `Human` fragment.
+Instead, declare and explicitly include the dependencies for helper methods that may receive GraphQL data objects. This decouples the `page_title` from changes to the ERB `Human` fragment.
 
 ``` erb
 <%graphql
