@@ -13,7 +13,7 @@ module GraphQL
     # query sections.
     #
     #   <%graphql
-    #     query GetVerison {
+    #     query GetVersion {
     #       version
     #     }
     #   %>
