@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require "graphql"
 require "graphql/client"
+require "graphql/client/controller_helpers"
 require "rails/railtie"
 
 module GraphQL
@@ -27,6 +28,12 @@ module GraphQL
         else
           require "graphql/client/erubis"
           ActionView::Template::Handlers::ERB.erb_implementation = GraphQL::Client::Erubis
+        end
+      end
+
+      initializer "graphql.configure_controller_helpers" do |_app|
+        ActiveSupport.on_load(:action_controller) do
+          include GraphQL::Client::ControllerHelpers
         end
       end
 
