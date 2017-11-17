@@ -22,8 +22,13 @@ module GraphQL
       end
 
       initializer "graphql.configure_erb_implementation" do |_app|
-        require "graphql/client/erubis"
-        ActionView::Template::Handlers::ERB.erb_implementation = GraphQL::Client::Erubis
+        if Rails.version >= '5.1'
+          require "graphql/client/erubi"
+          ActionView::Template::Handlers::ERB.erb_implementation = GraphQL::Client::Erubi
+        else
+          require "graphql/client/erubis"
+          ActionView::Template::Handlers::ERB.erb_implementation = GraphQL::Client::Erubis
+        end
       end
 
       initializer "graphql.configure_views_namespace" do |app|
