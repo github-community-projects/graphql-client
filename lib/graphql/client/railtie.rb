@@ -14,7 +14,6 @@ module GraphQL
     #
     class Railtie < Rails::Railtie
       config.graphql = ActiveSupport::OrderedOptions.new
-      config.graphql.client = GraphQL::Client.new
 
       initializer "graphql.configure_log_subscriber" do |_app|
         require "graphql/client/log_subscriber"
@@ -31,17 +30,11 @@ module GraphQL
 
         path = app.paths["app/views"].first
 
-        # TODO: Accessing config.graphql.client during the initialization
-        # process seems error prone. The application may reassign
-        # config.graphql.client after this block is executed.
-        client = config.graphql.client
-
         config.watchable_dirs[path] = [:erb]
 
         Object.const_set(:Views, Module.new do
           extend GraphQL::Client::ViewModule
           self.path = path
-          self.client = client
         end)
       end
     end

@@ -17,7 +17,10 @@ module GraphQL
     #   Views::Users::Show::UserFragment
     #
     module ViewModule
-      attr_accessor :client
+      def client
+        @client ||= Rails.application.config.graphql.client
+      end
+      attr_writer :client
 
       # Public: Extract GraphQL section from ERB template.
       #
@@ -109,7 +112,6 @@ module GraphQL
         mod.extend(ViewModule)
         mod.load_path = File.join(load_path, pathname)
         mod.source_path = path
-        mod.client = client
         mod
       end
 
@@ -120,7 +122,6 @@ module GraphQL
         Module.new.tap do |mod|
           mod.extend(ViewModule)
           mod.load_path = dirname
-          mod.client = client
         end
       end
 
