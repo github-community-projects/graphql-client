@@ -129,7 +129,7 @@ module GraphQL
       # message.
       def each
         return enum_for(:each) unless block_given?
-        messages.keys.each do |field|
+        messages.each_key do |field|
           messages[field].each { |error| yield field, error }
         end
       end
