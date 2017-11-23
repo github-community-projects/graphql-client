@@ -43,6 +43,10 @@ module GraphQL
       alias has_key? key?
       alias member? key?
 
+      def each_key(&block)
+        @hash.each_key { |key| yield convert_value(key) }
+      end
+
       private
 
       def convert_value(key)
