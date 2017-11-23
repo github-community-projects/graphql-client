@@ -19,11 +19,11 @@ module RuboCop
           return unless node.location.expression.source =~ /^<<(-|~)?GRAPHQL/
 
           node.each_child_node(:begin) do |begin_node|
-            add_offense(begin_node, :expression, "Do not interpolate variables into GraphQL queries, " \
+            add_offense(begin_node, location: :expression, message: "Do not interpolate variables into GraphQL queries, " \
               "used variables instead.")
           end
 
-          add_offense(node, :expression, "GraphQL heredocs should be quoted. <<-'GRAPHQL'")
+          add_offense(node, location: :expression, message: "GraphQL heredocs should be quoted. <<-'GRAPHQL'")
         end
 
         def autocorrect(node)

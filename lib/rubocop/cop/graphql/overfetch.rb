@@ -44,7 +44,7 @@ module RuboCop
 
           fields.each do |field, count|
             next if count > 0
-            add_offense(nil, ranges[field], "GraphQL field '#{field}' query but was not used in template.")
+            add_offense(nil, location: ranges[field], message: "GraphQL field '#{field}' query but was not used in template.")
           end
         end
 
