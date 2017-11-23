@@ -31,7 +31,7 @@ module GraphQL
         errors
       end
 
-      # Internal: Initalize from collection of errors.
+      # Internal: Initialize from collection of errors.
       #
       # errors - Array of GraphQL Hash error objects
       # path   - Array of String|Integer fields to data

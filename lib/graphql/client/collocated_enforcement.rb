@@ -4,7 +4,7 @@ require "graphql/client/error"
 module GraphQL
   class Client
 
-    # Collcation will not be enforced if a stack trace includes any of these gems.
+    # Collocation will not be enforced if a stack trace includes any of these gems.
     WHITELISTED_GEM_NAMES = %w{pry byebug}
 
     # Raised when method is called from outside the expected file scope.

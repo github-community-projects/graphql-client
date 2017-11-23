@@ -5,7 +5,7 @@ module GraphQL
     # Public: Erubi enhancer that adds support for GraphQL static query sections.
     #
     #   <%graphql
-    #     query GetVerison {
+    #     query GetVersion {
     #       version
     #     }
     #   %>
