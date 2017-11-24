@@ -22,7 +22,7 @@ module GraphQL
           when GraphQL::ListType
             define_class(definition, irep_node, type.of_type).to_list_type
           else
-            const_get(type.name).define_class(definition, irep_node)
+            get_class(type.name).define_class(definition, irep_node)
           end
 
           irep_node.ast_node.directives.inject(type_klass) do |klass, directive|
@@ -32,6 +32,28 @@ module GraphQL
               klass
             end
           end
+        end
+
+        def get_class(type_name)
+          const_get(normalize_type_name(type_name))
+        end
+
+        def set_class(type_name, klass)
+          class_name = normalize_type_name(type_name)
+
+          if constants.include?(class_name.to_sym)
+            raise ArgumentError,
+              "Can't define #{class_name} to represent type #{type_name} " \
+              "because it's already defined"
+          end
+
+          const_set(class_name, klass)
+        end
+
+        private
+
+        def normalize_type_name(type_name)
+          type_name =~ /\A[A-Z]/ ? type_name : type_name.camelize
         end
       end
 
@@ -48,7 +70,7 @@ module GraphQL
           next if name.start_with?("__")
           if klass = class_for(schema, type, cache)
             klass.schema_module = mod
-            mod.const_set(name, klass)
+            mod.set_class(name, klass)
           end
         end
 
