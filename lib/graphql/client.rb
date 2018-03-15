@@ -48,6 +48,8 @@ module GraphQL
       case schema
       when GraphQL::Schema
         schema
+      when GraphQL::Query::Result
+        load_schema(schema.to_h)
       when Hash
         GraphQL::Schema::Loader.load(schema)
       when String
@@ -73,7 +75,7 @@ module GraphQL
         operation_name: "IntrospectionQuery",
         variables: {},
         context: {}
-      )
+      ).to_h
 
       if io
         io = File.open(io, "w") if io.is_a?(String)
