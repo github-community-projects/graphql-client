@@ -9,6 +9,11 @@ module RuboCop
     module GraphQL
       # Public: Rubocop for catching overfetched fields in ERB templates.
       class Overfetch < Cop
+        if defined?(RangeHelp)
+          # rubocop 0.53 moved the #source_range method into this module
+          include RangeHelp
+        end
+
         def_node_search :send_methods, "({send csend block_pass} ...)"
 
         def investigate(processed_source)

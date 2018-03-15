@@ -57,7 +57,13 @@ module GraphQL
           load_schema(JSON.parse(schema))
         end
       else
-        load_schema(dump_schema(schema)) if schema.respond_to?(:execute)
+        if schema.respond_to?(:execute)
+          load_schema(dump_schema(schema))
+        elsif schema.respond_to?(:to_h)
+          load_schema(schema.to_h)
+        else
+          nil
+        end
       end
     end
 
@@ -73,7 +79,7 @@ module GraphQL
         operation_name: "IntrospectionQuery",
         variables: {},
         context: {}
-      )
+      ).to_h
 
       if io
         io = File.open(io, "w") if io.is_a?(String)
