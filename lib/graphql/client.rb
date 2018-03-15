@@ -48,8 +48,6 @@ module GraphQL
       case schema
       when GraphQL::Schema
         schema
-      when GraphQL::Query::Result
-        load_schema(schema.to_h)
       when Hash
         GraphQL::Schema::Loader.load(schema)
       when String
@@ -59,7 +57,13 @@ module GraphQL
           load_schema(JSON.parse(schema))
         end
       else
-        load_schema(dump_schema(schema)) if schema.respond_to?(:execute)
+        if schema.respond_to?(:execute)
+          load_schema(dump_schema(schema))
+        elsif schema.respond_to?(:to_h)
+          load_schema(schema.to_h)
+        else
+          nil
+        end
       end
     end
 
