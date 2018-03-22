@@ -203,17 +203,11 @@ module GraphQL
         definitions[node.name] = definition
       end
 
-      rename_node = ->(node, _parent) do
-        definition = definitions[node.name]
-        if definition
-          node.extend(LazyName)
-          node.name = -> { definition.definition_name }
-        end
-      end
+      name_hook = RenameNodeHook.new(definitions)
       visitor = Language::Visitor.new(doc)
-      visitor[Language::Nodes::FragmentDefinition].leave << rename_node
-      visitor[Language::Nodes::OperationDefinition].leave << rename_node
-      visitor[Language::Nodes::FragmentSpread].leave << rename_node
+      visitor[Language::Nodes::FragmentDefinition].leave << name_hook.method(:rename_node)
+      visitor[Language::Nodes::OperationDefinition].leave << name_hook.method(:rename_node)
+      visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
       visitor.visit
 
       doc.deep_freeze
@@ -230,6 +224,21 @@ module GraphQL
         end
       end
     end
+
+    class RenameNodeHook
+      def initialize(definitions)
+        @definitions = definitions
+      end
+
+      def rename_node(node, _parent)
+        definition = @definitions[node.name]
+        if definition
+          node.extend(LazyName)
+          node.name = -> { definition.definition_name }
+        end
+      end
+    end
+
 
     # Public: Create operation definition from a fragment definition.
     #
