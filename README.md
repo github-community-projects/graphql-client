@@ -15,7 +15,12 @@ require "graphql/client/http"
 # Star Wars API example wrapper
 module SWAPI
   # Configure GraphQL endpoint using the basic HTTP network adapter.
-  HTTP = GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/")
+  HTTP = GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/") do
+    def headers(context)
+      # Optionally set any HTTP headers
+      { "User-Agent": "My Client" }
+    end
+  end  
 
   # Fetch latest schema on init, this will make a network request
   Schema = GraphQL::Client.load_schema(HTTP)
@@ -41,6 +46,17 @@ This client library encourages all GraphQL queries to be declared statically and
 HeroNameQuery = SWAPI::Client.parse <<-'GRAPHQL'
   query {
     hero {
+      name
+    }
+  }
+GRAPHQL
+```
+Queries can reference variables that are passed in at query execution time.
+
+```ruby
+HeroFromEpisodeQuery = SWAPI::Client.parse <<-'GRAPHQL'
+  query($episode: Episode) {
+    hero(episode: $episode) {
       name
     }
   }
@@ -105,7 +121,11 @@ result = SWAPI::Client.query(Hero::Query)
 # The wrapped result allows to you access data with Ruby methods
 result.data.luke.home_planet
 ```
+`GraphQL::Client#query` also accepts variables and context parameters that can be leveraged by the underlying network executor. 
 
+``` ruby
+result = SWAPI::Client.query(Hero::HeroFromEpisodeQuery, variables: {episode: "JEDI"}, context: {user_id: current_user_id})
+```
 ### Rails ERB integration
 
 If you're using Ruby on Rails ERB templates, theres a ERB extension that allows static queries to be defined in the template itself.
