@@ -16,7 +16,7 @@ module GraphQL
         @hash = hash
         @aliases = {}
 
-        hash.keys.each do |key|
+        hash.each_key do |key|
           if key.is_a?(String)
             key_alias = ActiveSupport::Inflector.underscore(key)
             @aliases[key_alias] = key if key != key_alias
@@ -42,6 +42,10 @@ module GraphQL
       alias include? key?
       alias has_key? key?
       alias member? key?
+
+      def each_key(&block)
+        @hash.each_key { |key| yield convert_value(key) }
+      end
 
       private
 

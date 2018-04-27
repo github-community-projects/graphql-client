@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 Gem::Specification.new do |s|
   s.name = "graphql-client"
-  s.version = "0.12.1"
+  s.version = "0.12.3"
   s.summary = "GraphQL Client"
   s.description = "A Ruby library for declaring, composing and executing GraphQL queries"
   s.homepage = "https://github.com/github/graphql-client"
@@ -17,8 +17,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency "erubis", "~> 2.7"
   s.add_development_dependency "minitest", "~> 5.9"
   s.add_development_dependency "rake", "~> 11.2"
-  s.add_development_dependency "rubocop-github", "~> 0.3"
-  s.add_development_dependency "rubocop", "~> 0.47"
+  s.add_development_dependency "rubocop-github", "~> 0.6"
+  s.add_development_dependency "rubocop", "~> 0.49"
 
   s.required_ruby_version = ">= 2.1.0"
 

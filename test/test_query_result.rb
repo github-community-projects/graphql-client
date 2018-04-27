@@ -320,7 +320,7 @@ class TestQueryResult < MiniTest::Test
     assert_equal false, person.homepage_url?
   end
 
-  def test_field_alises
+  def test_field_aliases
     Temp.const_set :Person, @client.parse(<<-'GRAPHQL')
       fragment on Person {
         nickname: name
