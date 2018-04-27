@@ -5,6 +5,16 @@ require "graphql/client/query_error"
 module GraphQL
   class Client
     module ControllerHelpers
+      def self.included(base)
+        base.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        def graphql_parse(query)
+          Rails.application.config.graphql.client.parse(query)
+        end
+      end
+
       private
 
       # Private: The GraphQL::Client instance to be used for graphql_query.
