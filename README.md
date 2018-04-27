@@ -195,6 +195,34 @@ Should your query generate any errors it will raise a `GraphQL::Client::QueryErr
 
 If you're wondering why the special ERB extension exists, in standard Ruby you can simply assign queries and fragments to constants and they'll be available throughout the app. However, the contents of an ERB template is compiled into a Ruby method, and methods can't assign constants. So a new ERB tag was extended to declare static sections that include a GraphQL query.
 
+## Extending the query context
+
+After you run the [provided Rails generator](#configuration) it will add a `graphql_context` method for you to use to pass any additional context for your queries.
+
+For example:
+
+```ruby
+class ApplicationController < ActionController::Base
+  def graphql_context
+    {
+      viewer: current_user,
+      tenant: current_tenant,
+    }
+  end
+end
+```
+
+You could now access any of these fields in your GraphQL schema:
+
+```ruby
+field :login, types.String do
+  description "An example field added by the generator"
+  resolve ->(obj, args, ctx) {
+    ctx[:viewer]&.login
+  }
+end
+```
+
 ## Examples
 
 [github/github-graphql-rails-example](https://github.com/github/github-graphql-rails-example) is an example application using this library to implement views on the GitHub GraphQL API.

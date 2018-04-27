@@ -14,6 +14,15 @@ module GraphqlClient
 
       def install
         template("initializer.erb", "config/initializers/graphql_client.rb")
+
+        inject_into_file 'app/controllers/application_controller.rb', after: "class ApplicationController < ActionController::Base\n" do <<-'RUBY'
+  def graphql_context
+    {
+      viewer: defined?(current_user) && current_user,
+    }
+  end
+RUBY
+end
       end
 
       private
