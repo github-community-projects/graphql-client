@@ -176,17 +176,18 @@ Now that we have the query defined in the view, we can reference it in the contr
 ```ruby
 class HomeController < ApplicationController
   IndexQuery = graphql_parse <<-'GRAPHQL'
-  {
-    luke: human(id: "1000") {
-      ...Views::Home::Index::HomeFragment
-    }
-    leia: human(id: "1003") {
+  query($humanId: String!) {
+    human(id: $humanId) {
       ...Views::Home::Index::HomeFragment
     }
   }
   GRAPHQL
   def index
-    render "index", locals: { characters: graphql_query(IndexQuery) }
+    variables = {
+      humanId: "1002",
+    }
+    characters = graphql_query(IndexQuery, variables)
+    render "index", locals: { characters: characters }
   end
 end
 ```
