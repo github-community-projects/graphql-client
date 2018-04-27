@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+module <%= app_name %>
+  Client = ::GraphQL::Client.new(
+    schema: <%= schema_name %>,
+    execute: <%= schema_name %>,
+    enforce_collocated_callers: Rails.env.development? || Rails.env.test?,
+  )
+end
+
+Rails.application.config.graphql.client = <%= app_name %>::Client
