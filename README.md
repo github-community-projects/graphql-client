@@ -15,7 +15,7 @@ require "graphql/client/http"
 # Star Wars API example wrapper
 module SWAPI
   # Configure GraphQL endpoint using the basic HTTP network adapter.
-  HTTP = GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/") do
+  HTTP = GraphQL::Client::HTTP.new("https://example.com/graphql") do
     def headers(context)
       # Optionally set any HTTP headers
       { "User-Agent": "My Client" }
