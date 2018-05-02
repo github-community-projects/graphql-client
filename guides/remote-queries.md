@@ -10,7 +10,7 @@ An execution adapter is any object that responds to `execute(document:, operatio
 
 To demonstrate using a network library other than `Net::HTTP`, here's a simplified HTTP adapter using the Faraday library.
 
-``` ruby
+```ruby
 require "faraday"
 
 class FaradayAdapter

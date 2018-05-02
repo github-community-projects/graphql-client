@@ -13,7 +13,7 @@
 
 Controllers written with GraphQL queries will delegate all content authorization and record loading concerns to the GraphQL server. Actions will primarily be responsible for constructing a GraphQL query from the URL `params`, executing the query and passing the result data to a template or partial view.
 
-``` ruby
+```ruby
 class IssuesController < ApplicationController
   # Statically define any GraphQL queries as constants. This avoids query string
   # parsing at runtime and ensures we can statically validate all queries for
@@ -60,7 +60,6 @@ The controller only needs to handle object existence and 404 when no data is ret
 With ActiveRecord we could expose objects like `@repository` so any view could lazily traverse its attributes and associations. This object could be generically set by a `before_filter` and used freely by any subview. But this leads to unpredictable data access. Any one of these views could load traverse expense associations off this object.
 
 Instead, views will explicitly declare their data dependencies. They'll only get the data they ask for. Its only useful to the view that requested it and therefore should be passed explicitly as a `:locals`. Also, actions within the same controller will be asking for different properties of the "repository" so having a shared `find_repository` before filter step no longer applies.
-
 
 ## See also
 

@@ -2,14 +2,14 @@
 
 There are two general types of GraphQL operation errors.
 
-1. Parse or Validation errors
-2. Execution errors
+1.  Parse or Validation errors
+2.  Execution errors
 
 ## Parse/Validation errors
 
 Making a query to a server with invalid query syntax or against fields that don't exist will fail the entire operation. No data is returned.
 
-``` ruby
+```ruby
 response = Client.query(BadQuery)
 response.data #=> nil
 response.errors[:data] #=> "Field 'missing' doesn't exist on type 'Query'"
@@ -23,7 +23,7 @@ Execution errors occur while the server if resolving the query operation. These 
 
 The errors API was modeled after [`ActiveModel::Errors`](http://api.rubyonrails.org/classes/ActiveModel/Errors.html). So it should be familiar if you're working with Rails.
 
-``` ruby
+```ruby
 class IssuesController < ApplicationController
   ShowQuery = FooApp::Client.parse <<-'GRAPHQL'
     query($id: ID!) {
@@ -44,7 +44,7 @@ class IssuesController < ApplicationController
       # A Relay node() lookup is nullable so we should conditional check if
       # the id was found.
       if issue = data.issue
-        render "issues/show", issue: issue      
+        render "issues/show", issue: issue
 
       # Otherwise, the server will likely give us a message about why the node()
       # lookup failed.
@@ -75,7 +75,7 @@ Its important to remember that partial data being returned will still validate a
 
 An issue may or may not have an assignee. So we already need a guard to check if the value is present. In this case, we can also choose to look for errors loading the assignee.
 
-``` erb
+```erb
 <% if issue.assignee %>
   <%= render "assignee", user: issue.assignee %>
 <% elsif issue.errors[:assignee] %>
@@ -87,7 +87,7 @@ An issue may or may not have an assignee. So we already need a guard to check if
 
 Scalar values that are non-nullable may return a sensible default value when there is an error fetching the data. Then set an error to inform the client that the data maybe wrong and they can choose to display it with a warning or not all all. If the client neglects to handle the error, the view can still be rendered with a default value.
 
-``` erb
+```erb
 <% if repository.errors[:watchers_count].any? %>
   <img src="data-error.png">
 <% end %>
@@ -99,7 +99,7 @@ Scalar values that are non-nullable may return a sensible default value when the
 
 If an execution error occurs loading a collection of data, an empty list may be returned to the client.
 
-``` erb
+```erb
 <% if repository.errors[:search_results].any? %>
   <p>Search is down</p>
 <% else %>
@@ -111,7 +111,7 @@ If an execution error occurs loading a collection of data, an empty list may be 
 
 The list could also be partial populated and truncated because of a timeout.
 
-``` erb
+```erb
 <% pull.diff_entries.nodes.each do |diff_entry| %>
   <%= diff_entry.path %>
 <% end %>

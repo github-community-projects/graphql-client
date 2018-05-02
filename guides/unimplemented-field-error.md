@@ -2,13 +2,13 @@
 
 Raised when trying access a field on a GraphQL response type which isn't defined by the schema.
 
-``` graphql
+```graphql
 type User {
   name: String!
 }
 ```
 
-``` ruby
+```ruby
 UserFragment = Client.parse <<-'GRAPHQL'
   fragment on User {
     name

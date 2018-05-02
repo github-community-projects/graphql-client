@@ -2,7 +2,7 @@
 
 Raised when trying to execute a query that was not assigned to at static constant.
 
-``` ruby
+```ruby
 # good
 HeroNameQuery = SWAPI::Client.parse <<-'GRAPHQL'
   query($id: ID!) {
@@ -14,7 +14,7 @@ GRAPHQL
 result = SWAPI::Client.query(HeroNameQuery, variables: { id: params[:id] })
 ```
 
-``` ruby
+```ruby
 # bad
 hero_query = SWAPI::Client.parse <<-'GRAPHQL'
   query($id: ID!) {
@@ -28,7 +28,7 @@ result = SWAPI::Client.query(HeroNameQuery, variables: { id: params[:id] })
 
 Parsing a query and validating a query on every request adds performance overhead. It also prevents validation errors from being discovered until request time, rather than when the query is parsed at startup.
 
-``` ruby
+```ruby
 # horrible
 hero_query = SWAPI::Client.parse <<-GRAPHQL
   query {

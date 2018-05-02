@@ -6,7 +6,7 @@ All data passing is done explicitly through `locals:` just as you would pass arg
 
 `app/views/issues/show.html.erb`:
 
-``` erb
+```erb
 <%# cast issue data hash into ruby friendly struct %>
 <% issue = Issues::Show::Issue.new(issue) %>
 
@@ -26,7 +26,7 @@ However, since the views can not access ActiveRecord objects directly anymore, a
 
 `app/views/issues/show.html.erb`:
 
-``` erb
+```erb
 <%graphql
   fragment on Issue {
     title
@@ -55,7 +55,7 @@ However, we do render a subview and hand off a `comment`. Since we composed rend
 
 `app/views/issues/_comment.html.erb`:
 
-``` erb
+```erb
 <%graphql
   fragment on Comment {
     bodyHTML
@@ -80,7 +80,7 @@ by <%= comment.author.login %>
 
 Many views will always render a set of subviews.
 
-``` erb
+```erb
 <div class="issue-container">
   <h1><%= issue.title %></h1>
   <%= render "issues/header", issue: issue %>
@@ -90,7 +90,7 @@ Many views will always render a set of subviews.
 
 The fragment should declare all the data dependencies used by just this partial. In this case, only the issue's `title` is explicitly used, then include any subview fragments.
 
-``` erb
+```erb
 <%graphql
   fragment IssueFragment on Issue {
     title
@@ -102,7 +102,7 @@ The fragment should declare all the data dependencies used by just this partial.
 
 ### Looping over a collection
 
-``` erb
+```erb
 <h1><%= issue.title %></h1>
 
 <% issue.comments.each do |comment| %>
@@ -112,7 +112,7 @@ The fragment should declare all the data dependencies used by just this partial.
 
 The fragment declares the view's own data dependencies as before. As well as the `comments` collection. Since a comment is passed to the `issues/comment` partial, not the issue, we'll include the fragment inside `comments { ... }`.
 
-``` erb
+```erb
 <%graphql
   fragment IssueFragment on Issue {
     title
@@ -125,7 +125,7 @@ The fragment declares the view's own data dependencies as before. As well as the
 
 ### Branch on associated data presence
 
-``` erb
+```erb
 <h1><%= issue.title %></h1>
 
 <% if milestone = issue.milestone %>
@@ -135,7 +135,7 @@ The fragment declares the view's own data dependencies as before. As well as the
 
 Similar to embedding a collection's fragment, the partial defines the data for the milestone itself, not the issue. We include the fragment in the `milestone { ... }` connection.
 
-``` erb
+```erb
 <%graphql
   fragment Issue on Issue {
     title
@@ -150,7 +150,7 @@ Similar to embedding a collection's fragment, the partial defines the data for t
 
 More generally, UI may only be visible if a flag is set on the data object.
 
-``` erb
+```erb
 <% if comment.editable_by_viewer? %>
   <%= render "issues/comment_edit_toolbar", comment: comment
 <% end %>
@@ -160,8 +160,7 @@ More generally, UI may only be visible if a flag is set on the data object.
 
 Since the view may conditionally need the edit toolbars data, the view's fragment must always be included. This is an acceptable place where overfetching data is okay.
 
-
-``` erb
+```erb
 <%graphql
   fragment Comment on Comment {
     bodyHTML
@@ -175,5 +174,5 @@ Since the view may conditionally need the edit toolbars data, the view's fragmen
 [github-graphql-rails-example](https://github.com/github/github-graphql-rails-example) template examples:
 
 * [app/views/repositories/index.html.erb](https://github.com/github/github-graphql-rails-example/blob/master/app/views/repositories/index.html.erb) shows the root template's listing query and composition over subviews.
-* [app/views/repositories/_repositories.html.erb]( https://github.com/github/github-graphql-rails-example/blob/master/app/views/repositories/_repositories.html.erb) makes use of GraphQL connections to show the first couple items and a "load more" button.
+* [app/views/repositories/\_repositories.html.erb](https://github.com/github/github-graphql-rails-example/blob/master/app/views/repositories/_repositories.html.erb) makes use of GraphQL connections to show the first couple items and a "load more" button.
 * [app/views/repositories/show.html.erb](https://github.com/github/github-graphql-rails-example/blob/master/app/views/repositories/show.html.erb) shows the root template for the repository show page.

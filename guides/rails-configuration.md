@@ -8,7 +8,7 @@ Assumes your application is named `Foo`.
 
 ### Add graphql-client to your Gemfile
 
-``` ruby
+```ruby
 gem 'graphql-client'
 ```
 
@@ -16,7 +16,7 @@ gem 'graphql-client'
 
 This part is temporarily a mess due to railtie and application initialization order.
 
-``` ruby
+```ruby
 require "graphql/client/railtie"
 require "graphql/client/http"
 
@@ -38,9 +38,9 @@ end
 
 ### Define a schema updater rake task
 
-*(May eventually be part of `graphql/railtie`)*
+_(May eventually be part of `graphql/railtie`)_
 
-``` ruby
+```ruby
 namespace :schema do
   task :update do
     GraphQL::Client.dump_schema(Foo::HTTP, "db/schema.json")
@@ -50,7 +50,7 @@ end
 
 Its recommended you check in the downloaded schema. Periodically refetch and keep up-to-date.
 
-``` sh
+```sh
 $ bin/rake schema:update
 $ git add db/schema.json
 ```

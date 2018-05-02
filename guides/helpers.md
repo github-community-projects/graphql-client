@@ -4,7 +4,7 @@ There is nothing special about ERB templates that can declare data dependencies.
 
 Helpers accessing many or nested object fields may declare a fragment for those requirements.
 
-``` ruby
+```ruby
 module MilestoneHelper
   # Define static query fragment for fetching data for helper.
   MilestoneProgressFragment = FooApp::Client.parse <<-'GRAPHQL'

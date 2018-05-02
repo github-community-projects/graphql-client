@@ -4,7 +4,7 @@ Nothing says GraphQL queries need to go over wires.
 
 If your frontend and backend code happen to be running in one big monolith application, you can simply point your client at your server's defined schema and execute queries in the same process.
 
-``` ruby
+```ruby
 # server.rb
 require "graphql"
 
@@ -20,7 +20,7 @@ end
 
 See more about [defining a server schema on the graphql-ruby guide](https://github.com/rmosolgo/graphql-ruby/blob/master/guides/defining_your_schema.md).
 
-``` ruby
+```ruby
 # client.rb
 require "server"
 require "graphql/client"

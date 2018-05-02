@@ -2,14 +2,14 @@
 
 Raised when trying to access a field on a GraphQL response type which hasn't been explicitly queried.
 
-``` graphql
+```graphql
 type User {
   firstName: String!
   lastName: String!
 }
 ```
 
-``` ruby
+```ruby
 UserFragment = Client.parse <<-'GRAPHQL'
   fragment on User {
     firstName
@@ -27,7 +27,7 @@ user.last_name
 
 GraphQL requires all fields to be explicitly queried. Just add `lastName` to your query and be on your way.
 
-``` ruby
+```ruby
 UserFragment = Client.parse <<-'GRAPHQL'
   fragment on User {
     firstName

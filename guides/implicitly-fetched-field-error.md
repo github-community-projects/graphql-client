@@ -10,7 +10,7 @@ One source of these data leaks may come from a parent fragment fetching the data
 
 For instance, a controller may fetch a user and include its `fullName`.
 
-``` ruby
+```ruby
 UserQuery = Client.parse <<-'GRAPHQL'
   query {
     user(name: "Josh") {
@@ -23,7 +23,7 @@ GRAPHQL
 
 Many layers deep, a contact info helper might also too want to make use of the user's `fullName`.
 
-``` ruby
+```ruby
 UserFragment = Client.parse <<-'GRAPHQL'
   fragment on User {
     location
@@ -42,7 +42,7 @@ user.full_name
 
 In this case, the raw GraphQL will include both `location` and `fullName`:
 
-``` json
+```json
 {
   "user": {
     "fullName": "Joshua Peek",
@@ -59,7 +59,7 @@ Self contained functions should only safely rely on data dependencies they expli
 
 Similar to the parent data leak scenario, but occurs when a subview fetches data that our root view didn't explicitly ask for.
 
-``` erb
+```erb
 <%graphql
   fragment User on User {
     fullName
@@ -68,7 +68,7 @@ Similar to the parent data leak scenario, but occurs when a subview fetches data
 %>
 ```
 
-``` ruby
+```ruby
 UserQuery = Client.parse <<-'GRAPHQL'
   query {
     user(name: "Josh") {

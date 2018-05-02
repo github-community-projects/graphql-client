@@ -4,7 +4,7 @@ The collocation best practice comes from the [Relay.js](https://facebook.github.
 
 ## Ruby method collocation
 
-``` ruby
+```ruby
 PageTitleFragment = SWAPI::Client.parse <<-'GRAPHQL'
   fragment on Human {
     name
@@ -25,7 +25,7 @@ You can clearly see that both `name` and `homePlanet` are used by this helper me
 
 Additional fields maybe queried without any change to this functions call sites.
 
-``` diff
+```diff
   PageTitleFragment = SWAPI::Client.parse <<-'GRAPHQL'
     fragment on Human {
       name
@@ -43,7 +43,7 @@ Additional fields maybe queried without any change to this functions call sites.
 
 ## ERB Collocation
 
-``` erb
+```erb
 <%graphql
   fragment Human on Human {
     name
@@ -63,7 +63,7 @@ As with the plain old ruby method, you can still clearly see that both `name` an
 
 ### Sharing definitions between multiple helpers
 
-``` ruby
+```ruby
 # bad
 SharedFragment = SWAPI::Client.parse <<-'GRAPHQL'
   fragment on Human {
@@ -91,7 +91,7 @@ Avoid this by defining separate fragments for `human_header` and `page_title`.
 
 ### Sharing object references with logic outside the current module
 
-``` erb
+```erb
 <%graphql
   fragment Human on Human {
     name
@@ -105,7 +105,7 @@ Avoid this by defining separate fragments for `human_header` and `page_title`.
 
 Just looking at this template it appears that none of the fields queried are actually used. But until we dig into the helper methods do we see they are implicitly accessed by other logic. This breaks our ability to locally reason about the template data requirements.
 
-``` ruby
+```ruby
 # bad
 def page_title(human)
   page_title_via_more_indirection(human)
@@ -119,7 +119,7 @@ end
 
 Instead, declare and explicitly include the dependencies for helper methods that may receive GraphQL data objects. This decouples the `page_title` from changes to the ERB `Human` fragment.
 
-``` erb
+```erb
 <%graphql
   fragment Human on Human {
     ...HumanHelper::PageTitleFragment
@@ -130,7 +130,7 @@ Instead, declare and explicitly include the dependencies for helper methods that
 <%= page_title(human) %>
 ```
 
-``` ruby
+```ruby
 PageTitleFragment = SWAPI::Client.parse <<-'GRAPHQL'
   fragment on Human {
     name
