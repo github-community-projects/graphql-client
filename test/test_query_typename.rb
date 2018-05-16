@@ -4,6 +4,8 @@ require "graphql/client/query_typename"
 require "minitest/autorun"
 
 class TestQueryTypename < MiniTest::Test
+  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+
   PersonType = GraphQL::ObjectType.define do
     name "Person"
     field :id, types.Int do

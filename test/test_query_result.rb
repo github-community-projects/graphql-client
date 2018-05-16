@@ -6,6 +6,8 @@ require "ostruct"
 require_relative "foo_helper"
 
 class TestQueryResult < MiniTest::Test
+  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+
   DateTime = GraphQL::ScalarType.define do
     name "DateTime"
     coerce_input ->(value, ctx) do

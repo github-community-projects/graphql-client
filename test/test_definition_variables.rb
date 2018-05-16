@@ -5,6 +5,8 @@ require "graphql/client/definition_variables"
 require "minitest/autorun"
 
 class TestDefinitionVariables < MiniTest::Test
+  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+
   QueryType = GraphQL::ObjectType.define do
     name "Query"
     field :version, !types.Int

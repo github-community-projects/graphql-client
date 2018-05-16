@@ -5,6 +5,8 @@ require "minitest/autorun"
 require "ostruct"
 
 class TestObjectTypename < MiniTest::Test
+  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+
   PersonType = GraphQL::ObjectType.define do
     name "Person"
     field :id, types.Int do

@@ -5,6 +5,8 @@ require "graphql/client/view_module"
 require "minitest/autorun"
 
 class TestViewModule < MiniTest::Test
+  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+
   Root = File.expand_path("..", __FILE__)
 
   UserType = GraphQL::ObjectType.define do

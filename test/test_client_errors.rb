@@ -4,6 +4,8 @@ require "graphql/client"
 require "minitest/autorun"
 
 class TestClientErrors < MiniTest::Test
+  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+
   FooType = GraphQL::ObjectType.define do
     name "Foo"
     field :nullableError, types.String do

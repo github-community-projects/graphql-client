@@ -5,6 +5,8 @@ require "json"
 require "minitest/autorun"
 
 class TestClientSchema < MiniTest::Test
+  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+
   QueryType = GraphQL::ObjectType.define do
     name "AwesomeQuery"
     field :version, !types.Int

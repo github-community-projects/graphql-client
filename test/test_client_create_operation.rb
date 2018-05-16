@@ -4,6 +4,8 @@ require "graphql/client"
 require "minitest/autorun"
 
 class TestClientCreateOperation < MiniTest::Test
+  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+
   UserType = GraphQL::ObjectType.define do
     name "User"
     field :id, !types.ID
