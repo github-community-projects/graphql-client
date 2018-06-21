@@ -22,7 +22,10 @@ module GraphQL
 
         def define_class(definition, irep_node)
           fields = irep_node.typed_children[type].inject({}) { |h, (field_name, field_irep_node)|
-            if definition.indexes[:definitions][field_irep_node.ast_node] == definition.definition_node
+            definition_for_field = definition.indexes[:definitions][field_irep_node.ast_node]
+
+            # Ignore fields defined in other documents.
+            if definition.source_document.definitions.include?(definition_for_field)
               h[field_name.to_sym] = schema_module.define_class(definition, field_irep_node, field_irep_node.definition.type)
             end
             h
