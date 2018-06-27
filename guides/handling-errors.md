@@ -58,7 +58,7 @@ class IssuesController < ApplicationController
     # errors object will report these.
     elsif response.errors.any?
       # "Could not resolve to a node with the global id of 'abc'"
-      message = response.data.errors[:issue].join(", ")
+      message = response.errors[:issue].join(", ")
       render status: :internal_server_error, plain: message
     end
   end
