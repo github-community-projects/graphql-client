@@ -206,8 +206,7 @@ For example:
 class ApplicationController < ActionController::Base
   def graphql_context
     {
-      viewer: current_user,
-      tenant: current_tenant,
+      request_id: request.request_id,
     }
   end
 end
