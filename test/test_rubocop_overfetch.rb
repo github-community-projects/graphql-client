@@ -36,7 +36,7 @@ class TestRubocopOverfetch < MiniTest::Test
 
   def investigate(cop, path)
     engine = GraphQL::Client::Erubis.new(File.read(path))
-    processed_source = RuboCop::ProcessedSource.new(engine.src, RUBY_VERSION.to_f, path)
+    processed_source = RuboCop::ProcessedSource.new(engine.src.dup, RUBY_VERSION.to_f, path)
     commissioner = RuboCop::Cop::Commissioner.new([cop], [], raise_error: true)
     commissioner.investigate(processed_source)
     commissioner

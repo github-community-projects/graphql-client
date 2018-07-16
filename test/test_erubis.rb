@@ -36,7 +36,8 @@ class TestErubis < MiniTest::Test
     erubis = GraphQL::Client::Erubis.new(src)
 
     output_buffer = ActionView::OutputBuffer.new
-    erubis.result(binding)
+    # rubocop:disable Security/Eval
+    eval(erubis.src, binding, "(erubis)")
     assert_equal "42", output_buffer.strip
 
     expected_query = <<-ERB
