@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require "graphql/client/erubis"
+require "graphql/client/erb"
 require "rubocop/cop/graphql/overfetch"
 require "minitest/autorun"
 
@@ -35,7 +35,7 @@ class TestRubocopOverfetch < MiniTest::Test
   private
 
   def investigate(cop, path)
-    engine = GraphQL::Client::Erubis.new(File.read(path))
+    engine = GraphQL::Client::ERB.new(File.read(path))
     processed_source = RuboCop::ProcessedSource.new(engine.src.dup, RUBY_VERSION.to_f, path)
     commissioner = RuboCop::Cop::Commissioner.new([cop], [], raise_error: true)
     commissioner.investigate(processed_source)
