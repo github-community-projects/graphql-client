@@ -31,7 +31,7 @@ module GraphQL
         errors
       end
 
-      # Internal: Initalize from collection of errors.
+      # Internal: Initialize from collection of errors.
       #
       # errors - Array of GraphQL Hash error objects
       # path   - Array of String|Integer fields to data
@@ -129,7 +129,7 @@ module GraphQL
       # message.
       def each
         return enum_for(:each) unless block_given?
-        messages.keys.each do |field|
+        messages.each_key do |field|
           messages[field].each { |error| yield field, error }
         end
       end

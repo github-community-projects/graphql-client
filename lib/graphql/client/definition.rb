@@ -28,9 +28,9 @@ module GraphQL
       def initialize(client:, document:, irep_node:, source_location:)
         @client = client
         @document = document
-        @definition_irep_node = irep_node
+        @definition_node = irep_node.ast_node
         @source_location = source_location
-        @schema_class = client.types.define_class(self, definition_irep_node, definition_irep_node.return_type)
+        @schema_class = client.types.define_class(self, irep_node, irep_node.return_type)
       end
 
       # Internal: Get associated owner GraphQL::Client instance.
@@ -41,18 +41,11 @@ module GraphQL
       # GraphQL::Client::Schema::PossibleTypes.
       attr_reader :schema_class
 
-      # Internal: Get underlying IRep Node for the definition.
-      #
-      # Returns GraphQL::InternalRepresentation::Node object.
-      attr_reader :definition_irep_node
-
       # Internal: Get underlying operation or fragment defintion AST node for
       # definition.
       #
       # Returns OperationDefinition or FragmentDefinition object.
-      def definition_node
-        definition_irep_node.ast_node
-      end
+      attr_reader :definition_node
 
       # Public: Global name of definition in client document.
       #
