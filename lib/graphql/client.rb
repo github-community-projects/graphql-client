@@ -198,6 +198,7 @@ module GraphQL
           client: self,
           irep_node: irep_node,
           document: sliced_document,
+          source_document: doc,
           source_location: source_location
         )
         definitions[node.name] = definition

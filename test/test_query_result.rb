@@ -935,6 +935,23 @@ class TestQueryResult < MiniTest::Test
     assert_equal "josh", owner.login
   end
 
+  def test_parse_fragment_spread_with_local_fragment
+    Temp.const_set :Queries, @client.parse(<<-'GRAPHQL')
+      fragment RepositoryFragment on Repository {
+        name
+      }
+
+      query Query {
+        repository {
+          ...RepositoryFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Queries::Query)
+    assert_equal "rails", response.data.repository.name
+  end
+
   def test_supports_unions_with_array_fields
     Temp.const_set :Fragment, @client.parse(<<-'GRAPHQL')
       fragment on IssueOrPullRequest {
