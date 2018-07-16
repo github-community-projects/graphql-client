@@ -206,7 +206,7 @@ For example:
 class ApplicationController < ActionController::Base
   def graphql_context
     {
-      request_id: request.request_id,
+      origin: "web",
     }
   end
 end
@@ -215,10 +215,10 @@ end
 You could now access any of these fields in your GraphQL schema:
 
 ```ruby
-field :login, types.String do
+field :origin, types.String do
   description "An example field added by the generator"
   resolve ->(obj, args, ctx) {
-    ctx[:viewer]&.login
+    ctx[:origin]
   }
 end
 ```
