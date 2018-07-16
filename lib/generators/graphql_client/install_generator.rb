@@ -3,42 +3,37 @@
 require 'rails/generators/base'
 
 module GraphqlClient
-    class InstallGenerator < Rails::Generators::Base
-      desc "Install GraphQL::Client boilerplate code"
-      source_root File.expand_path('../templates', __FILE__)
+  class InstallGenerator < Rails::Generators::Base
+    desc "Install GraphQL::Client boilerplate code"
+    source_root File.expand_path('../templates', __FILE__)
 
-      class_option :schema,
-        type: :string,
-        default: nil,
-        desc: "Name for the schema constant (default: {app_name}Schema)"
+    class_option :schema,
+      type: :string,
+      default: nil,
+      desc: "Name for the schema constant (default: {app_name}Schema)"
 
-      def install
-        template("initializer.erb", "config/initializers/graphql_client.rb")
+    def install
+      template("initializer.erb", "config/initializers/graphql_client.rb")
 
-        inject_into_file 'app/controllers/application_controller.rb', after: "class ApplicationController < ActionController::Base\n" do <<-'RUBY'
+      inject_into_file 'app/controllers/application_controller.rb', after: "class ApplicationController < ActionController::Base\n" do <<-'RUBY'
   def graphql_context
     # Add your context here
     {}
   end
 RUBY
-end
-      end
+    end
 
-      private
+    private
 
-      def app_name
-        Rails.application.class.parent_name
-      end
-
-      def schema_name
-        @schema_name ||= begin
-          if options[:schema]
-            options[:schema]
-          else
-            require File.expand_path("config/application", destination_root)
-            "#{app_name}Schema"
-          end
+    def schema_name
+      @schema_name ||= begin
+        if options[:schema]
+          options[:schema]
+        else
+          require File.expand_path("config/application", destination_root)
+          "#{Rails.application.class.parent_name}Schema"
         end
       end
     end
+  end
 end
