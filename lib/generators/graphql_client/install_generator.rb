@@ -17,9 +17,8 @@ module GraphqlClient
 
         inject_into_file 'app/controllers/application_controller.rb', after: "class ApplicationController < ActionController::Base\n" do <<-'RUBY'
   def graphql_context
-    {
-      viewer: defined?(current_user) && current_user,
-    }
+    # Add your context here
+    {}
   end
 RUBY
 end
