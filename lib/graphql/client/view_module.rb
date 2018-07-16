@@ -17,11 +17,6 @@ module GraphQL
     #   Views::Users::Show::UserFragment
     #
     module ViewModule
-      def client
-        @client ||= Rails.application.config.graphql.client
-      end
-      attr_writer :client
-
       # Public: Extract GraphQL section from ERB template.
       #
       # src - String ERB text
@@ -108,7 +103,7 @@ module GraphQL
         query, lineno = ViewModule.extract_graphql_section(contents)
         return unless query
 
-        mod = client.parse(query, path, lineno)
+        mod = Rails.application.config.graphql.client.parse(query, path, lineno)
         mod.extend(ViewModule)
         mod.load_path = File.join(load_path, pathname)
         mod.source_path = path
