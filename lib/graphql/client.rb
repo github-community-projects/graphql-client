@@ -157,10 +157,13 @@ module GraphQL
       doc = GraphQL.parse(str)
 
       document_types = DocumentTypes.analyze_types(self.schema, doc).freeze
-      QueryTypename.insert_typename_fields(doc, types: document_types)
+      doc = QueryTypename.insert_typename_fields(doc, types: document_types)
 
       doc.definitions.each do |node|
-        node.name ||= "__anonymous__"
+        if node.name.nil?
+          node_with_name = node.merge(name: "__anonymous__")
+          doc = doc.replace_child(node, node_with_name)
+        end
       end
 
       document_dependencies = Language::Nodes::Document.new(definitions: doc.definitions + definition_dependencies.to_a)
@@ -192,7 +195,6 @@ module GraphQL
           raise TypeError, "unexpected #{node.class}"
         end
 
-        node.name = nil if node.name == "__anonymous__"
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
         definition = Definition.for(
           client: self,
@@ -213,10 +215,12 @@ module GraphQL
 
       doc.deep_freeze
 
-      document.definitions.concat(doc.definitions) if document_tracking_enabled
+      if document_tracking_enabled
+        @document = @document.merge(definitions: document.definitions + doc.definitions)
+      end
 
-      if definitions[nil]
-        definitions[nil]
+      if definitions["__anonymous__"]
+        definitions["__anonymous__"]
       else
         Module.new do
           definitions.each do |name, definition|
@@ -235,7 +239,7 @@ module GraphQL
         definition = @definitions[node.name]
         if definition
           node.extend(LazyName)
-          node.name = -> { definition.definition_name }
+          node.name_proc = -> { definition.definition_name }
         end
       end
     end
@@ -358,8 +362,10 @@ module GraphQL
     # name to point to a lazily defined Proc instead of a static string.
     module LazyName
       def name
-        @name.call
+        @name_proc.call
       end
+
+      attr_writer :name_proc
     end
 
     private
