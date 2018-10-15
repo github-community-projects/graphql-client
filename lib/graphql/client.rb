@@ -173,8 +173,12 @@ module GraphQL
 
       doc.definitions.each do |node|
         if node.name.nil?
-          node_with_name = node.merge(name: "__anonymous__")
-          doc = doc.replace_child(node, node_with_name)
+          if node.respond_to?(:merge) # GraphQL 1.9 +
+            node_with_name = node.merge(name: "__anonymous__")
+            doc = doc.replace_child(node, node_with_name)
+          else
+            node.name = "__anonymous__"
+          end
         end
       end
 
@@ -225,8 +229,16 @@ module GraphQL
       visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
       visitor.visit
 
+      if GraphQL::VERSION < "1.9"
+        doc.deep_freeze # 1.9 introduced immutable AST nodes
+      end
+
       if document_tracking_enabled
-        @document = @document.merge(definitions: @document.definitions + doc.definitions)
+        if @document.respond_to?(:merge) # GraphQL 1.9+
+          @document = @document.merge(definitions: @document.definitions + doc.definitions)
+        else
+          @document.definitions.concat(doc.definitions)
+        end
       end
 
       if definitions["__anonymous__"]
