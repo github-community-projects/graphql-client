@@ -120,13 +120,21 @@ module GraphQL
 
       definition_dependencies = Set.new
 
+      # Replace Ruby constant reference with GraphQL fragment names,
+      # while populating `definition_dependencies` with
+      # GraphQL Fragment ASTs which this operation depends on
       str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)*)/) do
         match = Regexp.last_match
         const_name = match[1]
 
         if str.match(/fragment\s*#{const_name}/)
+          # It's a fragment _definition_, not a fragment usage
           match[0]
         else
+          # It's a fragment spread, so we should load the fragment
+          # which corresponds to the spread.
+          # We depend on ActiveSupport to either find the already-loaded
+          # constant, or to load the constant by name
           begin
             fragment = ActiveSupport::Inflector.constantize(const_name)
           rescue NameError
@@ -135,6 +143,10 @@ module GraphQL
 
           case fragment
           when FragmentDefinition
+            # We found the fragment definition that this fragment spread belongs to.
+            # So, register the AST of this fragment in `definition_dependencies`
+            # and update the query string to valid GraphQL syntax,
+            # replacing the Ruby constant
             definition_dependencies.merge(fragment.document.definitions)
             "...#{fragment.definition_name}"
           else
@@ -207,16 +219,14 @@ module GraphQL
       end
 
       name_hook = RenameNodeHook.new(definitions)
-      visitor = Language::Visitor.new(doc)
+      visitor = Language::Visitor.new(document_dependencies)
       visitor[Language::Nodes::FragmentDefinition].leave << name_hook.method(:rename_node)
       visitor[Language::Nodes::OperationDefinition].leave << name_hook.method(:rename_node)
       visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
       visitor.visit
 
-      doc.deep_freeze
-
       if document_tracking_enabled
-        @document = @document.merge(definitions: document.definitions + doc.definitions)
+        @document = @document.merge(definitions: @document.definitions + doc.definitions)
       end
 
       if definitions["__anonymous__"]
