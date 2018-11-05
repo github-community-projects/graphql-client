@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/github/graphql-client.svg?branch=master)](https://travis-ci.org/github/graphql-client)
+
 # graphql-client
 
 GraphQL Client is a Ruby library for declaring, composing and executing GraphQL queries.
