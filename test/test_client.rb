@@ -79,13 +79,15 @@ class TestClient < MiniTest::Test
   class Schema < GraphQL::Schema
     query(QueryType)
     mutation(MutationType)
+    use GraphQL::Execution::Interpreter
+    use GraphQL::Analysis::AST
   end
 
   module Temp
   end
 
   def setup
-    @client = GraphQL::Client.new(schema: Schema)
+    @client = GraphQL::Client.new(schema: Schema.graphql_definition)
     @client.document_tracking_enabled = true
   end
 
@@ -314,6 +316,12 @@ class TestClient < MiniTest::Test
   end
 
   def test_client_parse_query_fragment_document
+    Temp.const_set :StandardProfilePic, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        profilePic(size: 50)
+      }
+    GRAPHQL
+
     Temp.const_set :UserDocument, @client.parse(<<-'GRAPHQL')
       query NestedFragments {
         user(id: 4) {
@@ -329,15 +337,15 @@ class TestClient < MiniTest::Test
       fragment FriendFields on User {
         id
         name
-        ...StandardProfilePic
-      }
-
-      fragment StandardProfilePic on User {
-        profilePic(size: 50)
+        ...TestClient::Temp::StandardProfilePic
       }
     GRAPHQL
 
     assert_equal(<<-'GRAPHQL'.gsub(/^      /, "").chomp, @client.document.to_query_string)
+      fragment TestClient__Temp__StandardProfilePic on User {
+        profilePic(size: 50)
+      }
+
       query TestClient__Temp__UserDocument__NestedFragments {
         user(id: 4) {
           friends(first: 10) {
@@ -352,11 +360,7 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__UserDocument__FriendFields on User {
         id
         name
-        ...TestClient__Temp__UserDocument__StandardProfilePic
-      }
-
-      fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
-        profilePic(size: 50)
+        ...TestClient__Temp__StandardProfilePic
       }
     GRAPHQL
 
@@ -375,10 +379,10 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__UserDocument__FriendFields on User {
         id
         name
-        ...TestClient__Temp__UserDocument__StandardProfilePic
+        ...TestClient__Temp__StandardProfilePic
       }
 
-      fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
+      fragment TestClient__Temp__StandardProfilePic on User {
         profilePic(size: 50)
       }
     GRAPHQL
@@ -387,20 +391,20 @@ class TestClient < MiniTest::Test
       fragment TestClient__Temp__UserDocument__FriendFields on User {
         id
         name
-        ...TestClient__Temp__UserDocument__StandardProfilePic
+        ...TestClient__Temp__StandardProfilePic
       }
 
-      fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
+      fragment TestClient__Temp__StandardProfilePic on User {
         profilePic(size: 50)
       }
     GRAPHQL
 
     query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
-      fragment TestClient__Temp__UserDocument__StandardProfilePic on User {
+      fragment TestClient__Temp__StandardProfilePic on User {
         profilePic(size: 50)
       }
     GRAPHQL
-    assert_equal(query_string, Temp::UserDocument::StandardProfilePic.document.to_query_string)
+    assert_equal(query_string, Temp::StandardProfilePic.document.to_query_string)
   end
 
   def test_client_parse_query_external_fragments_document
