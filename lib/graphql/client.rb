@@ -202,19 +202,10 @@ module GraphQL
 
       definitions = {}
       doc.definitions.each do |node|
-        irep_node = case node
-        when GraphQL::Language::Nodes::OperationDefinition
-          errors[:irep].operation_definitions[node.name]
-        when GraphQL::Language::Nodes::FragmentDefinition
-          errors[:irep].fragment_definitions[node.name]
-        else
-          raise TypeError, "unexpected #{node.class}"
-        end
-
         sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
         definition = Definition.for(
           client: self,
-          irep_node: irep_node,
+          ast_node: node,
           document: sliced_document,
           source_document: doc,
           source_location: source_location
