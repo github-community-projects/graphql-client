@@ -2,6 +2,7 @@
 require "graphql"
 require "graphql/client"
 require "minitest/autorun"
+require "time" # required for Time#iso8601
 require "ostruct"
 require_relative "foo_helper"
 
