@@ -1,8 +1,17 @@
-# graphql-client
+# graphql-client [![Gem Version](https://badge.fury.io/rb/graphql-client.svg)](https://badge.fury.io/rb/graphql-client)
 
 GraphQL Client is a Ruby library for declaring, composing and executing GraphQL queries.
 
 ## Usage
+
+### Installation
+
+Add `graphql-client` to your Gemfile and then run `bundle install`.
+
+```ruby
+# Gemfile
+gem 'graphql-client'
+```
 
 ### Configuration
 
