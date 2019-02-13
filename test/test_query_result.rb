@@ -1038,9 +1038,30 @@ class TestQueryResult < MiniTest::Test
 
     response = @client.query(Temp::Query)
 
-    assert_raises TypeError,  "TestQueryResult::Temp::AdminFragment is not included in TestQueryResult::Temp::Query" do
+    assert_raises TypeError, "TestQueryResult::Temp::AdminFragment is not included in TestQueryResult::Temp::Query" do
       Temp::AdminFragment.new(response.data.node)
     end
+  end
+
+  def test_parse_valid_fragment_cast_on_spread
+    Temp.const_set :AdminFragment, @client.parse(<<-'GRAPHQL')
+      fragment on AdminUser {
+        password
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        node(id: "1") {
+          ...TestQueryResult::Temp::AdminFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+    admin = Temp::AdminFragment.new(response.data.node)
+
+    assert_equal "secret", admin.password
   end
 
   def test_client_parse_fragment_query_result_with_inline_fragments
