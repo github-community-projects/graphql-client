@@ -110,7 +110,14 @@ module GraphQL
           when NilClass
             nil
           else
-            schema_class.cast(obj.to_h, obj.errors)
+            if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
+              unless obj.class._spreads.include?(definition_node.name)
+                raise TypeError, "#{definition_node.name} is not included in #{obj.class.source_definition.name}"
+              end
+              schema_class.cast(obj.to_h, obj.errors)
+            else
+              raise TypeError, "unexpected #{obj.class}"
+            end
           end
         when GraphQL::Client::Schema::ObjectType
           case obj
