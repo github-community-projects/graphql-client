@@ -108,7 +108,7 @@ module GraphQL
         when GraphQL::Client::Schema::PossibleTypes
           case obj
           when NilClass
-            nil
+            obj
           else
             if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
               unless obj.class._spreads.include?(definition_node.name)
