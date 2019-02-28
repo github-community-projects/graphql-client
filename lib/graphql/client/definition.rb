@@ -108,9 +108,9 @@ module GraphQL
         when GraphQL::Client::Schema::PossibleTypes
           case obj
           when NilClass
-            nil
+            obj
           else
-            schema_class.cast(obj.to_h, obj.errors)
+            cast_object(obj)
           end
         when GraphQL::Client::Schema::ObjectType
           case obj
@@ -119,14 +119,7 @@ module GraphQL
           when Hash
             schema_class.new(obj, errors)
           else
-            if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
-              unless obj.class._spreads.include?(definition_node.name)
-                raise TypeError, "#{definition_node.name} is not included in #{obj.class.source_definition.name}"
-              end
-              schema_class.cast(obj.to_h, obj.errors)
-            else
-              raise TypeError, "unexpected #{obj.class}"
-            end
+            cast_object(obj)
           end
         else
           raise TypeError, "unexpected #{schema_class}"
@@ -145,6 +138,18 @@ module GraphQL
       end
 
       private
+
+        def cast_object(obj)
+          if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
+            unless obj.class._spreads.include?(definition_node.name)
+              raise TypeError, "#{definition_node.name} is not included in #{obj.class.source_definition.name}"
+            end
+            schema_class.cast(obj.to_h, obj.errors)
+          else
+            raise TypeError, "unexpected #{obj.class}"
+          end
+        end
+
         def index_spreads(visitor)
           spreads = {}
           on_node = ->(node, _parent) { spreads[node] = Set.new(flatten_spreads(node).map(&:name)) }
