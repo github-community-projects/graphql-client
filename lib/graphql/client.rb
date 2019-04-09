@@ -14,6 +14,7 @@ require "graphql/client/response"
 require "graphql/client/schema"
 require "graphql/language/nodes/deep_freeze_ext"
 require "json"
+require "delegate"
 
 module GraphQL
   # GraphQL Client helps build and execute queries against a GraphQL backend.
