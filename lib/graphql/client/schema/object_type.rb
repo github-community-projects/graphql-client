@@ -95,9 +95,9 @@ module GraphQL
           name = name.to_s
           method_name = ActiveSupport::Inflector.underscore(name)
 
-          ctx.define_method(method_name, &METHOD_CACHE[key])
+          ctx.send(:define_method, method_name, &METHOD_CACHE[key])
 
-          ctx.define_method("#{method_name}?", &PREDICATE_CACHE[name])
+          ctx.send(:define_method, "#{method_name}?", &PREDICATE_CACHE[name])
         end
 
         def define_field(name, type)
