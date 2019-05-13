@@ -87,7 +87,6 @@ module GraphQL
             fields.each { |name, type| this.define_cached_field(name, type, self) }
           end
           include mod
-          #fields.each { |name, type| define_cached_field(name, type, self) }
         end
 
         def define_cached_field(name, type, ctx)
