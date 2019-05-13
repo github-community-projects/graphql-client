@@ -82,20 +82,20 @@ module GraphQL
 
         def define_fields(fields)
           const_set :FIELDS, fields
-          this = self
           mod = MODULE_CACHE[fields.keys.sort] ||= Module.new do
-            fields.each { |name, type| this.define_cached_field(name, type, self) }
+            fields.each do |name, type|
+              GraphQL::Client::Schema::ObjectType.define_cached_field(name, type, self)
+            end
           end
           include mod
         end
 
-        def define_cached_field(name, type, ctx)
+        def self.define_cached_field(name, type, ctx)
           key = name
           name = name.to_s
           method_name = ActiveSupport::Inflector.underscore(name)
 
           ctx.send(:define_method, method_name, &METHOD_CACHE[key])
-
           ctx.send(:define_method, "#{method_name}?", &PREDICATE_CACHE[name])
         end
 
