@@ -17,7 +17,7 @@ module GraphQL
           end
 
           def respond_to_missing?(method_name, include_private = false)
-            if method_name[-1] == '?' && @enum.include?(method_name[0..-2])
+            if method_name[-1] == "?" && @enum.include?(method_name[0..-2])
               true
             else
               super
@@ -25,7 +25,7 @@ module GraphQL
           end
 
           def method_missing(method_name, *args)
-            if method_name[-1] == '?'
+            if method_name[-1] == "?"
               queried_value = method_name[0..-2]
               if @enum.include?(queried_value)
                 raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 0)" unless args.empty?
