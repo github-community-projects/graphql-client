@@ -9,7 +9,7 @@ module GraphQL
       class EnumType < Module
         include BaseType
 
-        class EnumValue < DelegateClass(String)
+        class EnumValue < String
           def initialize(obj, enum_value, enum)
             super(obj)
             @enum_value = enum_value
