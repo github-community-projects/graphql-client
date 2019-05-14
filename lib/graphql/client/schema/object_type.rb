@@ -19,6 +19,11 @@ module GraphQL
           end
         end
 
+        module ClassMethods
+          attr_reader :source_definition
+          attr_reader :_spreads
+        end
+
         def define_class(definition, ast_nodes)
           # First, gather all the ast nodes representing a certain selection, by name.
           # We gather AST nodes into arrays so that multiple selections can be grouped, for example:
@@ -46,22 +51,18 @@ module GraphQL
             field_classes[result_name.to_sym] = schema_module.define_class(definition, field_ast_nodes, field_return_type)
           end
 
-          Class.new(self) do
-            define_fields(field_classes)
+          klass = Class.new(self)
+          klass.define_fields(field_classes)
+          klass.extend(ClassMethods)
+          klass.instance_variable_set(:@source_definition, definition)
+          klass.instance_variable_set(:@_spreads, definition.indexes[:spreads][ast_nodes.first])
 
-            if definition.client.enforce_collocated_callers
-              keys = field_classes.keys.map { |key| ActiveSupport::Inflector.underscore(key) }
-              Client.enforce_collocated_callers(self, keys, definition.source_location[0])
-            end
-
-            class << self
-              attr_reader :source_definition
-              attr_reader :_spreads
-            end
-
-            @source_definition = definition
-            @_spreads = definition.indexes[:spreads][ast_nodes.first]
+          if definition.client.enforce_collocated_callers
+            keys = field_classes.keys.map { |key| ActiveSupport::Inflector.underscore(key) }
+            Client.enforce_collocated_callers(klass, keys, definition.source_location[0])
           end
+
+          klass
         end
 
         def define_fields(fields)
