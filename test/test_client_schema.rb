@@ -7,6 +7,18 @@ require "minitest/autorun"
 class TestClientSchema < MiniTest::Test
   GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
 
+  FakeConn = Class.new do
+    attr_reader :context
+
+    def headers(_)
+     {}
+    end
+
+    def execute(document:, operation_name: nil, variables: {}, context: {})
+     @context = context
+    end
+  end
+
   QueryType = GraphQL::ObjectType.define do
     name "AwesomeQuery"
     field :version, !types.Int
@@ -46,5 +58,11 @@ class TestClientSchema < MiniTest::Test
     GraphQL::Client.dump_schema(Schema, buffer)
     buffer.rewind
     assert_equal "{\n  \"data\"", buffer.read(10)
+  end
+
+  def test_dump_schema_context
+    conn = FakeConn.new
+    GraphQL::Client.dump_schema(conn, StringIO.new, context: { user_id: 1})
+    assert_equal({ user_id: 1 }, conn.context)
   end
 end

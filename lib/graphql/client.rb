@@ -70,7 +70,7 @@ module GraphQL
 
     IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
 
-    def self.dump_schema(schema, io = nil)
+    def self.dump_schema(schema, io = nil, context: {})
       unless schema.respond_to?(:execute)
         raise TypeError, "expected schema to respond to #execute(), but was #{schema.class}"
       end
@@ -79,7 +79,7 @@ module GraphQL
         document: IntrospectionDocument,
         operation_name: "IntrospectionQuery",
         variables: {},
-        context: {}
+        context: context
       ).to_h
 
       if io
