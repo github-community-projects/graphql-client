@@ -65,8 +65,41 @@ module GraphQL
           klass
         end
 
+        PREDICATE_CACHE = Hash.new { |h, name|
+          h[name] = -> { @data[name] ? true : false }
+        }
+
+        METHOD_CACHE = Hash.new { |h, key|
+          h[key] = -> {
+            name = key.to_s
+            type = self.class::FIELDS[key]
+            @casted_data.fetch(name) do
+              @casted_data[name] = type.cast(@data[name], @errors.filter_by_path(name))
+            end
+          }
+        }
+
+        MODULE_CACHE = Hash.new do |h, fields|
+          h[fields] = Module.new do
+            fields.each do |name|
+              GraphQL::Client::Schema::ObjectType.define_cached_field(name, self)
+            end
+          end
+        end
+
         def define_fields(fields)
-          fields.each { |name, type| define_field(name, type) }
+          const_set :FIELDS, fields
+          mod = MODULE_CACHE[fields.keys.sort]
+          include mod
+        end
+
+        def self.define_cached_field(name, ctx)
+          key = name
+          name = -name.to_s
+          method_name = ActiveSupport::Inflector.underscore(name)
+
+          ctx.send(:define_method, method_name, &METHOD_CACHE[key])
+          ctx.send(:define_method, "#{method_name}?", &PREDICATE_CACHE[name])
         end
 
         def define_field(name, type)
