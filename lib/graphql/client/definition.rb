@@ -150,9 +150,14 @@ module GraphQL
           end
         end
 
+        EMPTY_SET = Set.new.freeze
+
         def index_spreads(visitor)
           spreads = {}
-          on_node = ->(node, _parent) { spreads[node] = Set.new(flatten_spreads(node).map(&:name)) }
+          on_node = ->(node, _parent) do
+            node_spreads = flatten_spreads(node).map(&:name)
+            spreads[node] = node_spreads.empty? ? EMPTY_SET : Set.new(node_spreads).freeze
+          end
 
           visitor[GraphQL::Language::Nodes::Field] << on_node
           visitor[GraphQL::Language::Nodes::FragmentDefinition] << on_node
