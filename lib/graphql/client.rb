@@ -253,7 +253,7 @@ module GraphQL
         definition = @definitions[node.name]
         if definition
           node.extend(LazyName)
-          node.name_proc = -> { definition.definition_name }
+          node._definition = definition
         end
       end
     end
@@ -376,10 +376,10 @@ module GraphQL
     # name to point to a lazily defined Proc instead of a static string.
     module LazyName
       def name
-        @name_proc.call
+        @_definition.definition_name
       end
 
-      attr_writer :name_proc
+      attr_writer :_definition
     end
 
     private
