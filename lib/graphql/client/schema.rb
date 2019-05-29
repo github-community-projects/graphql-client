@@ -70,10 +70,6 @@ module GraphQL
         mod = Module.new
         mod.extend ClassMethods
 
-        mod.define_singleton_method :schema do
-          schema
-        end
-
         cache = {}
         schema.types.each do |name, type|
           next if name.start_with?("__")
