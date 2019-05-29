@@ -19,11 +19,6 @@ module GraphQL
           end
         end
 
-        module ClassMethods
-          attr_reader :source_definition
-          attr_reader :_spreads
-        end
-
         def define_class(definition, ast_nodes)
           # First, gather all the ast nodes representing a certain selection, by name.
           # We gather AST nodes into arrays so that multiple selections can be grouped, for example:
@@ -53,7 +48,6 @@ module GraphQL
 
           klass = Class.new(self)
           klass.define_fields(field_classes)
-          klass.extend(ClassMethods)
           klass.instance_variable_set(:@source_definition, definition)
           klass.instance_variable_set(:@_spreads, definition.indexes[:spreads][ast_nodes.first])
 
@@ -181,6 +175,13 @@ module GraphQL
       end
 
       class ObjectClass
+        module ClassMethods
+          attr_reader :source_definition
+          attr_reader :_spreads
+        end
+
+        extend ClassMethods
+
         def initialize(data = {}, errors = Errors.new)
           @data = data
           @casted_data = {}
