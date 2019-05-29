@@ -51,6 +51,9 @@ module GraphQL
         end
 
         @schema_class = client.types.define_class(self, [ast_node], definition_type)
+
+        # Clear cache only needed during initialization
+        @indexes = nil
       end
 
       # Internal: Get associated owner GraphQL::Client instance.
