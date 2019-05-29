@@ -81,8 +81,10 @@ module GraphQL
           end
         end
 
+        FIELDS_CACHE = Hash.new { |h, k| h[k] = k }
+
         def define_fields(fields)
-          const_set :FIELDS, fields
+          const_set :FIELDS, FIELDS_CACHE[fields]
           mod = MODULE_CACHE[fields.keys.sort]
           include mod
         end
