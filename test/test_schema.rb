@@ -73,10 +73,6 @@ class TestSchemaType < MiniTest::Test
 
   Types = GraphQL::Client::Schema.generate(Schema)
 
-  def test_schema
-    assert_equal Schema, Types.schema
-  end
-
   def test_query_object_class
     assert_equal QueryType, Types::Query.type
     assert_equal "TestSchemaType::Types::Query", Types::Query.inspect
