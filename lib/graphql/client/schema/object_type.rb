@@ -16,6 +16,42 @@ module GraphQL
 
             define_singleton_method(:type) { type }
             define_singleton_method(:fields) { fields }
+
+            defined_class = Class.new(self) do
+              def initialize(data = {}, errors = Errors.new, definer)
+                super(data, errors)
+                @definer = definer
+              end
+            end
+            define_singleton_method(:defined_class) { defined_class }
+
+            def _spreads
+              @definer.spreads
+            end
+
+            def source_definition
+              @definer.definition
+            end
+          end
+        end
+
+        class WithDefinition
+          include BaseType
+          include ObjectType
+
+          attr_reader :type, :fields
+          attr_reader :definition, :spreads
+
+          def initialize(klass, type, fields, definition, spreads)
+            @klass = klass
+            @type = type
+            @fields = fields
+            @definition = definition
+            @spreads = spreads
+          end
+
+          def new(data = {}, errors = Errors.new)
+            @klass.new(data, errors, self)
           end
         end
 
@@ -46,17 +82,19 @@ module GraphQL
             field_classes[result_name.to_sym] = schema_module.define_class(definition, field_ast_nodes, field_return_type)
           end
 
-          klass = Class.new(self)
+          spreads = definition.indexes[:spreads][ast_nodes.first]
+
+          klass = Class.new(defined_class)
           klass.define_fields(field_classes)
           klass.instance_variable_set(:@source_definition, definition)
-          klass.instance_variable_set(:@_spreads, definition.indexes[:spreads][ast_nodes.first])
+          klass.instance_variable_set(:@_spreads, spreads)
 
           if definition.client.enforce_collocated_callers
             keys = field_classes.keys.map { |key| ActiveSupport::Inflector.underscore(key) }
             Client.enforce_collocated_callers(klass, keys, definition.source_location[0])
           end
 
-          klass
+          WithDefinition.new(klass, type, fields, definition, spreads)
         end
 
         PREDICATE_CACHE = Hash.new { |h, name|
