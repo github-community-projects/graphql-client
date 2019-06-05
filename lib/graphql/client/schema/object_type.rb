@@ -22,16 +22,30 @@ module GraphQL
                 super(data, errors)
                 @definer = definer
               end
+
+              def _spreads
+                @definer.spreads
+              end
+
+              def source_definition
+                @definer.definition
+              end
+
+              def method_missing(name, *args)
+                if attr = @definer.defined_methods[name]
+                  type = @definer.defined_fields[attr]
+                  @casted_data.fetch(attr) do
+                    @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
+                  end
+                elsif attr = @definer.defined_predicates[name]
+                  !!@data[attr]
+                else
+                  super
+                end
+              end
             end
+
             define_singleton_method(:defined_class) { defined_class }
-
-            def _spreads
-              @definer.spreads
-            end
-
-            def source_definition
-              @definer.definition
-            end
           end
         end
 
@@ -40,14 +54,24 @@ module GraphQL
           include ObjectType
 
           attr_reader :type, :fields
-          attr_reader :definition, :spreads
+          attr_reader :defined_fields, :definition, :spreads
 
-          def initialize(klass, type, fields, definition, spreads)
+          attr_reader :defined_methods, :defined_predicates
+
+          def initialize(klass, type, fields, defined_fields, definition, spreads)
             @klass = klass
             @type = type
             @fields = fields
+            @defined_fields = defined_fields.transform_keys(&:to_s)
             @definition = definition
             @spreads = spreads
+
+            @defined_methods = @defined_fields.keys.map do |attr|
+              [ActiveSupport::Inflector.underscore(attr).to_sym, attr.to_s]
+            end.to_h
+            @defined_predicates = @defined_methods.transform_keys do |name|
+              :"#{name}?"
+            end
           end
 
           def new(data = {}, errors = Errors.new)
@@ -94,7 +118,7 @@ module GraphQL
             Client.enforce_collocated_callers(klass, keys, definition.source_location[0])
           end
 
-          WithDefinition.new(klass, type, fields, definition, spreads)
+          WithDefinition.new(defined_class, type, fields, field_classes, definition, spreads)
         end
 
         PREDICATE_CACHE = Hash.new { |h, name|
