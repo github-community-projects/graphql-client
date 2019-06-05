@@ -17,35 +17,37 @@ module GraphQL
             define_singleton_method(:type) { type }
             define_singleton_method(:fields) { fields }
 
-            defined_class = Class.new(self) do
-              def initialize(data = {}, errors = Errors.new, definer)
-                super(data, errors)
-                @definer = definer
-              end
-
-              def _spreads
-                @definer.spreads
-              end
-
-              def source_definition
-                @definer.definition
-              end
-
-              def method_missing(name, *args)
-                if attr = @definer.defined_methods[name]
-                  type = @definer.defined_fields[attr]
-                  @casted_data.fetch(attr) do
-                    @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
-                  end
-                elsif attr = @definer.defined_predicates[name]
-                  !!@data[attr]
-                else
-                  super
-                end
-              end
-            end
-
+            defined_class = Class.new(self)
+            defined_class.prepend Defined
             define_singleton_method(:defined_class) { defined_class }
+          end
+        end
+
+        module Defined
+          def initialize(data = {}, errors = Errors.new, definer)
+            super(data, errors)
+            @definer = definer
+          end
+
+          def _spreads
+            @definer.spreads
+          end
+
+          def source_definition
+            @definer.definition
+          end
+
+          def method_missing(name, *args)
+            if attr = @definer.defined_methods[name]
+              type = @definer.defined_fields[attr]
+              @casted_data.fetch(attr) do
+                @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
+              end
+            elsif attr = @definer.defined_predicates[name]
+              !!@data[attr]
+            else
+              super
+            end
           end
         end
 
