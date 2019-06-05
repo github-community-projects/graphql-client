@@ -64,12 +64,12 @@ module GraphQL
             @klass = klass
             @type = type
             @fields = fields
-            @defined_fields = defined_fields.transform_keys(&:to_s)
+            @defined_fields = defined_fields.transform_keys { |key| -key.to_s }
             @definition = definition
             @spreads = spreads
 
             @defined_methods = @defined_fields.keys.map do |attr|
-              [ActiveSupport::Inflector.underscore(attr).to_sym, attr.to_s]
+              [ActiveSupport::Inflector.underscore(attr).to_sym, -attr.to_s]
             end.to_h
             @defined_predicates = @defined_methods.transform_keys do |name|
               :"#{name}?"
