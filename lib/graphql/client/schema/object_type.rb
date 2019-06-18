@@ -38,18 +38,22 @@ module GraphQL
           end
 
           def method_missing(name, *args)
-            if attr = @definer.defined_methods[name]
-              type = @definer.defined_fields[attr]
+            attr = READERS[name]
+            type = @definer.defined_fields[attr]
+            if (attr = READERS[name]) && (type = @definer.defined_fields[attr])
               @casted_data.fetch(attr) do
                 @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
               end
-            elsif attr = @definer.defined_predicates[name]
+            elsif (attr = PREDICATES[name]) && @definer.defined_fields[attr]
               !!@data[attr]
             else
               super
             end
           end
         end
+
+        READERS = {}
+        PREDICATES = {}
 
         class WithDefinition
           include BaseType
@@ -68,11 +72,10 @@ module GraphQL
             @definition = definition
             @spreads = spreads
 
-            @defined_methods = @defined_fields.keys.map do |attr|
-              [ActiveSupport::Inflector.underscore(attr).to_sym, -attr.to_s]
-            end.to_h
-            @defined_predicates = @defined_methods.transform_keys do |name|
-              :"#{name}?"
+            @defined_fields.keys.each do |attr|
+              name = ActiveSupport::Inflector.underscore(attr)
+              READERS[:"#{name}"] ||= attr
+              PREDICATES[:"#{name}?"] ||= attr
             end
           end
 
