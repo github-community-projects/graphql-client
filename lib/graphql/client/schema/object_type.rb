@@ -59,15 +59,18 @@ module GraphQL
           include BaseType
           include ObjectType
 
-          attr_reader :type, :fields
           attr_reader :defined_fields, :definition, :spreads
 
-          attr_reader :defined_methods, :defined_predicates
+          def type
+            @klass.type
+          end
 
-          def initialize(klass, type, fields, defined_fields, definition, spreads)
+          def fields
+            @klass.fields
+          end
+
+          def initialize(klass, defined_fields, definition, spreads)
             @klass = klass
-            @type = type
-            @fields = fields
             @defined_fields = defined_fields.transform_keys { |key| -key.to_s }
             @definition = definition
             @spreads = spreads
@@ -113,7 +116,7 @@ module GraphQL
 
           spreads = definition.indexes[:spreads][ast_nodes.first]
 
-          WithDefinition.new(defined_class, type, fields, field_classes, definition, spreads)
+          WithDefinition.new(defined_class, field_classes, definition, spreads)
         end
 
         def define_field(name, type)
