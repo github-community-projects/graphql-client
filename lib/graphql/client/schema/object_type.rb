@@ -40,8 +40,6 @@ module GraphQL
           end
 
           def method_missing(name, *args)
-            attr = READERS[name]
-            type = @definer.defined_fields[attr]
             if (attr = READERS[name]) && (type = @definer.defined_fields[attr])
               @casted_data.fetch(attr) do
                 @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
