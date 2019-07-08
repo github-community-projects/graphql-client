@@ -115,9 +115,18 @@ module GraphQL
           else
             cast_object(obj)
           end
+        when GraphQL::Client::Schema::ObjectType::WithDefinition
+          case obj
+          when nil, schema_class.klass
+            obj
+          when Hash
+            schema_class.new(obj, errors)
+          else
+            cast_object(obj)
+          end
         when GraphQL::Client::Schema::ObjectType
           case obj
-          when NilClass, schema_class
+          when nil, schema_class
             obj
           when Hash
             schema_class.new(obj, errors)
