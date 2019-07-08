@@ -117,8 +117,14 @@ module GraphQL
           end
         when GraphQL::Client::Schema::ObjectType::WithDefinition
           case obj
-          when nil, schema_class.klass
-            obj
+          when schema_class.klass
+            if obj.definer == schema_class
+              obj
+            else
+              cast_object(obj)
+            end
+          when nil
+            nil
           when Hash
             schema_class.new(obj, errors)
           else

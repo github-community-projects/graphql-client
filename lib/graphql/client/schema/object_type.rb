@@ -24,6 +24,8 @@ module GraphQL
         end
 
         module Defined
+          attr_reader :definer
+
           def initialize(data = {}, errors = Errors.new, definer)
             super(data, errors)
             @definer = definer
@@ -59,7 +61,7 @@ module GraphQL
           include BaseType
           include ObjectType
 
-          attr_reader :defined_fields, :definition, :spreads
+          attr_reader :klass, :defined_fields, :definition, :spreads
 
           def type
             @klass.type
