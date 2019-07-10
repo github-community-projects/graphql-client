@@ -41,15 +41,31 @@ module GraphQL
 
           def method_missing(name, *args)
             if (attr = READERS[name]) && (type = @definer.defined_fields[attr])
-              read_attribute(attr, type)
+              verify_collocated_path do
+                read_attribute(attr, type)
+              end
             elsif (attr = PREDICATES[name]) && @definer.defined_fields[attr]
-              has_attribute?(attr)
+              verify_collocated_path do
+                has_attribute?(attr)
+              end
             else
               super
             end
           end
 
           private
+
+          def verify_collocated_path
+            if @definer.collocated_path
+              location = caller_locations(2, 1)[0]
+
+              CollocatedEnforcement.verify_collocated_path(location, @definer.collocated_path) do
+                yield
+              end
+            else
+              yield
+            end
+          end
 
           def read_attribute(attr, type)
             @casted_data.fetch(attr) do
@@ -85,6 +101,7 @@ module GraphQL
             @defined_fields = defined_fields.transform_keys { |key| -key.to_s }
             @definition = definition
             @spreads = spreads
+            @collocated_path = collocated_path
 
             @defined_fields.keys.each do |attr|
               name = ActiveSupport::Inflector.underscore(attr)
