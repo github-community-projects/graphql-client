@@ -19,6 +19,7 @@ module GraphQL
 
             defined_class = Class.new(self)
             defined_class.prepend Defined
+            const_set(:DefinedClass, defined_class)
             define_singleton_method(:defined_class) { defined_class }
           end
         end
