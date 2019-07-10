@@ -56,10 +56,10 @@ module GraphQL
           private
 
           def verify_collocated_path
-            if @definer.collocated_path
+            if enforce_collocation?
               location = caller_locations(2, 1)[0]
 
-              CollocatedEnforcement.verify_collocated_path(location, @definer.collocated_path) do
+              CollocatedEnforcement.verify_collocated_path(location, source_definition.source_location[0]) do
                 yield
               end
             else
@@ -77,6 +77,9 @@ module GraphQL
             !!@data[attr]
           end
 
+          def enforce_collocation?
+            source_definition.client.enforce_collocated_callers
+          end
         end
 
         READERS = {}
@@ -86,7 +89,7 @@ module GraphQL
           include BaseType
           include ObjectType
 
-          attr_reader :klass, :defined_fields, :definition, :spreads, :collocated_path
+          attr_reader :klass, :defined_fields, :definition, :spreads
 
           def type
             @klass.type
@@ -96,12 +99,11 @@ module GraphQL
             @klass.fields
           end
 
-          def initialize(klass, defined_fields, definition, spreads, collocated_path)
+          def initialize(klass, defined_fields, definition, spreads)
             @klass = klass
             @defined_fields = defined_fields.transform_keys { |key| -key.to_s }
             @definition = definition
             @spreads = spreads
-            @collocated_path = collocated_path
 
             @defined_fields.keys.each do |attr|
               name = ActiveSupport::Inflector.underscore(attr)
@@ -143,9 +145,8 @@ module GraphQL
           end
 
           spreads = definition.indexes[:spreads][ast_nodes.first]
-          collocation_path = definition.source_location[0] if definition.client.enforce_collocated_callers
 
-          WithDefinition.new(defined_class, field_classes, definition, spreads, collocation_path)
+          WithDefinition.new(defined_class, field_classes, definition, spreads)
         end
 
         def define_field(name, type)
