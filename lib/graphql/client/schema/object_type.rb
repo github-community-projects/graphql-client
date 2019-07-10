@@ -41,15 +41,26 @@ module GraphQL
 
           def method_missing(name, *args)
             if (attr = READERS[name]) && (type = @definer.defined_fields[attr])
-              @casted_data.fetch(attr) do
-                @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
-              end
+              read_attribute(attr, type)
             elsif (attr = PREDICATES[name]) && @definer.defined_fields[attr]
-              !!@data[attr]
+              has_attribute?(attr)
             else
               super
             end
           end
+
+          private
+
+          def read_attribute(attr, type)
+            @casted_data.fetch(attr) do
+              @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
+            end
+          end
+
+          def has_attribute?(attr)
+            !!@data[attr]
+          end
+
         end
 
         READERS = {}
@@ -59,7 +70,7 @@ module GraphQL
           include BaseType
           include ObjectType
 
-          attr_reader :klass, :defined_fields, :definition, :spreads
+          attr_reader :klass, :defined_fields, :definition, :spreads, :collocated_path
 
           def type
             @klass.type
@@ -69,7 +80,7 @@ module GraphQL
             @klass.fields
           end
 
-          def initialize(klass, defined_fields, definition, spreads)
+          def initialize(klass, defined_fields, definition, spreads, collocated_path)
             @klass = klass
             @defined_fields = defined_fields.transform_keys { |key| -key.to_s }
             @definition = definition
@@ -115,8 +126,9 @@ module GraphQL
           end
 
           spreads = definition.indexes[:spreads][ast_nodes.first]
+          collocation_path = definition.source_location[0] if definition.client.enforce_collocated_callers
 
-          WithDefinition.new(defined_class, field_classes, definition, spreads)
+          WithDefinition.new(defined_class, field_classes, definition, spreads, collocation_path)
         end
 
         def define_field(name, type)
