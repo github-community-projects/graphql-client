@@ -89,7 +89,9 @@ module GraphQL
           include BaseType
           include ObjectType
 
-          attr_reader :klass, :defined_fields, :definition, :spreads
+          EMPTY_SET = Set.new.freeze
+
+          attr_reader :klass, :defined_fields, :definition
 
           def type
             @klass.type
@@ -99,11 +101,19 @@ module GraphQL
             @klass.fields
           end
 
+          def spreads
+            if defined?(@spreads)
+              @spreads
+            else
+              EMPTY_SET
+            end
+          end
+
           def initialize(klass, defined_fields, definition, spreads)
             @klass = klass
             @defined_fields = defined_fields.transform_keys { |key| -key.to_s }
             @definition = definition
-            @spreads = spreads
+            @spreads = spreads unless spreads.empty?
 
             @defined_fields.keys.each do |attr|
               name = ActiveSupport::Inflector.underscore(attr)
