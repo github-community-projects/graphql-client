@@ -35,7 +35,7 @@ class TestERB < MiniTest::Test
 
     erb = GraphQL::Client::ERB.new(src)
 
-    output_buffer = ActionView::OutputBuffer.new
+    output_buffer = @output_buffer = ActionView::OutputBuffer.new
     # rubocop:disable Security/Eval
     eval(erb.src, binding, "(erb)")
     assert_equal "42", output_buffer.strip
