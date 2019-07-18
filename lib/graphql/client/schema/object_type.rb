@@ -112,7 +112,9 @@ module GraphQL
 
           def initialize(klass, defined_fields, definition, spreads)
             @klass = klass
-            @defined_fields = defined_fields.transform_keys { |key| -key.to_s }
+            @defined_fields = defined_fields.map do |k, v|
+              [-k.to_s, v]
+            end.to_h
             @definition = definition
             @spreads = spreads unless spreads.empty?
 
