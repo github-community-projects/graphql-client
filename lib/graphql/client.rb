@@ -12,7 +12,6 @@ require "graphql/client/operation_definition"
 require "graphql/client/query_typename"
 require "graphql/client/response"
 require "graphql/client/schema"
-require "graphql/language/nodes/deep_freeze_ext"
 require "json"
 require "delegate"
 
@@ -68,7 +67,7 @@ module GraphQL
       end
     end
 
-    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
+    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY)
 
     def self.dump_schema(schema, io = nil, context: {})
       unless schema.respond_to?(:execute)
