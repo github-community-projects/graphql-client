@@ -220,10 +220,6 @@ module GraphQL
       visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
       visitor.visit
 
-      if !doc.respond_to?(:merge)
-        doc.deep_freeze # 1.9 introduced immutable AST nodes, so we skip this on 1.9+
-      end
-
       if document_tracking_enabled
         if @document.respond_to?(:merge) # GraphQL 1.9+
           @document = @document.merge(definitions: @document.definitions + doc.definitions)
