@@ -11,8 +11,11 @@ env:
   - RAILS_VERSION=5.1.6 GRAPHQL_VERSION=1.8.11
   - RAILS_VERSION=5.1.6
   - RAILS_VERSION=5.2.0
+  - RAILS_VERSION=edge
 
 matrix:
-  include:
-  - rvm: 2.5.1
-    env: RAILS_VERSION=5.2.0 GRAPHQL_VERSION=1.9-dev
+  exclude:
+  - rvm: 2.4.4
+    env: RAILS_VERSION=edge
+  - rvm: 2.3.7
+    env: RAILS_VERSION=edge

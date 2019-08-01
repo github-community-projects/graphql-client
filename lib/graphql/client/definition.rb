@@ -51,6 +51,9 @@ module GraphQL
         end
 
         @schema_class = client.types.define_class(self, [ast_node], definition_type)
+
+        # Clear cache only needed during initialization
+        @indexes = nil
       end
 
       # Internal: Get associated owner GraphQL::Client instance.
@@ -108,9 +111,9 @@ module GraphQL
         when GraphQL::Client::Schema::PossibleTypes
           case obj
           when NilClass
-            nil
+            obj
           else
-            schema_class.cast(obj.to_h, obj.errors)
+            cast_object(obj)
           end
         when GraphQL::Client::Schema::ObjectType
           case obj
@@ -119,14 +122,7 @@ module GraphQL
           when Hash
             schema_class.new(obj, errors)
           else
-            if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
-              unless obj.class._spreads.include?(definition_node.name)
-                raise TypeError, "#{definition_node.name} is not included in #{obj.class.source_definition.name}"
-              end
-              schema_class.cast(obj.to_h, obj.errors)
-            else
-              raise TypeError, "unexpected #{obj.class}"
-            end
+            cast_object(obj)
           end
         else
           raise TypeError, "unexpected #{schema_class}"
@@ -145,9 +141,26 @@ module GraphQL
       end
 
       private
+
+        def cast_object(obj)
+          if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
+            unless obj.class._spreads.include?(definition_node.name)
+              raise TypeError, "#{definition_node.name} is not included in #{obj.class.source_definition.name}"
+            end
+            schema_class.cast(obj.to_h, obj.errors)
+          else
+            raise TypeError, "unexpected #{obj.class}"
+          end
+        end
+
+        EMPTY_SET = Set.new.freeze
+
         def index_spreads(visitor)
           spreads = {}
-          on_node = ->(node, _parent) { spreads[node] = Set.new(flatten_spreads(node).map(&:name)) }
+          on_node = ->(node, _parent) do
+            node_spreads = flatten_spreads(node).map(&:name)
+            spreads[node] = node_spreads.empty? ? EMPTY_SET : Set.new(node_spreads).freeze
+          end
 
           visitor[GraphQL::Language::Nodes::Field] << on_node
           visitor[GraphQL::Language::Nodes::FragmentDefinition] << on_node

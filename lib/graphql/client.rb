@@ -12,8 +12,8 @@ require "graphql/client/operation_definition"
 require "graphql/client/query_typename"
 require "graphql/client/response"
 require "graphql/client/schema"
-require "graphql/language/nodes/deep_freeze_ext"
 require "json"
+require "delegate"
 
 module GraphQL
   # GraphQL Client helps build and execute queries against a GraphQL backend.
@@ -67,9 +67,9 @@ module GraphQL
       end
     end
 
-    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY).deep_freeze
+    IntrospectionDocument = GraphQL.parse(GraphQL::Introspection::INTROSPECTION_QUERY)
 
-    def self.dump_schema(schema, io = nil)
+    def self.dump_schema(schema, io = nil, context: {})
       unless schema.respond_to?(:execute)
         raise TypeError, "expected schema to respond to #execute(), but was #{schema.class}"
       end
@@ -78,7 +78,7 @@ module GraphQL
         document: IntrospectionDocument,
         operation_name: "IntrospectionQuery",
         variables: {},
-        context: {}
+        context: context
       ).to_h
 
       if io
@@ -220,10 +220,6 @@ module GraphQL
       visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
       visitor.visit
 
-      if !doc.respond_to?(:merge)
-        doc.deep_freeze # 1.9 introduced immutable AST nodes, so we skip this on 1.9+
-      end
-
       if document_tracking_enabled
         if @document.respond_to?(:merge) # GraphQL 1.9+
           @document = @document.merge(definitions: @document.definitions + doc.definitions)
@@ -252,7 +248,7 @@ module GraphQL
         definition = @definitions[node.name]
         if definition
           node.extend(LazyName)
-          node.name_proc = -> { definition.definition_name }
+          node._definition = definition
         end
       end
     end
@@ -375,10 +371,10 @@ module GraphQL
     # name to point to a lazily defined Proc instead of a static string.
     module LazyName
       def name
-        @name_proc.call
+        @_definition.definition_name
       end
 
-      attr_writer :name_proc
+      attr_writer :_definition
     end
 
     private

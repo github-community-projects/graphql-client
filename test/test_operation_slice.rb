@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 require "graphql"
-require "graphql/language/nodes/deep_freeze_ext"
 require "minitest/autorun"
 
 class TestDefinitionSlice < MiniTest::Test
   def test_slice_simple_query_operation
-    document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
+    document = GraphQL.parse(<<-'GRAPHQL')
       query FooQuery {
         node(id: "42") {
           id
@@ -26,7 +25,7 @@ class TestDefinitionSlice < MiniTest::Test
   end
 
   def test_slice_simple_mutation_operation
-    document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
+    document = GraphQL.parse(<<-'GRAPHQL')
       mutation FooMutation {
         incr {
           count
@@ -47,7 +46,7 @@ class TestDefinitionSlice < MiniTest::Test
   end
 
   def test_slice_query_with_fragment
-    document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
+    document = GraphQL.parse(<<-'GRAPHQL')
       query FooQuery {
         node(id: "42") {
           ...NodeFragment
@@ -80,7 +79,7 @@ class TestDefinitionSlice < MiniTest::Test
   end
 
   def test_slice_nested_query_with_fragment
-    document = GraphQL.parse(<<-'GRAPHQL').deep_freeze
+    document = GraphQL.parse(<<-'GRAPHQL')
       fragment NodeFragment on Node {
         id
         ...UserFragment

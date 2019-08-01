@@ -52,6 +52,13 @@ module GraphQL
           const_set(class_name, klass)
         end
 
+        DIRECTIVES = { include: IncludeDirective,
+                       skip: SkipDirective }.freeze
+
+        def directives
+          DIRECTIVES
+        end
+
         private
 
         def normalize_type_name(type_name)
@@ -63,10 +70,6 @@ module GraphQL
         mod = Module.new
         mod.extend ClassMethods
 
-        mod.define_singleton_method :schema do
-          schema
-        end
-
         cache = {}
         schema.types.each do |name, type|
           next if name.start_with?("__")
@@ -75,11 +78,6 @@ module GraphQL
             mod.set_class(name, klass)
           end
         end
-
-        directives = {}
-        mod.define_singleton_method(:directives) { directives }
-        directives[:include] = IncludeDirective
-        directives[:skip] = SkipDirective
 
         mod
       end

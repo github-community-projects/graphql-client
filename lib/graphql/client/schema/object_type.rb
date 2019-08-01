@@ -46,26 +46,56 @@ module GraphQL
             field_classes[result_name.to_sym] = schema_module.define_class(definition, field_ast_nodes, field_return_type)
           end
 
-          Class.new(self) do
-            define_fields(field_classes)
+          klass = Class.new(self)
+          klass.define_fields(field_classes)
+          klass.instance_variable_set(:@source_definition, definition)
+          klass.instance_variable_set(:@_spreads, definition.indexes[:spreads][ast_nodes.first])
 
-            if definition.client.enforce_collocated_callers
-              keys = field_classes.keys.map { |key| ActiveSupport::Inflector.underscore(key) }
-              Client.enforce_collocated_callers(self, keys, definition.source_location[0])
+          if definition.client.enforce_collocated_callers
+            keys = field_classes.keys.map { |key| ActiveSupport::Inflector.underscore(key) }
+            Client.enforce_collocated_callers(klass, keys, definition.source_location[0])
+          end
+
+          klass
+        end
+
+        PREDICATE_CACHE = Hash.new { |h, name|
+          h[name] = -> { @data[name] ? true : false }
+        }
+
+        METHOD_CACHE = Hash.new { |h, key|
+          h[key] = -> {
+            name = key.to_s
+            type = self.class::FIELDS[key]
+            @casted_data.fetch(name) do
+              @casted_data[name] = type.cast(@data[name], @errors.filter_by_path(name))
             end
+          }
+        }
 
-            class << self
-              attr_reader :source_definition
-              attr_reader :_spreads
+        MODULE_CACHE = Hash.new do |h, fields|
+          h[fields] = Module.new do
+            fields.each do |name|
+              GraphQL::Client::Schema::ObjectType.define_cached_field(name, self)
             end
-
-            @source_definition = definition
-            @_spreads = definition.indexes[:spreads][ast_nodes.first]
           end
         end
 
+        FIELDS_CACHE = Hash.new { |h, k| h[k] = k }
+
         def define_fields(fields)
-          fields.each { |name, type| define_field(name, type) }
+          const_set :FIELDS, FIELDS_CACHE[fields]
+          mod = MODULE_CACHE[fields.keys.sort]
+          include mod
+        end
+
+        def self.define_cached_field(name, ctx)
+          key = name
+          name = -name.to_s
+          method_name = ActiveSupport::Inflector.underscore(name)
+
+          ctx.send(:define_method, method_name, &METHOD_CACHE[key])
+          ctx.send(:define_method, "#{method_name}?", &PREDICATE_CACHE[name])
         end
 
         def define_field(name, type)
@@ -147,6 +177,13 @@ module GraphQL
       end
 
       class ObjectClass
+        module ClassMethods
+          attr_reader :source_definition
+          attr_reader :_spreads
+        end
+
+        extend ClassMethods
+
         def initialize(data = {}, errors = Errors.new)
           @data = data
           @casted_data = {}

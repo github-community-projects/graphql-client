@@ -2,15 +2,16 @@
 source "https://rubygems.org"
 gemspec
 
-gem "actionpack", ENV["RAILS_VERSION"] if ENV["RAILS_VERSION"]
-gem "activesupport", ENV["RAILS_VERSION"] if ENV["RAILS_VERSION"]
+rails_version = ENV["RAILS_VERSION"] == "edge" ? { github: "rails/rails" } : ENV["RAILS_VERSION"]
+gem "actionpack", rails_version
+gem "activesupport", rails_version
 
-graphql_version = ENV["GRAPHQL_VERSION"] == "1.9-dev" ? { github: "rmosolgo/graphql-ruby", branch: "1.9-dev" } : ENV["GRAPHQL_VERSION"]
+graphql_version = ENV["GRAPHQL_VERSION"]
 if graphql_version
   gem "graphql", graphql_version
 end
 
 
 group :development, :test do
-  gem "rubocop", "~> 0.51"
+  gem "rubocop", "~> 0.62.0"
 end
