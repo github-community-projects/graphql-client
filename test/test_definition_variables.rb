@@ -5,33 +5,31 @@ require "graphql/client/definition_variables"
 require "minitest/autorun"
 
 class TestDefinitionVariables < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :version, !types.Int
-    field :user, !types.String do
-      argument :name, !types.String
-      argument :maybeName, types.String
+  class QueryType < GraphQL::Schema::Object
+    field :version, Integer, null: false
+    field :user, String, null: false do
+      argument :name, String, required: true
+      argument :maybe_name, String, required: false
     end
-    field :node, !types.String do
-      argument :id, !types.ID
+    field :node, String, null: false do
+      argument :id, ID, required: true
     end
   end
 
-  UserInput = GraphQL::InputObjectType.define do
-    name "CreateUserInput"
-    argument :name, !types.String
+  class CreateUserInput < GraphQL::Schema::InputObject
+    argument :name, String, required: true
   end
 
-  MutationType = GraphQL::ObjectType.define do
-    name "Mutation"
-    field :createUser, types.String do
-      argument :input, !UserInput
+  class MutationType < GraphQL::Schema::Object
+    field :create_user, String, null: true do
+      argument :input, CreateUserInput, required: true
     end
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType, mutation: MutationType)
+  class Schema < GraphQL::Schema
+    query(QueryType)
+    mutation(MutationType)
+  end
 
   def test_query_with_no_variables
     document = GraphQL.parse <<-'GRAPHQL'
@@ -66,8 +64,8 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:name]
-    assert_equal GraphQL::STRING_TYPE, variables[:name].unwrap
+    assert variables[:name].kind.non_null?
+    assert_equal "String", variables[:name].unwrap.graphql_name
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$name: String!"], variables.map(&:to_query_string)
@@ -86,8 +84,8 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:name]
-    assert_equal GraphQL::STRING_TYPE, variables[:name].unwrap
+    assert variables[:name].kind.non_null?
+    assert_equal "String", variables[:name].unwrap.graphql_name
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$name: String!"], variables.map(&:to_query_string)
@@ -110,8 +108,8 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:one]
-    assert_equal GraphQL::STRING_TYPE, variables[:one].unwrap
+    assert variables[:one].kind.non_null?
+    assert_equal "String", variables[:one].unwrap.graphql_name
     assert_equal false, variables.key?(:two)
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
@@ -127,9 +125,9 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:foo]
-    assert_equal GraphQL::STRING_TYPE, variables[:foo].unwrap
-    assert_equal GraphQL::STRING_TYPE, variables[:bar]
+    assert variables[:foo].kind.non_null?
+    assert_equal "String", variables[:foo].unwrap.graphql_name
+    assert_equal "String", variables[:bar].graphql_name
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$foo: String!", "$bar: String"], variables.map(&:to_query_string)
@@ -146,8 +144,8 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:name]
-    assert_equal GraphQL::STRING_TYPE, variables[:name].unwrap
+    assert variables[:name].kind.non_null?
+    assert_equal "String", variables[:name].unwrap.graphql_name
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$name: String!"], variables.map(&:to_query_string)
@@ -163,10 +161,10 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:foo]
-    assert_equal GraphQL::STRING_TYPE, variables[:foo].unwrap
-    assert_kind_of GraphQL::NonNullType, variables[:bar]
-    assert_equal GraphQL::STRING_TYPE, variables[:bar].unwrap
+    assert variables[:foo].kind.non_null?
+    assert_equal "String", variables[:foo].unwrap.graphql_name
+    assert variables[:bar].kind.non_null?
+    assert_equal "String", variables[:bar].unwrap.graphql_name
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$foo: String!", "$bar: String!"], variables.map(&:to_query_string)
@@ -189,8 +187,8 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:one]
-    assert_equal GraphQL::STRING_TYPE, variables[:one].unwrap
+    assert variables[:one].kind.non_null?
+    assert_equal "String", variables[:one].unwrap.graphql_name
     assert_equal false, variables.key?(:two)
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
@@ -206,8 +204,8 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:input]
-    assert_equal UserInput, variables[:input].unwrap
+    assert variables[:input].kind.non_null?
+    assert_equal CreateUserInput, variables[:input].unwrap
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$input: CreateUserInput!"], variables.map(&:to_query_string)
@@ -222,8 +220,8 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:name]
-    assert_equal GraphQL::STRING_TYPE, variables[:name].unwrap
+    assert variables[:name].kind.non_null?
+    assert_equal "String", variables[:name].unwrap.graphql_name
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$name: String!"], variables.map(&:to_query_string)
@@ -238,8 +236,8 @@ class TestDefinitionVariables < MiniTest::Test
     definition = document.definitions[0]
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
-    assert_kind_of GraphQL::NonNullType, variables[:should_skip]
-    assert_equal GraphQL::BOOLEAN_TYPE, variables[:should_skip].unwrap
+    assert variables[:should_skip].kind.non_null?
+    assert_equal "Boolean", variables[:should_skip].unwrap.graphql_name
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$should_skip: Boolean!"], variables.map(&:to_query_string)
