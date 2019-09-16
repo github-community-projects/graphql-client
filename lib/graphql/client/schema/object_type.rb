@@ -211,12 +211,13 @@ module GraphQL
             raise e
           end
 
-          field = type.all_fields.find do |f|
+          all_fields = type.respond_to?(:all_fields) ? type.all_fields : type.fields.values
+          field = all_fields.find do |f|
             f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
           end
 
           unless field
-            raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type} type. https://git.io/v1y3m"
+            raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://git.io/v1y3m"
           end
 
           if @data.key?(field.name)

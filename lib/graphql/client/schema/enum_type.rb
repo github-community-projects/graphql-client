@@ -41,8 +41,8 @@ module GraphQL
         #
         # type - GraphQL::EnumType instance
         def initialize(type)
-          unless type.is_a?(GraphQL::EnumType)
-            raise "expected type to be a GraphQL::EnumType, but was #{type.class}"
+          unless type.kind.enum?
+            raise "expected type to be an Enum, but was #{type.class}"
           end
 
           @type = type

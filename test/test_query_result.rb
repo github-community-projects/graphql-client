@@ -7,237 +7,219 @@ require "ostruct"
 require_relative "foo_helper"
 
 class TestQueryResult < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
-  DateTime = GraphQL::ScalarType.define do
-    name "DateTime"
-    coerce_input ->(value, ctx) do
+  class DateTimeType < GraphQL::Schema::Scalar
+    def self.coerce_input(value, ctx)
       Time.iso8601(value)
     end
-    coerce_result ->(value, ctx) do
+
+    def self.coerce_result(value, ctx)
       value.utc.iso8601
     end
   end
 
-  NodeType = GraphQL::InterfaceType.define do
-    name "Node"
-    field :id, !types.ID
+  module NodeType
+    include GraphQL::Schema::Interface
+    field :id, ID, null: false
   end
 
-  PlanEnum = GraphQL::EnumType.define do
-    name "Plan"
+  class PlanType < GraphQL::Schema::Enum
     value("FREE")
     value("SMALL")
     value("LARGE")
   end
 
-  AdminUser = GraphQL::InterfaceType.define do
-    name "AdminUser"
-    field :password, !types.String
+  module AdminUser
+    include GraphQL::Schema::Interface
+    field :password, String, null: false
   end
 
-  RepositoryType = GraphQL::ObjectType.define do
-    name "Repository"
-    field :name, !types.String
-    field :owner, !UserType
-    field :starCount, !types.Int
-    field :watchers, -> { !types[!UserType] }
+  class RepositoryType < GraphQL::Schema::Object
+    field :name, String, null: false
+    field :owner, "TestQueryResult::UserType", null: false
+    field :star_count, Integer, null: false
+    field :watchers, "[TestQueryResult::UserType]", null: false
   end
 
-  UserType = GraphQL::ObjectType.define do
-    name "User"
-    interfaces [NodeType, AdminUser]
-    field :id, !types.ID
-    field :firstName, !types.String
-    field :lastName, !types.String
-    field :name, !types.String
-    field :login, !types.String
-    field :login_url, !types.String
-    field :profileName, !types.String
-    field :isCool, !types.Boolean
-    field :profilePic, types.String do
-      argument :size, types.Int
+  class UserType < GraphQL::Schema::Object
+    implements NodeType, AdminUser
+    field :id, ID, null: false
+    field :first_name, String, null: false
+    field :last_name, String, null: false
+    field :name, String, null: false
+    field :login, String, null: false
+    field :login_url, String, null: false
+    field :profile_name, String, null: false
+    field :is_cool, Boolean, null: false
+    field :profile_pic, String, null: true do
+      argument :size, Integer, required: false
     end
-    field :repositories, !types[!RepositoryType]
+    field :repositories, [RepositoryType], null: false
   end
 
-  HumanLike = GraphQL::InterfaceType.define do
-    name "HumanLike"
-    field :updatedAt, !DateTime
+  module HumanLike
+    include GraphQL::Schema::Interface
+    field :updated_at, DateTimeType, null: false
   end
 
-  PersonType = GraphQL::ObjectType.define do
-    name "Person"
-    interfaces [HumanLike]
-    field :login, types.String
-    field :name, types.String
-    field :firstName, types.String
-    field :lastName, types.String
-    field :company, types.String
-    field :homepageURL, types.String
-    field :createdAt, !DateTime
-    field :hobbies, types[types.String]
-    field :plan, !PlanEnum
+  class PersonType < GraphQL::Schema::Object
+    implements HumanLike
+    field :login, String, null: true
+    field :name, String, null: true
+    field :first_name, String, null: true
+    field :last_name, String, null: true
+    field :company, String, null: true
+    field :homepageURL, String, null: true
+    field :created_at, DateTimeType, null: false
+    field :hobbies, [String], null: true
+    field :plan, PlanType, null: false
   end
 
-  IssueType = GraphQL::ObjectType.define do
-    name "Issue"
-
-    field :title, !types.String
-    field :assignees, !types[!UserType]
+  class IssueType < GraphQL::Schema::Object
+    field :title, String, null: false
+    field :assignees, [UserType], null: false
   end
 
-  PullRequestType = GraphQL::ObjectType.define do
-    name "PullRequest"
-
-    field :title, !types.String
-    field :assignees, !types[!UserType]
+  class PullRequestType < GraphQL::Schema::Object
+    field :title, String, null: false
+    field :assignees, [UserType], null: false
   end
 
-  OrganizationType = GraphQL::ObjectType.define do
-    name "Organization"
-    interfaces [NodeType]
-    field :name, !types.String
+  class OrganizationType < GraphQL::Schema::Object
+    implements NodeType
+    field :name, String, null: false
   end
 
-  BotType = GraphQL::ObjectType.define do
-    name "Bot"
-    field :login, types.String
+  class BotType < GraphQL::Schema::Object
+    field :login, String, null: true
   end
 
-  IssueOrPullRequestUnion = GraphQL::UnionType.define do
-    name "IssueOrPullRequest"
-    possible_types [IssueType, PullRequestType]
+  class IssueOrPullRequest < GraphQL::Schema::Union
+    possible_types IssueType, PullRequestType
   end
 
-  ActorUnion = GraphQL::UnionType.define do
-    name "Actor"
-    possible_types [PersonType, BotType]
+  class Actor < GraphQL::Schema::Union
+    possible_types PersonType, BotType
   end
 
-  PersonConnection = PersonType.define_connection do
-    name "PersonConnection"
-  end
+  PersonConnection = PersonType.connection_type
 
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :me, !PersonType do
-      resolve ->(_query, _args, _ctx) {
-        OpenStruct.new(
+  class QueryType < GraphQL::Schema::Object
+    field :me, PersonType, null: false
+    def me
+      OpenStruct.new(
+        login: "josh",
+        name: "Josh",
+        first_name: "Joshua",
+        last_name: "Peek",
+        company: "GitHub",
+        created_at: Time.at(0),
+        updated_at: Time.at(1),
+        hobbies: ["soccer", "coding"],
+        homepage_url: nil,
+        plan: "LARGE"
+      )
+    end
+
+    field :issue_or_pull_request, IssueOrPullRequest, null: false
+    def issue_or_pull_request
+      OpenStruct.new({
+        type: PullRequestType,
+        title: "Some issue",
+        assignees: [
+          OpenStruct.new(
+            login: "josh",
+            name: "Josh",
+            first_name: "Joshua",
+            last_name: "Peek",
+            company: "GitHub",
+            created_at: Time.at(0),
+            updated_at: Time.at(1),
+            hobbies: ["soccer", "coding"],
+            plan: "LARGE"
+          )
+        ]
+      })
+    end
+
+    field :user_no_hobbies, PersonType, null: false
+    def user_no_hobbies
+      OpenStruct.new(
+        hobbies: nil
+      )
+    end
+
+    field :current_actor, Actor, null: false
+    def current_actor
+      OpenStruct.new(
+        type: PersonType,
+        login: "josh",
+        name: "Josh",
+        first_name: "Joshua",
+        last_name: "Peek",
+        updated_at: Time.at(1),
+      )
+    end
+
+    field :users, PersonConnection, null: true do
+      argument :first, Integer, required: false
+    end
+
+    def users
+      [
+        OpenStruct.new(login: "josh"),
+        OpenStruct.new(login: "mislav")
+      ]
+    end
+
+    field :node, NodeType, null: true do
+      argument :id, ID, required: true
+    end
+
+    def node(id:)
+      {
+        "1" => OpenStruct.new({
+          type: UserType,
+          id: "1",
           login: "josh",
-          name: "Josh",
-          firstName: "Joshua",
-          lastName: "Peek",
-          company: "GitHub",
-          createdAt: Time.at(0),
-          updatedAt: Time.at(1),
-          hobbies: ["soccer", "coding"],
-          plan: "LARGE"
-        )
-      }
-    end
-
-    field :issueOrPullRequest, !IssueOrPullRequestUnion do
-      resolve -> (_query, _args, _ctx) {
-        OpenStruct.new({
-          type: PullRequestType,
-          title: "Some issue",
-          assignees: [
+          password: "secret",
+          login_url: "/login",
+          profile_name: "Josh",
+          is_cool: true,
+          repositories: [
             OpenStruct.new(
-              login: "josh",
-              name: "Josh",
-              firstName: "Joshua",
-              lastName: "Peek",
-              company: "GitHub",
-              createdAt: Time.at(0),
-              updatedAt: Time.at(1),
-              hobbies: ["soccer", "coding"],
-              plan: "LARGE"
+              type: RepositoryType,
+              name: "github",
+              watchers: [
+                OpenStruct.new(login: "josh")
+              ]
             )
           ]
         })
-      }
+      }[id]
     end
 
-    field :userNoHobbies, !PersonType do
-      resolve ->(_query, _args, _ctx) {
-        OpenStruct.new(
-          hobbies: nil
-        )
-      }
+    field :user, UserType, null: true do
+      argument :id, ID, required: true
     end
 
-    field :currentActor, !ActorUnion do
-      resolve ->(_query, _args, _ctx) {
-        OpenStruct.new(
-          type: PersonType,
-          login: "josh",
-          name: "Josh",
-          firstName: "Joshua",
-          lastName: "Peek",
-          updatedAt: Time.at(1),
-        )
-      }
+    field :organization, OrganizationType, null: true do
+      argument :id, ID, required: true
     end
 
-    connection :users, PersonConnection do
-      argument :first, types.Int
-
-      resolve ->(_query, _args, _ctx) {
-        [
-          OpenStruct.new(login: "josh"),
-          OpenStruct.new(login: "mislav")
-        ]
-      }
-    end
-
-    field :node, NodeType do
-      argument :id, !types.ID
-
-      resolve ->(_query, args, _ctx) {
-        {
-          "1" => OpenStruct.new({
-            type: UserType,
-            id: "1",
-            login: "josh",
-            password: "secret",
-            login_url: "/login",
-            profileName: "Josh",
-            isCool: true,
-            repositories: [
-              OpenStruct.new(
-                type: RepositoryType,
-                name: "github",
-                watchers: [
-                  OpenStruct.new(login: "josh")
-                ]
-              )
-            ]
-          })
-        }[args[:id]]
-      }
-    end
-
-    field :user, UserType do
-      argument :id, !types.ID
-    end
-
-    field :organization, OrganizationType do
-      argument :id, !types.ID
-    end
-
-    field :repository, RepositoryType do
-      resolve ->(_query, args, _ctx) {
-        OpenStruct.new({
-          name: "rails",
-          owner: OpenStruct.new(type: UserType, login: "josh")
-        })
-      }
+    field :repository, RepositoryType, null: true
+    def repository
+      OpenStruct.new({
+        name: "rails",
+        owner: OpenStruct.new(type: UserType, login: "josh")
+      })
     end
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType) do
-    resolve_type -> (_type, obj, _ctx) { obj.type }
+  class Schema < GraphQL::Schema
+    query(QueryType)
+    def self.resolve_type(_type, obj, _ctx)
+      obj.type
+    end
   end
 
   module Temp
@@ -584,7 +566,7 @@ class TestQueryResult < MiniTest::Test
     response = @client.query(Temp::Query)
 
     actor = response.data.current_actor
-    assert_equal "Person", actor.class.type.name
+    assert_equal "Person", actor.class.type.graphql_name
     assert_equal "josh", actor.login
   end
 
@@ -608,7 +590,7 @@ class TestQueryResult < MiniTest::Test
     response = @client.query(Temp::Query)
 
     actor = response.data.current_actor
-    assert_equal "Person", actor.class.type.name
+    assert_equal "Person", actor.class.type.graphql_name
     assert_equal "josh", actor.login
     assert_equal "Josh", actor.name
     assert_equal Time.at(1).utc, actor.updated_at
@@ -740,7 +722,7 @@ class TestQueryResult < MiniTest::Test
 
     response = @client.query(Temp::Query)
     refute response.data.me.nil?
-    assert_equal "Person", response.data.me.class.type.name
+    assert_equal "Person", response.data.me.class.type.graphql_name
     assert response.data.me.is_a?(@client.types::Person)
   end
 
@@ -763,7 +745,7 @@ class TestQueryResult < MiniTest::Test
     response = @client.query(Temp::Query)
     refute response.data.me.nil?
     assert_kind_of @client.types::Person, response.data.me
-    assert_equal "Person", response.data.me.class.type.name
+    assert_equal "Person", response.data.me.class.type.graphql_name
     assert response.data.me.is_a?(@client.types::Person)
 
     person = Temp::Fragment.new(response.data).me
@@ -872,7 +854,7 @@ class TestQueryResult < MiniTest::Test
   def test_parse_fragment_query_result_aliases
     Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
       fragment on User {
-        login_url
+        loginUrl
         profileName
         name: profileName
         isCool
