@@ -4,19 +4,17 @@ require "graphql/client"
 require "minitest/autorun"
 
 class TestClientValidation < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
-  UserType = GraphQL::ObjectType.define do
-    name "User"
-    field :name, !types.String
+  class UserType < GraphQL::Schema::Object
+    field :name, String, null: false
   end
 
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :viewer, !UserType
+  class QueryType < GraphQL::Schema::Object
+    field :viewer, UserType, null: false
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType)
+  class Schema < GraphQL::Schema
+    query(QueryType)
+  end
 
   module Temp
   end

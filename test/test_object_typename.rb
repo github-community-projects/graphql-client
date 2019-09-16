@@ -5,86 +5,53 @@ require "minitest/autorun"
 require "ostruct"
 
 class TestObjectTypename < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+  class PersonType < GraphQL::Schema::Object
+    field :id, Integer, null: true
+    def id; 42; end
 
-  PersonType = GraphQL::ObjectType.define do
-    name "Person"
-    field :id, types.Int do
-      resolve ->(_query, _args, _ctx) {
-        42
-      }
-    end
+    field :friends, "TestObjectTypename::PersonConnection", null: true
+    def friends; [OpenStruct.new, OpenStruct.new]; end
 
-    connection :friends, -> { PersonConnection } do
-      resolve ->(_query, _args, _ctx) {
-        [
-          OpenStruct.new,
-          OpenStruct.new
-        ]
-      }
-    end
+    field :events, "TestObjectTypename::EventConnection", null: true
+    def events; [OpenStruct.new(type: PublicEventType), OpenStruct.new(type: PrivateEventType)]; end
 
-    connection :events, -> { EventConnection } do
-      resolve ->(_query, _args, _ctx) {
-        [
-          OpenStruct.new(type: PublicEventType),
-          OpenStruct.new(type: PrivateEventType)
-        ]
-      }
-    end
-
-    field :nextEvent, -> { EventInterface } do
-      resolve ->(_query, _args, _ctx) {
-        OpenStruct.new(type: PublicEventType)
-      }
+    field :next_event, "TestObjectTypename::EventInterface", null: true
+    def next_event
+      OpenStruct.new(type: PublicEventType)
     end
   end
 
-  EventInterface = GraphQL::InterfaceType.define do
-    name "Event"
-    field :id, types.Int do
-      resolve ->(_query, _args, _ctx) {
-        42
-      }
-    end
+  module EventInterface
+    include GraphQL::Schema::Interface
+    field :id, Integer, null: true
+    def id; 42; end
   end
 
-  PublicEventType = GraphQL::ObjectType.define do
-    name "PublicEvent"
-    interfaces [EventInterface]
+  class PublicEventType < GraphQL::Schema::Object
+    implements EventInterface
   end
 
-  PrivateEventType = GraphQL::ObjectType.define do
-    name "PrivateEvent"
-    interfaces [EventInterface]
+  class PrivateEventType < GraphQL::Schema::Object
+    implements EventInterface
   end
 
-  EventUnion = GraphQL::UnionType.define do
-    name "Events"
-    possible_types [PublicEventType, PrivateEventType]
+  class Event < GraphQL::Schema::Union
+    possible_types PublicEventType, PrivateEventType
   end
 
-  PersonConnection = PersonType.define_connection do
-    name "PersonConnection"
+  PersonConnection = PersonType.connection_type
+  EventConnection = Event.connection_type
+
+  class QueryType < GraphQL::Schema::Object
+    field :me, PersonType, null: false
+    def me; OpenStruct.new; end
   end
 
-  EventConnection = EventUnion.define_connection do
-    name "EventConnection"
-  end
-
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :me, !PersonType do
-      resolve ->(_query, _args, _ctx) {
-        OpenStruct.new
-      }
-    end
-  end
-
-  Schema = GraphQL::Schema.define(query: QueryType) do
-    resolve_type ->(_type, obj, _ctx) {
+  class Schema < GraphQL::Schema
+    query(QueryType)
+    def self.resolve_type(_type, obj, _ctx)
       obj.type
-    }
+    end
   end
 
   module Temp
@@ -134,16 +101,16 @@ class TestObjectTypename < MiniTest::Test
     response = @client.query(Temp::Query)
     assert data = response.data
 
-    assert_equal "Person", data.me.class.type.name
+    assert_equal "Person", data.me.class.type.graphql_name
 
-    assert_equal "PersonConnection", data.me.friends.class.type.name
-    assert_equal %w(PersonEdge PersonEdge), data.me.friends.edges.map { |obj| obj.class.type.name }
-    assert_equal %w(Person Person), data.me.friends.edges.map(&:node).map { |obj| obj.class.type.name }
+    assert_equal "PersonConnection", data.me.friends.class.type.graphql_name
+    assert_equal %w(PersonEdge PersonEdge), data.me.friends.edges.map { |obj| obj.class.type.graphql_name }
+    assert_equal %w(Person Person), data.me.friends.edges.map(&:node).map { |obj| obj.class.type.graphql_name }
 
-    assert_equal "EventConnection", data.me.events.class.type.name
-    assert_equal %w(EventsEdge EventsEdge), data.me.events.edges.map { |obj| obj.class.type.name }
-    assert_equal %w(PublicEvent PrivateEvent), data.me.events.edges.map(&:node).map { |obj| obj.class.type.name }
+    assert_equal "EventConnection", data.me.events.class.type.graphql_name
+    assert_equal %w(EventEdge EventEdge), data.me.events.edges.map { |obj| obj.class.type.graphql_name }
+    assert_equal %w(PublicEvent PrivateEvent), data.me.events.edges.map(&:node).map { |obj| obj.class.type.graphql_name }
 
-    assert_equal "PublicEvent", data.me.next_event.class.type.name
+    assert_equal "PublicEvent", data.me.next_event.class.type.graphql_name
   end
 end

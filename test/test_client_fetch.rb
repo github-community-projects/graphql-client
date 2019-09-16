@@ -4,29 +4,34 @@ require "graphql/client"
 require "minitest/autorun"
 
 class TestClientFetch < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
+  class QueryType < GraphQL::Schema::Object
+    field :version, Integer, null: false
+    def version
+      1
+    end
 
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :version, !types.Int do
-      resolve ->(_query, _args, _ctx) { 1 }
+    field :error, String, null: false
+    def error
+      raise GraphQL::ExecutionError, "b00m"
     end
-    field :error, !types.String do
-      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
-    end
-    field :partial_error, types.String do
-      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "just a little broken" }
-    end
-    field :variables, !types.Boolean do
-      argument :foo, !types.Int
 
-      resolve ->(_query, args, _ctx) {
-        args[:foo] == 42
-      }
+    field :partial_error, String, null: true
+    def partial_error
+      raise GraphQL::ExecutionError, "just a little broken"
+    end
+
+    field :variables, Boolean, null: false do
+      argument :foo, Integer, required: true
+    end
+
+    def variables(foo:)
+      foo == 42
     end
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType)
+  class Schema < GraphQL::Schema
+    query(QueryType)
+  end
 
   module Temp
   end
@@ -55,12 +60,16 @@ class TestClientFetch < MiniTest::Test
   end
 
   def test_failed_validation_response
-    query = GraphQL::ObjectType.define do
-      name "Query"
-      field :err, types.String
+    query = Class.new(GraphQL::Schema::Object) do
+      graphql_name "Query"
+      field :err, String, null: true
     end
-    outdated_schema = GraphQL::Schema.define(query: query) do
-      resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
+
+    outdated_schema = Class.new(GraphQL::Schema) do
+      query(query)
+      def self.resolve_type(_type, _obj, _ctx)
+        raise NotImplementedError
+      end
     end
 
     @client = GraphQL::Client.new(schema: outdated_schema, execute: Schema)
@@ -86,13 +95,13 @@ class TestClientFetch < MiniTest::Test
   end
 
   def test_partial_response
-    Temp.const_set :Query, @client.parse("{ partial_error }")
+    Temp.const_set :Query, @client.parse("{ partialError }")
     response = @client.query(Temp::Query)
 
     assert response.data
     assert_nil response.data.partial_error
     refute_empty response.data.errors
-    assert_equal "just a little broken", response.data.errors["partial_error"][0]
+    assert_equal "just a little broken", response.data.errors["partialError"][0]
 
     assert_empty response.errors
     refute_empty response.errors.all

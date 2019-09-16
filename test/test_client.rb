@@ -79,7 +79,7 @@ class TestClient < MiniTest::Test
   class Schema < GraphQL::Schema
     query(QueryType)
     mutation(MutationType)
-    if GraphQL::VERSION > "1.9"
+    if defined?(GraphQL::Execution::Interpreter)
       use GraphQL::Execution::Interpreter
       use GraphQL::Analysis::AST
     end

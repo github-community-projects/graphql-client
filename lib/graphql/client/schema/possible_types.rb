@@ -22,7 +22,7 @@ module GraphQL
             unless klass.is_a?(ObjectType)
               raise TypeError, "expected type to be #{ObjectType}, but was #{type.class}"
             end
-            @possible_types[klass.type.name] = klass
+            @possible_types[klass.type.graphql_name] = klass
           end
         end
 

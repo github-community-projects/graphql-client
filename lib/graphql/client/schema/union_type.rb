@@ -9,8 +9,8 @@ module GraphQL
         include BaseType
 
         def initialize(type)
-          unless type.is_a?(GraphQL::UnionType)
-            raise "expected type to be a GraphQL::UnionType, but was #{type.class}"
+          unless type.kind.union?
+            raise "expected type to be a Union, but was #{type.class}"
           end
 
           @type = type

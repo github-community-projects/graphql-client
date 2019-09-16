@@ -5,8 +5,6 @@ require "json"
 require "minitest/autorun"
 
 class TestClientSchema < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
   FakeConn = Class.new do
     attr_reader :context
 
@@ -19,16 +17,17 @@ class TestClientSchema < MiniTest::Test
     end
   end
 
-  QueryType = GraphQL::ObjectType.define do
-    name "AwesomeQuery"
-    field :version, !types.Int
+  class AwesomeQueryType < GraphQL::Schema::Object
+    field :version, Integer, null: false
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType)
+  class Schema < GraphQL::Schema
+    query(AwesomeQueryType)
+  end
 
   def test_load_schema_identity
     schema = GraphQL::Client.load_schema(Schema)
-    assert_equal "AwesomeQuery", schema.query.name
+    assert_equal "AwesomeQuery", schema.query.graphql_name
   end
 
   def test_load_schema_from_introspection_query_result
