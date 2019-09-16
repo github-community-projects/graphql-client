@@ -4,44 +4,61 @@ require "graphql/client"
 require "minitest/autorun"
 
 class TestClientErrors < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
-  FooType = GraphQL::ObjectType.define do
-    name "Foo"
-    field :nullableError, types.String do
-      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+  class FooType < GraphQL::Schema::Object
+    field :nullable_error, String, null: true
+    def nullable_error
+      raise GraphQL::ExecutionError, "b00m"
     end
-    field :nonnullableError, !types.String do
-      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+
+    field :nonnullable_error, String, null: false
+    def nonnullable_error
+      raise GraphQL::ExecutionError, "b00m"
     end
   end
 
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :version, !types.Int do
-      resolve ->(_query, _args, _ctx) { 1 }
+  class QueryType < GraphQL::Schema::Object
+    field :version, Int, null: false
+    def version
+      1
     end
-    field :node, FooType do
-      resolve ->(_query, _args, _ctx) { GraphQL::ExecutionError.new("missing node") }
+
+    field :node, FooType, null: true
+    def node
+      GraphQL::ExecutionError.new("missing node")
     end
-    field :nodes, !types[FooType] do
-      resolve ->(_query, _args, _ctx) { [GraphQL::ExecutionError.new("missing node"), {}] }
+
+    field :nodes, [FooType, null: true], null: false
+    def nodes
+      [GraphQL::ExecutionError.new("missing node"), {}]
     end
-    field :nullableError, types.String do
-      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+
+    field :nullable_error, String, null: true
+    def nullable_error
+      raise GraphQL::ExecutionError, "b00m"
     end
-    field :nonnullableError, !types.String do
-      resolve ->(_query, _args, _ctx) { raise GraphQL::ExecutionError, "b00m" }
+
+    field :nonnullable_error, String, null: false
+    def nonnullable_error
+      raise GraphQL::ExecutionError, "b00m"
     end
-    field :foo, !FooType do
-      resolve ->(_query, _args, _ctx) { {} }
+
+    field :foo, FooType, null: false
+    def foo
+      {}
     end
-    field :foos, types[!FooType] do
-      resolve ->(_query, _args, _ctx) { [{}, {}] }
+
+    field :foos, [FooType], null: true
+    def foos
+      [{}, {}]
     end
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType)
+  class Schema < GraphQL::Schema
+    query(QueryType)
+
+    use GraphQL::Execution::Interpreter
+    use GraphQL::Analysis::AST
+  end
 
   module Temp
   end

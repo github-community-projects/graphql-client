@@ -46,7 +46,7 @@ module GraphQL
 
     def self.load_schema(schema)
       case schema
-      when GraphQL::Schema
+      when GraphQL::Schema, Class
         schema
       when Hash
         GraphQL::Schema::Loader.load(schema)
@@ -288,15 +288,15 @@ module GraphQL
       variables = GraphQL::Client::DefinitionVariables.operation_variables(self.schema, fragment.document, fragment.definition_name)
       type_name = fragment.definition_node.type.name
 
-      if schema.query && type_name == schema.query.name
+      if schema.query && type_name == schema.query.graphql_name
         operation_type = "query"
-      elsif schema.mutation && type_name == schema.mutation.name
+      elsif schema.mutation && type_name == schema.mutation.graphql_name
         operation_type = "mutation"
-      elsif schema.subscription && type_name == schema.subscription.name
+      elsif schema.subscription && type_name == schema.subscription.graphql_name
         operation_type = "subscription"
       else
         types = [schema.query, schema.mutation, schema.subscription].compact
-        raise Error, "Fragment must be defined on #{types.map(&:name).join(", ")}"
+        raise Error, "Fragment must be defined on #{types.map(&:graphql_name).join(", ")}"
       end
 
       doc_ast = GraphQL::Language::Nodes::Document.new(definitions: [

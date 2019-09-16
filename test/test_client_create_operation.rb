@@ -4,38 +4,38 @@ require "graphql/client"
 require "minitest/autorun"
 
 class TestClientCreateOperation < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
-  UserType = GraphQL::ObjectType.define do
-    name "User"
-    field :id, !types.ID
+  class UserType < GraphQL::Schema::Object
+    field :id, ID, null: false
   end
 
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :version, !types.Int
-    field :user, UserType do
-      argument :name, !types.String
+  class QueryType < GraphQL::Schema::Object
+    field :version, Int, null: false
+    field :user, UserType, null: true do
+      argument :name, String, required: true
     end
-    field :users, types[!UserType] do
-      argument :name, types.String
-      argument :names, types[!types.String]
+    field :users, [UserType], null: false do
+      argument :name, String, required: false
+      argument :names, [String], required: false
     end
   end
 
-  UserInput = GraphQL::InputObjectType.define do
-    name "CreateUserInput"
-    argument :name, !types.String
+  class CreateUserInput < GraphQL::Schema::InputObject
+    argument :name, String, required: true
   end
 
-  MutationType = GraphQL::ObjectType.define do
-    name "Mutation"
-    field :createUser, UserType do
-      argument :input, !UserInput
+  class MutationType < GraphQL::Schema::Object
+    field :create_user, UserType, null: true do
+      argument :input, CreateUserInput, required: true
     end
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType, mutation: MutationType)
+  class Schema < GraphQL::Schema
+    query(QueryType)
+    mutation(MutationType)
+
+    use GraphQL::Execution::Interpreter
+    use GraphQL::Analysis::AST
+  end
 
   module Temp
   end

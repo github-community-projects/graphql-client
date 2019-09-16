@@ -41,7 +41,7 @@ module GraphQL
           field_nodes.each do |result_name, field_ast_nodes|
             # `result_name` might be an alias, so make sure to get the proper name
             field_name = field_ast_nodes.first.name
-            field_definition = definition.client.schema.get_field(type.name, field_name)
+            field_definition = definition.client.schema.get_field(type.graphql_name, field_name)
             field_return_type = field_definition.type
             field_classes[result_name.to_sym] = schema_module.define_class(definition, field_ast_nodes, field_return_type)
           end
