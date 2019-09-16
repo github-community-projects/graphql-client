@@ -205,7 +205,7 @@ class TestDefinitionVariables < MiniTest::Test
 
     variables = GraphQL::Client::DefinitionVariables.variables(Schema, document, definition.name)
     assert variables[:input].kind.non_null?
-    assert_equal CreateUserInput, variables[:input].unwrap
+    assert_equal "CreateUserInput", variables[:input].unwrap.graphql_name
 
     variables = GraphQL::Client::DefinitionVariables.operation_variables(Schema, document, definition.name)
     assert_equal ["$input: CreateUserInput!"], variables.map(&:to_query_string)
