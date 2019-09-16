@@ -362,6 +362,9 @@ class TestClientErrors < MiniTest::Test
 
     refute_empty response.data.errors
     assert_equal "missing node", response.data.errors["node"][0]
-    assert_equal "missing node", response.data.nodes.errors[0][0]
+    # This error isn't added in class-based schemas + `Execution::Execute`, same bug as above
+    if defined?(GraphQL::Execution::Interpreter)
+      assert_equal "missing node", response.data.nodes.errors[0][0]
+    end
   end
 end
