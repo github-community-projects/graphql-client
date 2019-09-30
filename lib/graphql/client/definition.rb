@@ -45,7 +45,7 @@ module GraphQL
             raise "Unexpected operation_type: #{ast_node.operation_type}"
           end
         when GraphQL::Language::Nodes::FragmentDefinition
-          @client.schema.types[ast_node.type.name]
+          @client.find_type(ast_node.type.name)
         else
           raise "Unexpected ast_node: #{ast_node}"
         end
