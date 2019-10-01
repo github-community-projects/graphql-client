@@ -374,15 +374,15 @@ module GraphQL
       end.to_h
 
       doc.definitions.map do |node|
-        seen = Set.new
-        deps = [node.name]
+        deps = Set.new
         definitions = document_dependencies.definitions.map { |x| [x.name, x] }.to_h
-        deps.each do |name|
-          next if seen.include?(name)
-          seen.add(name)
-          deps.concat dependencies[name]
+
+        queue = [node.name]
+        while name = queue.shift
+          next if deps.include?(name)
+          deps.add(name)
+          queue.concat dependencies[name]
         end
-        deps = Set.new(deps)
 
         definitions = document_dependencies.definitions.select { |x| deps.include?(x.name)  }
         sliced_document = Language::Nodes::Document.new(definitions: definitions)
