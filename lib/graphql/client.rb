@@ -213,12 +213,17 @@ module GraphQL
         definitions[node.name] = definition
       end
 
-      name_hook = RenameNodeHook.new(definitions)
-      visitor = Language::Visitor.new(document_dependencies)
-      visitor[Language::Nodes::FragmentDefinition].leave << name_hook.method(:rename_node)
-      visitor[Language::Nodes::OperationDefinition].leave << name_hook.method(:rename_node)
-      visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
-      visitor.visit
+      if @document.respond_to?(:merge) # GraphQL 1.9+
+        visitor = RenameNodeVisitor.new(document_dependencies, definitions: definitions)
+        visitor.visit
+      else
+        name_hook = RenameNodeHook.new(definitions)
+        visitor = Language::Visitor.new(document_dependencies)
+        visitor[Language::Nodes::FragmentDefinition].leave << name_hook.method(:rename_node)
+        visitor[Language::Nodes::OperationDefinition].leave << name_hook.method(:rename_node)
+        visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
+        visitor.visit
+      end
 
       if document_tracking_enabled
         if @document.respond_to?(:merge) # GraphQL 1.9+
@@ -235,6 +240,38 @@ module GraphQL
           definitions.each do |name, definition|
             const_set(name, definition)
           end
+        end
+      end
+    end
+
+    class RenameNodeVisitor < GraphQL::Language::Visitor
+      def initialize(document, definitions:)
+        super(document)
+        @definitions = definitions
+      end
+
+      def on_fragment_definition(node, _parent)
+        rename_node(node)
+        super
+      end
+
+      def on_operation_definition(node, _parent)
+        rename_node(node)
+        super
+      end
+
+      def on_fragment_spread(node, _parent)
+        rename_node(node)
+        super
+      end
+
+      private
+
+      def rename_node(node)
+        definition = @definitions[node.name]
+        if definition
+          node.extend(LazyName)
+          node._definition = definition
         end
       end
     end

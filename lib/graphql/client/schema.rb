@@ -62,7 +62,7 @@ module GraphQL
         private
 
         def normalize_type_name(type_name)
-          type_name =~ /\A[A-Z]/ ? type_name : type_name.camelize
+          /\A[A-Z]/.match?(type_name) ? type_name : type_name.camelize
         end
       end
 
