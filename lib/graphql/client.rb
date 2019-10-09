@@ -46,7 +46,7 @@ module GraphQL
 
     def self.load_schema(schema)
       case schema
-      when GraphQL::Schema
+      when GraphQL::Schema, Class
         schema
       when Hash
         GraphQL::Schema::Loader.load(schema)
@@ -213,12 +213,17 @@ module GraphQL
         definitions[node.name] = definition
       end
 
-      name_hook = RenameNodeHook.new(definitions)
-      visitor = Language::Visitor.new(document_dependencies)
-      visitor[Language::Nodes::FragmentDefinition].leave << name_hook.method(:rename_node)
-      visitor[Language::Nodes::OperationDefinition].leave << name_hook.method(:rename_node)
-      visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
-      visitor.visit
+      if @document.respond_to?(:merge) # GraphQL 1.9+
+        visitor = RenameNodeVisitor.new(document_dependencies, definitions: definitions)
+        visitor.visit
+      else
+        name_hook = RenameNodeHook.new(definitions)
+        visitor = Language::Visitor.new(document_dependencies)
+        visitor[Language::Nodes::FragmentDefinition].leave << name_hook.method(:rename_node)
+        visitor[Language::Nodes::OperationDefinition].leave << name_hook.method(:rename_node)
+        visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
+        visitor.visit
+      end
 
       if document_tracking_enabled
         if @document.respond_to?(:merge) # GraphQL 1.9+
@@ -239,6 +244,38 @@ module GraphQL
       end
     end
 
+    class RenameNodeVisitor < GraphQL::Language::Visitor
+      def initialize(document, definitions:)
+        super(document)
+        @definitions = definitions
+      end
+
+      def on_fragment_definition(node, _parent)
+        rename_node(node)
+        super
+      end
+
+      def on_operation_definition(node, _parent)
+        rename_node(node)
+        super
+      end
+
+      def on_fragment_spread(node, _parent)
+        rename_node(node)
+        super
+      end
+
+      private
+
+      def rename_node(node)
+        definition = @definitions[node.name]
+        if definition
+          node.extend(LazyName)
+          node._definition = definition
+        end
+      end
+    end
+
     class RenameNodeHook
       def initialize(definitions)
         @definitions = definitions
@@ -253,6 +290,14 @@ module GraphQL
       end
     end
 
+    # Public: A wrapper to use the more-efficient `.get_type` when it's available from GraphQL-Ruby (1.10+)
+    def get_type(type_name)
+      if @schema.respond_to?(:get_type)
+        @schema.get_type(type_name)
+      else
+        @schema.types[type_name]
+      end
+    end
 
     # Public: Create operation definition from a fragment definition.
     #
@@ -288,15 +333,15 @@ module GraphQL
       variables = GraphQL::Client::DefinitionVariables.operation_variables(self.schema, fragment.document, fragment.definition_name)
       type_name = fragment.definition_node.type.name
 
-      if schema.query && type_name == schema.query.name
+      if schema.query && type_name == schema.query.graphql_name
         operation_type = "query"
-      elsif schema.mutation && type_name == schema.mutation.name
+      elsif schema.mutation && type_name == schema.mutation.graphql_name
         operation_type = "mutation"
-      elsif schema.subscription && type_name == schema.subscription.name
+      elsif schema.subscription && type_name == schema.subscription.graphql_name
         operation_type = "subscription"
       else
         types = [schema.query, schema.mutation, schema.subscription].compact
-        raise Error, "Fragment must be defined on #{types.map(&:name).join(", ")}"
+        raise Error, "Fragment must be defined on #{types.map(&:graphql_name).join(", ")}"
       end
 
       doc_ast = GraphQL::Language::Nodes::Document.new(definitions: [

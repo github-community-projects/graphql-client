@@ -12,7 +12,7 @@ module GraphQL
       #
       # Returns a Hash[Language::Nodes::Node] to GraphQL::Type objects.
       def self.analyze_types(schema, document)
-        unless schema.is_a?(GraphQL::Schema)
+        unless schema.is_a?(GraphQL::Schema) || (schema.is_a?(Class) && schema < GraphQL::Schema)
           raise TypeError, "expected schema to be a GraphQL::Schema, but was #{schema.class}"
         end
 
@@ -40,7 +40,10 @@ module GraphQL
         visitor.visit
 
         fields
-      rescue StandardError
+      rescue StandardError => err
+        if err.is_a?(TypeError)
+          raise
+        end
         # FIXME: TypeStack my crash on invalid documents
         fields
       end

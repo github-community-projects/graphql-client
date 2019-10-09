@@ -12,8 +12,8 @@ module GraphQL
         #
         # type - GraphQL::BaseType instance
         def initialize(type)
-          unless type.is_a?(GraphQL::ScalarType)
-            raise "expected type to be a GraphQL::ScalarType, but was #{type.class}"
+          unless type.kind.scalar?
+            raise "expected type to be a Scalar, but was #{type.class}"
           end
 
           @type = type

@@ -3,15 +3,13 @@ language: ruby
 cache: bundler
 
 rvm:
-  - 2.3.7
-  - 2.4.4
-  - 2.5.1
+  - 2.5.6
+  - 2.6.4
 
 env:
-  - RAILS_VERSION=5.1.6 GRAPHQL_VERSION=1.8.11
-  - RAILS_VERSION=5.1.6
-  - RAILS_VERSION=5.2.0
-  - RAILS_VERSION=edge
+  - RAILS_VERSION=5.2.0 GRAPHQL_VERSION=1.8.11
+  - RAILS_VERSION=5.2.0 GRAPHQL_VERSION=1.9.12
+  - RAILS_VERSION=edge GRAPHQL_VERSION=edge
 
 matrix:
   exclude:

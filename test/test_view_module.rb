@@ -5,22 +5,21 @@ require "graphql/client/view_module"
 require "minitest/autorun"
 
 class TestViewModule < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
   Root = File.expand_path("..", __FILE__)
 
-  UserType = GraphQL::ObjectType.define do
-    name "User"
-    field :login, !types.String
+  class UserType < GraphQL::Schema::Object
+    field :login, String, null: false
   end
 
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :viewer, !UserType
+  class QueryType < GraphQL::Schema::Object
+    field :viewer, UserType, null: false
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType) do
-    resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
+  class Schema < GraphQL::Schema
+    query(QueryType)
+    def self.resolve_type(_t, _obj, _ctx)
+      raise NotImplementedError
+    end
   end
 
   Client = GraphQL::Client.new(schema: Schema)

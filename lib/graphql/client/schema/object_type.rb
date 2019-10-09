@@ -41,7 +41,7 @@ module GraphQL
           field_nodes.each do |result_name, field_ast_nodes|
             # `result_name` might be an alias, so make sure to get the proper name
             field_name = field_ast_nodes.first.name
-            field_definition = definition.client.schema.get_field(type.name, field_name)
+            field_definition = definition.client.schema.get_field(type.graphql_name, field_name)
             field_return_type = field_definition.type
             field_classes[result_name.to_sym] = schema_module.define_class(definition, field_ast_nodes, field_return_type)
           end
@@ -135,7 +135,7 @@ module GraphQL
               true
             else
               schema = definition.client.schema
-              type_condition = schema.types[selected_ast_node.type.name]
+              type_condition = definition.client.get_type(selected_ast_node.type.name)
               applicable_types = schema.possible_types(type_condition)
               # continue if this object type is one of the types matching the fragment condition
               applicable_types.include?(type)
@@ -152,7 +152,7 @@ module GraphQL
             end
 
             schema = definition.client.schema
-            type_condition = schema.types[fragment_definition.type.name]
+            type_condition = definition.client.get_type(fragment_definition.type.name)
             applicable_types = schema.possible_types(type_condition)
             # continue if this object type is one of the types matching the fragment condition
             continue_selection = applicable_types.include?(type)
@@ -211,12 +211,13 @@ module GraphQL
             raise e
           end
 
-          field = type.all_fields.find do |f|
+          all_fields = type.respond_to?(:all_fields) ? type.all_fields : type.fields.values
+          field = all_fields.find do |f|
             f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
           end
 
           unless field
-            raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type} type. https://git.io/v1y3m"
+            raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://git.io/v1y3m"
           end
 
           if @data.key?(field.name)

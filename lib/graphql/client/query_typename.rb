@@ -28,8 +28,8 @@ module GraphQL
             type = @types[node]
             type = type && type.unwrap
 
-            if (node.selections.any? && (type.nil? || type.is_a?(GraphQL::InterfaceType) || type.is_a?(GraphQL::UnionType))) ||
-              (node.selections.none? && type.is_a?(GraphQL::ObjectType))
+            if (node.selections.any? && (type.nil? || type.kind.interface? || type.kind.union?)) ||
+              (node.selections.none? && (type && type.kind.object?))
               names = QueryTypename.node_flatten_selections(node.selections).map { |s| s.respond_to?(:name) ? s.name : nil }
               names = Set.new(names.compact)
 

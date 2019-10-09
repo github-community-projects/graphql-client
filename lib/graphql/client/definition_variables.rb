@@ -14,7 +14,7 @@ module GraphQL
       #
       # Returns a Hash[Symbol] to GraphQL::Type objects.
       def self.variables(schema, document, definition_name = nil)
-        unless schema.is_a?(GraphQL::Schema)
+        unless schema.is_a?(GraphQL::Schema) || (schema.is_a?(Class) && schema < GraphQL::Schema)
           raise TypeError, "expected schema to be a GraphQL::Schema, but was #{schema.class}"
         end
 
@@ -35,7 +35,7 @@ module GraphQL
 
             if existing_type && existing_type.unwrap != definition.type.unwrap
               raise GraphQL::Client::ValidationError, "$#{node.name} was already declared as #{existing_type.unwrap}, but was #{definition.type.unwrap}"
-            elsif !existing_type.is_a?(GraphQL::NonNullType)
+            elsif !(existing_type && existing_type.kind.non_null?)
               variables[node.name.to_sym] = definition.type
             end
           end
@@ -66,13 +66,13 @@ module GraphQL
       #
       # Returns GraphQL::Language::Nodes::Type.
       def self.variable_node(type)
-        case type
-        when GraphQL::NonNullType
+        case type.kind.name
+        when "NON_NULL"
           GraphQL::Language::Nodes::NonNullType.new(of_type: variable_node(type.of_type))
-        when GraphQL::ListType
+        when "LIST"
           GraphQL::Language::Nodes::ListType.new(of_type: variable_node(type.of_type))
         else
-          GraphQL::Language::Nodes::TypeName.new(name: type.name)
+          GraphQL::Language::Nodes::TypeName.new(name: type.graphql_name)
         end
       end
     end

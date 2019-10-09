@@ -9,8 +9,8 @@ module GraphQL
         include BaseType
 
         def initialize(type)
-          unless type.is_a?(GraphQL::InterfaceType)
-            raise "expected type to be a GraphQL::InterfaceType, but was #{type.class}"
+          unless type.kind.interface?
+            raise "expected type to be an Interface, but was #{type.class}"
           end
 
           @type = type
