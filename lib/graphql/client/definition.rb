@@ -45,7 +45,7 @@ module GraphQL
             raise "Unexpected operation_type: #{ast_node.operation_type}"
           end
         when GraphQL::Language::Nodes::FragmentDefinition
-          @client.find_type(ast_node.type.name)
+          @client.get_type(ast_node.type.name)
         else
           raise "Unexpected ast_node: #{ast_node}"
         end
@@ -170,16 +170,18 @@ module GraphQL
         end
 
         def flatten_spreads(node)
-          node.selections.flat_map do |selection|
+          spreads = []
+          node.selections.each do |selection|
             case selection
             when Language::Nodes::FragmentSpread
-              selection
+              spreads << selection
             when Language::Nodes::InlineFragment
-              flatten_spreads(selection)
+              spreads.concat(flatten_spreads(selection))
             else
-              []
+              # Do nothing, not a spread
             end
           end
+          spreads
         end
 
         def index_node_definitions(visitor)

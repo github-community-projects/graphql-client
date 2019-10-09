@@ -135,7 +135,7 @@ module GraphQL
               true
             else
               schema = definition.client.schema
-              type_condition = definition.client.find_type(selected_ast_node.type.name)
+              type_condition = definition.client.get_type(selected_ast_node.type.name)
               applicable_types = schema.possible_types(type_condition)
               # continue if this object type is one of the types matching the fragment condition
               applicable_types.include?(type)
@@ -152,7 +152,7 @@ module GraphQL
             end
 
             schema = definition.client.schema
-            type_condition = definition.client.find_type(fragment_definition.type.name)
+            type_condition = definition.client.get_type(fragment_definition.type.name)
             applicable_types = schema.possible_types(type_condition)
             # continue if this object type is one of the types matching the fragment condition
             continue_selection = applicable_types.include?(type)

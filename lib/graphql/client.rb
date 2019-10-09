@@ -290,10 +290,10 @@ module GraphQL
       end
     end
 
-    # Public: A wrapper to use the more-efficient `.find_type` when it's available from GraphQL-Ruby (1.10+)
-    def find_type(type_name)
-      if @schema.respond_to?(:find_type)
-        @schema.find_type(type_name)
+    # Public: A wrapper to use the more-efficient `.get_type` when it's available from GraphQL-Ruby (1.10+)
+    def get_type(type_name)
+      if @schema.respond_to?(:get_type)
+        @schema.get_type(type_name)
       else
         @schema.types[type_name]
       end
