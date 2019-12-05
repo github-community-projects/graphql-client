@@ -200,18 +200,7 @@ module GraphQL
         raise error
       end
 
-      definitions = {}
-      doc.definitions.each do |node|
-        sliced_document = Language::DefinitionSlice.slice(document_dependencies, node.name)
-        definition = Definition.for(
-          client: self,
-          ast_node: node,
-          document: sliced_document,
-          source_document: doc,
-          source_location: source_location
-        )
-        definitions[node.name] = definition
-      end
+      definitions = sliced_definitions(document_dependencies, doc, source_location: source_location)
 
       if @document.respond_to?(:merge) # GraphQL 1.9+
         visitor = RenameNodeVisitor.new(document_dependencies, definitions: definitions)
@@ -423,6 +412,44 @@ module GraphQL
     end
 
     private
+
+    def sliced_definitions(document_dependencies, doc, source_location:)
+      dependencies = document_dependencies.definitions.map do |node|
+        [node.name, find_definition_dependencies(node)]
+      end.to_h
+
+      doc.definitions.map do |node|
+        deps = Set.new
+        definitions = document_dependencies.definitions.map { |x| [x.name, x] }.to_h
+
+        queue = [node.name]
+        while name = queue.shift
+          next if deps.include?(name)
+          deps.add(name)
+          queue.concat dependencies[name]
+        end
+
+        definitions = document_dependencies.definitions.select { |x| deps.include?(x.name)  }
+        sliced_document = Language::Nodes::Document.new(definitions: definitions)
+        definition = Definition.for(
+          client: self,
+          ast_node: node,
+          document: sliced_document,
+          source_document: doc,
+          source_location: source_location
+        )
+
+        [node.name, definition]
+      end.to_h
+    end
+
+    def find_definition_dependencies(node)
+      names = []
+      visitor = Language::Visitor.new(node)
+      visitor[Language::Nodes::FragmentSpread] << -> (node, parent) { names << node.name }
+      visitor.visit
+      names.uniq
+    end
 
     def deep_freeze_json_object(obj)
       case obj
