@@ -135,11 +135,7 @@ module GraphQL
           # which corresponds to the spread.
           # We depend on ActiveSupport to either find the already-loaded
           # constant, or to load the constant by name
-          begin
-            fragment = ActiveSupport::Inflector.constantize(const_name)
-          rescue NameError
-            fragment = nil
-          end
+          fragment = ActiveSupport::Inflector.safe_constantize(const_name)
 
           case fragment
           when FragmentDefinition
