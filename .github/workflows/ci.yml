@@ -1,0 +1,49 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Test on Ruby ${{ matrix.ruby_version }}, Rails ${{ matrix.rails_version }}, graphql-ruby ${{ matrix.graphql_version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby_version:
+          - 2.5.x
+          - 2.6.x
+        graphql_version:
+          - 1.8.11
+          - 1.9.12
+        rails_version:
+          - "~> 5.2.0"
+          - "~> 6.0.0"
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Ruby ${{ matrix.ruby_version }}
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby_version }}
+    - name: Build and test
+      run: |
+        gem install bundler
+        bundle install --jobs 4 --retry 3
+        bundle exec rake test
+      env:
+        RAILS_VERSION: ${{ matrix.rails_version }}
+        GRAPHQL_VERSION: ${{ matrix.graphql_version }}
+
+  rubocop:
+    name: Rubocop
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Ruby
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.6.x
+    - name: Build and test
+      run: |
+        gem install bundler
+        bundle install --jobs 4 --retry 3
+        bundle exec rake rubocop
