@@ -46,9 +46,7 @@ module GraphQL
                 read_attribute(attr, type)
               end
             elsif (attr = PREDICATES[name]) && @definer.defined_fields[attr]
-              verify_collocated_path do
-                has_attribute?(attr)
-              end
+              has_attribute?(attr)
             else
               super
             end
