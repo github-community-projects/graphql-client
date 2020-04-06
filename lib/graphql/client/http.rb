@@ -7,7 +7,7 @@ module GraphQL
   class Client
     # Public: Basic HTTP network adapter.
     #
-    #   GraphQL::Client::Client.new(
+    #   GraphQL::Client.new(
     #     execute: GraphQL::Client::HTTP.new("http://graphql-swapi.parseapp.com/")
     #   )
     #
