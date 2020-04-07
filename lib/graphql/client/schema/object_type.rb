@@ -52,6 +52,14 @@ module GraphQL
             end
           end
 
+          def respond_to_missing?(name, priv)
+            if (attr = READERS[name]) || (attr = PREDICATES[name])
+              @definer.defined_fields.key?(attr) || super
+            else
+              super
+            end
+          end
+
           private
 
           def verify_collocated_path
