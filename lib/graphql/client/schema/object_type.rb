@@ -239,13 +239,6 @@ module GraphQL
       end
 
       class ObjectClass
-        module ClassMethods
-          attr_reader :source_definition
-          attr_reader :_spreads
-        end
-
-        extend ClassMethods
-
         def initialize(data = {}, errors = Errors.new)
           @data = data
           @casted_data = {}
