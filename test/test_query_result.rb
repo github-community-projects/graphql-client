@@ -855,6 +855,27 @@ class TestQueryResult < MiniTest::Test
     assert_equal "secret", user.password
   end
 
+  def test_parse_fragment_with_field_named_error
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        errors: profileName
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        node(id: "1") {
+          ...TestQueryResult::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+    user = Temp::UserFragment.new(response.data.node)
+
+    assert_equal "Josh", user.errors
+  end
+
   def test_parse_fragment_query_result_aliases
     Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
       fragment on User {
