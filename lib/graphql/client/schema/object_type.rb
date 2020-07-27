@@ -60,6 +60,17 @@ module GraphQL
             end
           end
 
+          # It's possible to define "errors" as a field. Ideally this shouldn't
+          # happen, but if it does we should prefer the field rather than the
+          # builtin error type.
+          def errors
+            if type = @definer.defined_fields["errors"]
+              read_attribute("errors", type)
+            else
+              super()
+            end
+          end
+
           private
 
           def verify_collocated_path
