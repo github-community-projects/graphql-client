@@ -19,6 +19,8 @@ module GraphQL
 
             defined_class = Class.new(self)
             defined_class.prepend Defined
+            defined_class.const_set(:READERS, {})
+            defined_class.const_set(:PREDICATES, {})
             const_set(:DefinedClass, defined_class)
             define_singleton_method(:defined_class) { defined_class }
           end
@@ -41,11 +43,11 @@ module GraphQL
           end
 
           def method_missing(name, *args)
-            if (attr = READERS[name]) && (type = @definer.defined_fields[attr])
+            if (attr = self.class::READERS[name]) && (type = @definer.defined_fields[attr])
               verify_collocated_path do
                 read_attribute(attr, type)
               end
-            elsif (attr = PREDICATES[name]) && @definer.defined_fields[attr]
+            elsif (attr = self.class::PREDICATES[name]) && @definer.defined_fields[attr]
               has_attribute?(attr)
             else
               super
@@ -53,7 +55,7 @@ module GraphQL
           end
 
           def respond_to_missing?(name, priv)
-            if (attr = READERS[name]) || (attr = PREDICATES[name])
+            if (attr = self.class::READERS[name]) || (attr = self.class::PREDICATES[name])
               @definer.defined_fields.key?(attr) || super
             else
               super
@@ -100,9 +102,6 @@ module GraphQL
           end
         end
 
-        READERS = {}
-        PREDICATES = {}
-
         class WithDefinition
           include BaseType
           include ObjectType
@@ -137,8 +136,8 @@ module GraphQL
 
             @defined_fields.keys.each do |attr|
               name = ActiveSupport::Inflector.underscore(attr)
-              READERS[:"#{name}"] ||= attr
-              PREDICATES[:"#{name}?"] ||= attr
+              @klass::READERS[:"#{name}"] ||= attr
+              @klass::PREDICATES[:"#{name}?"] ||= attr
             end
           end
 
