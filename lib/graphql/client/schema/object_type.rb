@@ -13,20 +13,13 @@ module GraphQL
           Class.new(ObjectClass) do
             extend BaseType
             extend ObjectType
+            prepend Defined
 
             define_singleton_method(:type) { type }
             define_singleton_method(:fields) { fields }
 
             const_set(:READERS, {})
             const_set(:PREDICATES, {})
-
-            defined_class = self
-            prepend Defined
-            const_set(:DefinedClass, defined_class)
-            define_singleton_method(:defined_class) { defined_class }
-
-            object_base_class = self
-            define_singleton_method(:object_base_class) { object_base_class }
           end
         end
 
@@ -37,7 +30,7 @@ module GraphQL
             super(data, errors)
 
             # If we are not provided a definition, we can use this empty default
-            definer ||= WithDefinition.new(self.class.object_base_class, {}, nil, [])
+            definer ||= WithDefinition.new(self.class, {}, nil, [])
 
             @definer = definer
           end
@@ -183,7 +176,7 @@ module GraphQL
 
           spreads = definition.indexes[:spreads][ast_nodes.first]
 
-          WithDefinition.new(defined_class, field_classes, definition, spreads)
+          WithDefinition.new(self, field_classes, definition, spreads)
         end
 
         def define_field(name, type)
@@ -313,7 +306,10 @@ module GraphQL
         end
 
         def inspect
-          parent = self.class.object_base_class
+          parent = self.class
+          until parent.superclass == ObjectClass
+            parent = parent.superclass
+          end
 
           ivars = @data.map { |key, value|
             if value.is_a?(Hash) || value.is_a?(Array)
