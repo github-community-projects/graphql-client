@@ -17,10 +17,11 @@ module GraphQL
             define_singleton_method(:type) { type }
             define_singleton_method(:fields) { fields }
 
+            const_set(:READERS, {})
+            const_set(:PREDICATES, {})
+
             defined_class = Class.new(self)
             defined_class.prepend Defined
-            defined_class.const_set(:READERS, {})
-            defined_class.const_set(:PREDICATES, {})
             const_set(:DefinedClass, defined_class)
             define_singleton_method(:defined_class) { defined_class }
           end
