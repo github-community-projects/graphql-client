@@ -306,7 +306,7 @@ module GraphQL
         end
 
         def inspect
-          parent = self.class.ancestors.select { |m| m.is_a?(ObjectType) }.last
+          parent = self.class.ancestors.reverse.find { |m| m.is_a?(ObjectType) }
 
           ivars = @data.map { |key, value|
             if value.is_a?(Hash) || value.is_a?(Array)
