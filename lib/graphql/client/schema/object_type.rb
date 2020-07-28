@@ -20,8 +20,8 @@ module GraphQL
             const_set(:READERS, {})
             const_set(:PREDICATES, {})
 
-            defined_class = Class.new(self)
-            defined_class.prepend Defined
+            defined_class = self
+            prepend Defined
             const_set(:DefinedClass, defined_class)
             define_singleton_method(:defined_class) { defined_class }
 
@@ -33,8 +33,12 @@ module GraphQL
         module Defined
           attr_reader :definer
 
-          def initialize(data, errors, definer)
+          def initialize(data = {}, errors = Errors.new, definer = nil)
             super(data, errors)
+
+            # If we are not provided a definition, we can use this empty default
+            definer ||= WithDefinition.new(self.class.object_base_class, {}, nil, [])
+
             @definer = definer
           end
 
