@@ -24,8 +24,6 @@ module GraphQL
         end
 
         module Defined
-          attr_reader :definer
-
           def initialize(data = {}, errors = Errors.new, definer = nil)
             super(data, errors)
 
@@ -33,6 +31,10 @@ module GraphQL
             definer ||= WithDefinition.new(self.class, {}, nil, [])
 
             @definer = definer
+          end
+
+          def _definer
+            @definer
           end
 
           def _spreads

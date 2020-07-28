@@ -118,7 +118,7 @@ module GraphQL
         when GraphQL::Client::Schema::ObjectType::WithDefinition
           case obj
           when schema_class.klass
-            if obj.definer == schema_class
+            if obj._definer == schema_class
               obj
             else
               cast_object(obj)
