@@ -30,7 +30,7 @@ module GraphQL
         module Defined
           attr_reader :definer
 
-          def initialize(data = {}, errors = Errors.new, definer)
+          def initialize(data, errors, definer)
             super(data, errors)
             @definer = definer
           end
