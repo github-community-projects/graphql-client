@@ -13,95 +13,12 @@ module GraphQL
           Class.new(ObjectClass) do
             extend BaseType
             extend ObjectType
-            prepend Defined
 
             define_singleton_method(:type) { type }
             define_singleton_method(:fields) { fields }
 
             const_set(:READERS, {})
             const_set(:PREDICATES, {})
-          end
-        end
-
-        module Defined
-          def initialize(data = {}, errors = Errors.new, definer = nil)
-            super(data, errors)
-
-            # If we are not provided a definition, we can use this empty default
-            definer ||= WithDefinition.new(self.class, {}, nil, [])
-
-            @definer = definer
-          end
-
-          def _definer
-            @definer
-          end
-
-          def _spreads
-            @definer.spreads
-          end
-
-          def source_definition
-            @definer.definition
-          end
-
-          def method_missing(name, *args)
-            if (attr = self.class::READERS[name]) && (type = @definer.defined_fields[attr])
-              verify_collocated_path do
-                read_attribute(attr, type)
-              end
-            elsif (attr = self.class::PREDICATES[name]) && @definer.defined_fields[attr]
-              has_attribute?(attr)
-            else
-              super
-            end
-          end
-
-          def respond_to_missing?(name, priv)
-            if (attr = self.class::READERS[name]) || (attr = self.class::PREDICATES[name])
-              @definer.defined_fields.key?(attr) || super
-            else
-              super
-            end
-          end
-
-          # It's possible to define "errors" as a field. Ideally this shouldn't
-          # happen, but if it does we should prefer the field rather than the
-          # builtin error type.
-          def errors
-            if type = @definer.defined_fields["errors"]
-              read_attribute("errors", type)
-            else
-              super()
-            end
-          end
-
-          private
-
-          def verify_collocated_path
-            if enforce_collocation?
-              location = caller_locations(2, 1)[0]
-
-              CollocatedEnforcement.verify_collocated_path(location, source_definition.source_location[0]) do
-                yield
-              end
-            else
-              yield
-            end
-          end
-
-          def read_attribute(attr, type)
-            @casted_data.fetch(attr) do
-              @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
-            end
-          end
-
-          def has_attribute?(attr)
-            !!@data[attr]
-          end
-
-          def enforce_collocation?
-            source_definition.client.enforce_collocated_callers
           end
         end
 
@@ -260,10 +177,15 @@ module GraphQL
       end
 
       class ObjectClass
-        def initialize(data = {}, errors = Errors.new)
+        def initialize(data = {}, errors = Errors.new, definer = nil)
           @data = data
           @casted_data = {}
           @errors = errors
+
+          # If we are not provided a definition, we can use this empty default
+          definer ||= ObjectType::WithDefinition.new(self.class, {}, nil, [])
+
+          @definer = definer
         end
 
         # Public: Returns the raw response data
@@ -273,38 +195,74 @@ module GraphQL
           @data
         end
 
+        def _definer
+          @definer
+        end
+
+        def _spreads
+          @definer.spreads
+        end
+
+        def source_definition
+          @definer.definition
+        end
+
+        def respond_to_missing?(name, priv)
+          if (attr = self.class::READERS[name]) || (attr = self.class::PREDICATES[name])
+            @definer.defined_fields.key?(attr) || super
+          else
+            super
+          end
+        end
+
         # Public: Return errors associated with data.
         #
+        # It's possible to define "errors" as a field. Ideally this shouldn't
+        # happen, but if it does we should prefer the field rather than the
+        # builtin error type.
+        #
         # Returns Errors collection.
-        attr_reader :errors
-
-        def method_missing(*args)
-          super
-        rescue NoMethodError => e
-          type = self.class.type
-
-          if ActiveSupport::Inflector.underscore(e.name.to_s) != e.name.to_s
-            raise e
-          end
-
-          all_fields = type.respond_to?(:all_fields) ? type.all_fields : type.fields.values
-          field = all_fields.find do |f|
-            f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
-          end
-
-          unless field
-            raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://git.io/v1y3m"
-          end
-
-          if @data.key?(field.name)
-            error_class = ImplicitlyFetchedFieldError
-            message = "implicitly fetched field `#{field.name}' on #{type} type. https://git.io/v1yGL"
+        def errors
+          if type = @definer.defined_fields["errors"]
+            read_attribute("errors", type)
           else
-            error_class = UnfetchedFieldError
-            message = "unfetched field `#{field.name}' on #{type} type. https://git.io/v1y3U"
+            @errors
           end
+        end
 
-          raise error_class, message
+        def method_missing(name, *args)
+          if (attr = self.class::READERS[name]) && (type = @definer.defined_fields[attr])
+            verify_collocated_path do
+              read_attribute(attr, type)
+            end
+          elsif (attr = self.class::PREDICATES[name]) && @definer.defined_fields[attr]
+            has_attribute?(attr)
+          else
+            begin
+              super
+            rescue NoMethodError => e
+              type = self.class.type
+
+              if ActiveSupport::Inflector.underscore(e.name.to_s) != e.name.to_s
+                raise e
+              end
+
+              all_fields = type.respond_to?(:all_fields) ? type.all_fields : type.fields.values
+              field = all_fields.find do |f|
+                f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
+              end
+
+              unless field
+                raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://git.io/v1y3m"
+              end
+
+              if @data.key?(field.name)
+                raise ImplicitlyFetchedFieldError, "implicitly fetched field `#{field.name}' on #{type} type. https://git.io/v1yGL"
+              else
+                raise UnfetchedFieldError, "unfetched field `#{field.name}' on #{type} type. https://git.io/v1y3U"
+              end
+            end
+          end
         end
 
         def inspect
@@ -325,6 +283,34 @@ module GraphQL
           buf << " " << ivars.join(" ") if ivars.any?
           buf << ">"
           buf
+        end
+
+        private
+
+        def verify_collocated_path
+          if enforce_collocation?
+            location = caller_locations(2, 1)[0]
+
+            CollocatedEnforcement.verify_collocated_path(location, source_definition.source_location[0]) do
+              yield
+            end
+          else
+            yield
+          end
+        end
+
+        def read_attribute(attr, type)
+          @casted_data.fetch(attr) do
+            @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
+          end
+        end
+
+        def has_attribute?(attr)
+          !!@data[attr]
+        end
+
+        def enforce_collocation?
+          source_definition.client.enforce_collocated_callers
         end
       end
     end
