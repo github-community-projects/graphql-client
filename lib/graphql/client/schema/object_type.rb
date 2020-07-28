@@ -24,6 +24,9 @@ module GraphQL
             defined_class.prepend Defined
             const_set(:DefinedClass, defined_class)
             define_singleton_method(:defined_class) { defined_class }
+
+            object_base_class = self
+            define_singleton_method(:object_base_class) { object_base_class }
           end
         end
 
@@ -306,7 +309,7 @@ module GraphQL
         end
 
         def inspect
-          parent = self.class.ancestors.reverse.find { |m| m.is_a?(ObjectType) }
+          parent = self.class.object_base_class
 
           ivars = @data.map { |key, value|
             if value.is_a?(Hash) || value.is_a?(Array)
