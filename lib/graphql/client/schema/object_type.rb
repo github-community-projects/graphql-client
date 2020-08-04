@@ -186,6 +186,7 @@ module GraphQL
           definer ||= ObjectType::WithDefinition.new(self.class, {}, nil, [])
 
           @definer = definer
+          @enforce_collocated_callers = source_definition && source_definition.client.enforce_collocated_callers
         end
 
         # Public: Returns the raw response data
@@ -232,7 +233,11 @@ module GraphQL
 
         def method_missing(name, *args)
           if (attr = self.class::READERS[name]) && (type = @definer.defined_fields[attr])
-            verify_collocated_path do
+            if @enforce_collocated_callers
+              verify_collocated_path do
+                read_attribute(attr, type)
+              end
+            else
               read_attribute(attr, type)
             end
           elsif (attr = self.class::PREDICATES[name]) && @definer.defined_fields[attr]
@@ -288,13 +293,9 @@ module GraphQL
         private
 
         def verify_collocated_path
-          if enforce_collocation?
-            location = caller_locations(2, 1)[0]
+          location = caller_locations(2, 1)[0]
 
-            CollocatedEnforcement.verify_collocated_path(location, source_definition.source_location[0]) do
-              yield
-            end
-          else
+          CollocatedEnforcement.verify_collocated_path(location, source_definition.source_location[0]) do
             yield
           end
         end
@@ -307,10 +308,6 @@ module GraphQL
 
         def has_attribute?(attr)
           !!@data[attr]
-        end
-
-        def enforce_collocation?
-          source_definition.client.enforce_collocated_callers
         end
       end
     end
