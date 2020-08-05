@@ -68,7 +68,7 @@ class TestQueryResult < MiniTest::Test
     field :first_name, String, null: true
     field :last_name, String, null: true
     field :company, String, null: true
-    field :homepageURL, String, null: true
+    field :homepageURL, String, null: true, method: :homepage_url, camelize: false
     field :created_at, DateTimeType, null: false
     field :hobbies, [String], null: true
     field :plan, PlanType, null: false
