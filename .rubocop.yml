@@ -5,7 +5,7 @@ require:
   - ./lib/rubocop/cop/graphql/heredoc
 
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.7
 
 GraphQL/Heredoc:
   Enabled: true

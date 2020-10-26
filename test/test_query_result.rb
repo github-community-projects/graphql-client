@@ -256,6 +256,8 @@ class TestQueryResult < MiniTest::Test
     refute response.data.me.respond_to?(:company)
 
     person = Temp::Person.new(response.data.me)
+    assert person.respond_to?(:name)
+    assert person.respond_to?(:company)
     assert_equal "Josh", person.name
     assert_equal "GitHub", person.company
   end
@@ -812,9 +814,11 @@ class TestQueryResult < MiniTest::Test
     repo = Temp::RepositoryFragment.new(response.data.repository)
 
     assert_equal "rails", repo.name
+    assert repo.respond_to?(:name)
     refute repo.owner.respond_to?(:login)
 
     owner = Temp::UserFragment.new(repo.owner)
+    assert owner.respond_to?(:login)
     assert_equal "josh", owner.login
   end
 
@@ -849,6 +853,27 @@ class TestQueryResult < MiniTest::Test
     assert_equal "1", user.id
     assert_equal "josh", user.login
     assert_equal "secret", user.password
+  end
+
+  def test_parse_fragment_with_field_named_error
+    Temp.const_set :UserFragment, @client.parse(<<-'GRAPHQL')
+      fragment on User {
+        errors: profileName
+      }
+    GRAPHQL
+
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        node(id: "1") {
+          ...TestQueryResult::Temp::UserFragment
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+    user = Temp::UserFragment.new(response.data.node)
+
+    assert_equal "Josh", user.errors
   end
 
   def test_parse_fragment_query_result_aliases
@@ -909,12 +934,15 @@ class TestQueryResult < MiniTest::Test
 
     repo = Temp::RepositoryFragment.new(response.data.repository)
     assert_equal "rails", repo.name
+    assert repo.respond_to?(:name)
     refute repo.owner.respond_to?(:login)
 
     owner = Temp::UserFragment.new(repo.owner)
+    assert owner.respond_to?(:login)
     assert_equal "josh", owner.login
 
     owner = Temp::UserFragment.new(owner)
+    assert owner.respond_to?(:login)
     assert_equal "josh", owner.login
   end
 

@@ -16,6 +16,53 @@ module GraphQL
 
             define_singleton_method(:type) { type }
             define_singleton_method(:fields) { fields }
+
+            const_set(:READERS, {})
+            const_set(:PREDICATES, {})
+          end
+        end
+
+        class WithDefinition
+          include BaseType
+          include ObjectType
+
+          EMPTY_SET = Set.new.freeze
+
+          attr_reader :klass, :defined_fields, :definition
+
+          def type
+            @klass.type
+          end
+
+          def fields
+            @klass.fields
+          end
+
+          def spreads
+            if defined?(@spreads)
+              @spreads
+            else
+              EMPTY_SET
+            end
+          end
+
+          def initialize(klass, defined_fields, definition, spreads)
+            @klass = klass
+            @defined_fields = defined_fields.map do |k, v|
+              [-k.to_s, v]
+            end.to_h
+            @definition = definition
+            @spreads = spreads unless spreads.empty?
+
+            @defined_fields.keys.each do |attr|
+              name = ActiveSupport::Inflector.underscore(attr)
+              @klass::READERS[:"#{name}"] ||= attr
+              @klass::PREDICATES[:"#{name}?"] ||= attr
+            end
+          end
+
+          def new(data = {}, errors = Errors.new)
+            @klass.new(data, errors, self)
           end
         end
 
@@ -46,56 +93,9 @@ module GraphQL
             field_classes[result_name.to_sym] = schema_module.define_class(definition, field_ast_nodes, field_return_type)
           end
 
-          klass = Class.new(self)
-          klass.define_fields(field_classes)
-          klass.instance_variable_set(:@source_definition, definition)
-          klass.instance_variable_set(:@_spreads, definition.indexes[:spreads][ast_nodes.first])
+          spreads = definition.indexes[:spreads][ast_nodes.first]
 
-          if definition.client.enforce_collocated_callers
-            keys = field_classes.keys.map { |key| ActiveSupport::Inflector.underscore(key) }
-            Client.enforce_collocated_callers(klass, keys, definition.source_location[0])
-          end
-
-          klass
-        end
-
-        PREDICATE_CACHE = Hash.new { |h, name|
-          h[name] = -> { @data[name] ? true : false }
-        }
-
-        METHOD_CACHE = Hash.new { |h, key|
-          h[key] = -> {
-            name = key.to_s
-            type = self.class::FIELDS[key]
-            @casted_data.fetch(name) do
-              @casted_data[name] = type.cast(@data[name], @errors.filter_by_path(name))
-            end
-          }
-        }
-
-        MODULE_CACHE = Hash.new do |h, fields|
-          h[fields] = Module.new do
-            fields.each do |name|
-              GraphQL::Client::Schema::ObjectType.define_cached_field(name, self)
-            end
-          end
-        end
-
-        FIELDS_CACHE = Hash.new { |h, k| h[k] = k }
-
-        def define_fields(fields)
-          const_set :FIELDS, FIELDS_CACHE[fields]
-          mod = MODULE_CACHE[fields.keys.sort]
-          include mod
-        end
-
-        def self.define_cached_field(name, ctx)
-          key = name
-          name = -name.to_s
-          method_name = ActiveSupport::Inflector.underscore(name)
-
-          ctx.send(:define_method, method_name, &METHOD_CACHE[key])
-          ctx.send(:define_method, "#{method_name}?", &PREDICATE_CACHE[name])
+          WithDefinition.new(self, field_classes, definition, spreads)
         end
 
         def define_field(name, type)
@@ -177,17 +177,16 @@ module GraphQL
       end
 
       class ObjectClass
-        module ClassMethods
-          attr_reader :source_definition
-          attr_reader :_spreads
-        end
-
-        extend ClassMethods
-
-        def initialize(data = {}, errors = Errors.new)
+        def initialize(data = {}, errors = Errors.new, definer = nil)
           @data = data
           @casted_data = {}
           @errors = errors
+
+          # If we are not provided a definition, we can use this empty default
+          definer ||= ObjectType::WithDefinition.new(self.class, {}, nil, [])
+
+          @definer = definer
+          @enforce_collocated_callers = source_definition && source_definition.client.enforce_collocated_callers
         end
 
         # Public: Returns the raw response data
@@ -197,42 +196,85 @@ module GraphQL
           @data
         end
 
+        def _definer
+          @definer
+        end
+
+        def _spreads
+          @definer.spreads
+        end
+
+        def source_definition
+          @definer.definition
+        end
+
+        def respond_to_missing?(name, priv)
+          if (attr = self.class::READERS[name]) || (attr = self.class::PREDICATES[name])
+            @definer.defined_fields.key?(attr) || super
+          else
+            super
+          end
+        end
+
         # Public: Return errors associated with data.
         #
+        # It's possible to define "errors" as a field. Ideally this shouldn't
+        # happen, but if it does we should prefer the field rather than the
+        # builtin error type.
+        #
         # Returns Errors collection.
-        attr_reader :errors
-
-        def method_missing(*args)
-          super
-        rescue NoMethodError => e
-          type = self.class.type
-
-          if ActiveSupport::Inflector.underscore(e.name.to_s) != e.name.to_s
-            raise e
-          end
-
-          all_fields = type.respond_to?(:all_fields) ? type.all_fields : type.fields.values
-          field = all_fields.find do |f|
-            f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
-          end
-
-          unless field
-            raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://git.io/v1y3m"
-          end
-
-          if @data.key?(field.name)
-            error_class = ImplicitlyFetchedFieldError
-            message = "implicitly fetched field `#{field.name}' on #{type} type. https://git.io/v1yGL"
+        def errors
+          if type = @definer.defined_fields["errors"]
+            read_attribute("errors", type)
           else
-            error_class = UnfetchedFieldError
-            message = "unfetched field `#{field.name}' on #{type} type. https://git.io/v1y3U"
+            @errors
           end
+        end
 
-          raise error_class, message
+        def method_missing(name, *args)
+          if (attr = self.class::READERS[name]) && (type = @definer.defined_fields[attr])
+            if @enforce_collocated_callers
+              verify_collocated_path do
+                read_attribute(attr, type)
+              end
+            else
+              read_attribute(attr, type)
+            end
+          elsif (attr = self.class::PREDICATES[name]) && @definer.defined_fields[attr]
+            has_attribute?(attr)
+          else
+            begin
+              super
+            rescue NoMethodError => e
+              type = self.class.type
+
+              if ActiveSupport::Inflector.underscore(e.name.to_s) != e.name.to_s
+                raise e
+              end
+
+              all_fields = type.respond_to?(:all_fields) ? type.all_fields : type.fields.values
+              field = all_fields.find do |f|
+                f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
+              end
+
+              unless field
+                raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://git.io/v1y3m"
+              end
+
+              if @data.key?(field.name)
+                raise ImplicitlyFetchedFieldError, "implicitly fetched field `#{field.name}' on #{type} type. https://git.io/v1yGL"
+              else
+                raise UnfetchedFieldError, "unfetched field `#{field.name}' on #{type} type. https://git.io/v1y3U"
+              end
+            end
+          end
         end
 
         def inspect
-          parent = self.class.ancestors.select { |m| m.is_a?(ObjectType) }.last
+          parent = self.class
+          until parent.superclass == ObjectClass
+            parent = parent.superclass
+          end
 
           ivars = @data.map { |key, value|
             if value.is_a?(Hash) || value.is_a?(Array)
@@ -246,6 +288,26 @@ module GraphQL
           buf << " " << ivars.join(" ") if ivars.any?
           buf << ">"
           buf
+        end
+
+        private
+
+        def verify_collocated_path
+          location = caller_locations(2, 1)[0]
+
+          CollocatedEnforcement.verify_collocated_path(location, source_definition.source_location[0]) do
+            yield
+          end
+        end
+
+        def read_attribute(attr, type)
+          @casted_data.fetch(attr) do
+            @casted_data[attr] = type.cast(@data[attr], @errors.filter_by_path(attr))
+          end
+        end
+
+        def has_attribute?(attr)
+          !!@data[attr]
         end
       end
     end

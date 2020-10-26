@@ -115,9 +115,24 @@ module GraphQL
           else
             cast_object(obj)
           end
+        when GraphQL::Client::Schema::ObjectType::WithDefinition
+          case obj
+          when schema_class.klass
+            if obj._definer == schema_class
+              obj
+            else
+              cast_object(obj)
+            end
+          when nil
+            nil
+          when Hash
+            schema_class.new(obj, errors)
+          else
+            cast_object(obj)
+          end
         when GraphQL::Client::Schema::ObjectType
           case obj
-          when NilClass, schema_class
+          when nil, schema_class
             obj
           when Hash
             schema_class.new(obj, errors)
@@ -144,8 +159,8 @@ module GraphQL
 
         def cast_object(obj)
           if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
-            unless obj.class._spreads.include?(definition_node.name)
-              raise TypeError, "#{definition_node.name} is not included in #{obj.class.source_definition.name}"
+            unless obj._spreads.include?(definition_node.name)
+              raise TypeError, "#{definition_node.name} is not included in #{obj.source_definition.name}"
             end
             schema_class.cast(obj.to_h, obj.errors)
           else

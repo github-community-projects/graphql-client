@@ -10,5 +10,5 @@ graphql_version = ENV["GRAPHQL_VERSION"] == "edge" ? { github: "rmosolgo/graphql
 gem "graphql", graphql_version
 
 group :development, :test do
-  gem "rubocop", "~> 0.62.0"
+  gem "rubocop", "~> 0.82.0"
 end
