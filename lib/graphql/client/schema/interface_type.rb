@@ -21,7 +21,7 @@ module GraphQL
         end
 
         def define_class(definition, ast_nodes)
-          possible_type_names = definition.client.schema.possible_types(type).map(&:graphql_name)
+          possible_type_names = definition.client.possible_types(type).map(&:graphql_name)
           possible_types = possible_type_names.map { |concrete_type_name|
             schema_module.get_class(concrete_type_name).define_class(definition, ast_nodes)
           }
