@@ -60,6 +60,7 @@ class TestQueryResult < MiniTest::Test
     field :company, String, null: true
     field :homepageURL, String, null: true, method: :homepage_url, camelize: false
     field :created_at, GraphQL::Types::ISO8601DateTime, null: false
+    field :created_on, GraphQL::Types::ISO8601Date, null: false
     field :hobbies, [String], null: true
     field :plan, PlanType, null: false
   end
@@ -103,6 +104,7 @@ class TestQueryResult < MiniTest::Test
         last_name: "Peek",
         company: "GitHub",
         created_at: Time.at(0),
+        created_on: Date.new(1970, 1, 1),
         updated_at: Time.at(1),
         hobbies: ["soccer", "coding"],
         homepage_url: nil,
@@ -123,6 +125,7 @@ class TestQueryResult < MiniTest::Test
             last_name: "Peek",
             company: "GitHub",
             created_at: Time.at(0),
+            created_on: Date.new(1970, 1, 1),
             updated_at: Time.at(1),
             hobbies: ["soccer", "coding"],
             plan: "LARGE"
@@ -603,6 +606,23 @@ class TestQueryResult < MiniTest::Test
     assert_equal "Josh", person.name
     assert_equal Time.at(0), person.created_at
     assert_equal Time.at(1), person.updated_at
+  end
+
+  def test_date_scalar_casting
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          name
+          createdOn
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    person = response.data.me
+    assert_equal "Josh", person.name
+    assert_equal Date.new(1970, 1, 1), person.created_on
   end
 
   include FooHelper
