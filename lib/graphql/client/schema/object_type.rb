@@ -134,9 +134,8 @@ module GraphQL
             continue_selection = if selected_ast_node.type.nil?
               true
             else
-              schema = definition.client.schema
               type_condition = definition.client.get_type(selected_ast_node.type.name)
-              applicable_types = schema.possible_types(type_condition)
+              applicable_types = definition.client.possible_types(type_condition)
               # continue if this object type is one of the types matching the fragment condition
               applicable_types.include?(type)
             end
@@ -150,10 +149,8 @@ module GraphQL
             fragment_definition = definition.document.definitions.find do |defn|
               defn.is_a?(GraphQL::Language::Nodes::FragmentDefinition) && defn.name == selected_ast_node.name
             end
-
-            schema = definition.client.schema
             type_condition = definition.client.get_type(fragment_definition.type.name)
-            applicable_types = schema.possible_types(type_condition)
+            applicable_types = definition.client.possible_types(type_condition)
             # continue if this object type is one of the types matching the fragment condition
             continue_selection = applicable_types.include?(type)
 

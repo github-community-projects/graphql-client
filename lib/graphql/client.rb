@@ -97,8 +97,29 @@ module GraphQL
       @document_tracking_enabled = false
       @allow_dynamic_queries = false
       @enforce_collocated_callers = enforce_collocated_callers
-
+      if schema.is_a?(Class)
+        @possible_types = schema.possible_types
+      end
       @types = Schema.generate(@schema)
+    end
+
+    # A cache of the schema's merged possible types
+    # @param type_condition [Class, String] a type definition or type name
+    def possible_types(type_condition = nil)
+      if type_condition
+        if defined?(@possible_types)
+          if type_condition.respond_to?(:graphql_name)
+            type_condition = type_condition.graphql_name
+          end
+          @possible_types[type_condition]
+        else
+          @schema.possible_types(type_condition)
+        end
+      elsif defined?(@possible_types)
+        @possible_types
+      else
+        @schema.possible_types(type_condition)
+      end
     end
 
     def parse(str, filename = nil, lineno = nil)
