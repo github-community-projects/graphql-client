@@ -185,10 +185,12 @@ class TestClientErrors < MiniTest::Test
       "errors" => [
         {
           "message" => "error",
-          "normalizedPath" => %w(data)
-        }
-      ]
+          "path" => nil,
+          "normalizedPath" => %w(data),
+        },
+      ],
     }
+    assert_equal expected, actual
   end
 
   def test_filter_nested_errors_by_path
