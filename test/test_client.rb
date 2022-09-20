@@ -838,4 +838,31 @@ class TestClient < Minitest::Test
       }
     GRAPHQL
   end
+
+  def test_field_names_that_match_ruby_built_in_methods
+    query_type = Class.new(GraphQL::Schema::Object) do
+      graphql_name "Query"
+      field :things, String, null: false
+      def things
+        "things"
+      end
+
+      field :method, String, null: false
+      def method
+        "method"
+      end
+    end
+
+    schema = Class.new(GraphQL::Schema) do
+      query query_type
+    end
+
+    @client = ::GraphQL::Client.new(schema: schema, execute: schema)
+
+    Temp.const_set :Query, @client.parse("{ method things }")
+
+    result = @client.query(Temp::Query)
+    assert result.data.method == "method"
+    assert result.data.things == "things"
+  end
 end

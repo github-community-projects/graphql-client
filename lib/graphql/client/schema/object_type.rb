@@ -19,6 +19,7 @@ module GraphQL
 
             const_set(:READERS, {})
             const_set(:PREDICATES, {})
+            const_set(:DANGEROUS_FIELD_NAMES, {})
           end
         end
 
@@ -27,6 +28,15 @@ module GraphQL
           include ObjectType
 
           EMPTY_SET = Set.new.freeze
+          DANGEROUS_FIELDS_ALLOWLIST = ["test", "method"].freeze
+          # This client makes use of `BasicObject#method_missing` method to read field values from the response object.
+          # For a response to query { user { name } }, calling `response.user` will send a message to
+          # `ObjectClass#method_missing` with the name `:user`. This method will then look up the field name in the
+          # response and return the value. If the field name matches Ruby's built-in methods that is defined in the
+          # ancestor chain such as `Object#method` or `Kernel#test`, `method_missing` will not be called and we get an
+          # error or an incorrect response. To avoid this, add the field name to the `DANGEROUS_FIELD_NAMES` constant.
+          # This defines a method that overrides the ancestor method. Alternatively, consider renaming the field or
+          # accessing the field on the response hash by calling `response.to_hash["<field name>"]`.
 
           attr_reader :klass, :defined_fields, :definition
 
@@ -58,6 +68,7 @@ module GraphQL
               name = ActiveSupport::Inflector.underscore(attr)
               @klass::READERS[:"#{name}"] ||= attr
               @klass::PREDICATES[:"#{name}?"] ||= attr
+              @klass::DANGEROUS_FIELD_NAMES[:"#{name}"] ||= attr if DANGEROUS_FIELDS_ALLOWLIST.include?(name)
             end
           end
 
@@ -184,6 +195,7 @@ module GraphQL
 
           @definer = definer
           @enforce_collocated_callers = source_definition && source_definition.client.enforce_collocated_callers
+          define_accessor_methods unless self.class::DANGEROUS_FIELD_NAMES.empty?
         end
 
         # Public: Returns the raw response data
@@ -295,6 +307,14 @@ module GraphQL
 
           CollocatedEnforcement.verify_collocated_path(location, source_definition.source_location[0]) do
             yield
+          end
+        end
+
+        def define_accessor_methods
+          self.class::DANGEROUS_FIELD_NAMES.each do |k, v|
+            define_singleton_method(k) do
+              read_attribute(v, @definer.defined_fields[v])
+            end
           end
         end
 
