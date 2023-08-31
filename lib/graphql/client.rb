@@ -425,12 +425,26 @@ module GraphQL
       end.to_h
     end
 
+    class GatherNamesVisitor < GraphQL::Language::Visitor
+      def initialize(node)
+        @names = []
+        super
+      end
+
+      attr_reader :names
+
+      def on_fragment_spread(node, parent)
+        @names << node.name
+        super
+      end
+    end
+
     def find_definition_dependencies(node)
-      names = []
-      visitor = Language::Visitor.new(node)
-      visitor[Language::Nodes::FragmentSpread] << -> (node, parent) { names << node.name }
+      visitor = GatherNamesVisitor.new(node)
       visitor.visit
-      names.uniq
+      names = visitor.names
+      names.uniq!
+      names
     end
 
     def deep_freeze_json_object(obj)
