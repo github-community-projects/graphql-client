@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 require "graphql"
+require "graphql/client/type_stack"
 
 module GraphQL
   class Client
     # Internal: Use schema to detect definition and field types.
     module DocumentTypes
       class AnalyzeTypesVisitor < GraphQL::Language::Visitor
-        include GraphQL::Client::TypeStack
+        prepend GraphQL::Client::TypeStack
         attr_reader :fields
 
         def initialize(*a, **kw)
@@ -30,7 +31,7 @@ module GraphQL
         end
 
         def on_field(node, _parent)
-          @fields[node] = @object_field_definitions.last.type
+          @fields[node] = @field_definitions.last.type
           super
         end
       end
