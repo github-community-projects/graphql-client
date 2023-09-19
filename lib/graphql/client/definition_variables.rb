@@ -24,26 +24,33 @@ module GraphQL
 
         sliced_document = GraphQL::Language::DefinitionSlice.slice(document, definition_name)
 
-        visitor = GraphQL::Language::Visitor.new(sliced_document)
-        type_stack = GraphQL::StaticValidation::TypeStack.new(schema, visitor)
+        visitor = VariablesVisitor.new(sliced_document, schema: schema)
+        visitor.visit
+        visitor.variables
+      end
 
-        variables = {}
+      class VariablesVisitor < GraphQL::Language::Visitor
+        prepend GraphQL::Client::TypeStack
 
-        visitor[GraphQL::Language::Nodes::VariableIdentifier] << ->(node, parent) do
-          if definition = type_stack.argument_definitions.last
-            existing_type = variables[node.name.to_sym]
+        def initialize(*_args, **_kwargs)
+          super
+          @variables = {}
+        end
+
+        attr_reader :variables
+
+        def on_variable_identifier(node, parent)
+          if definition = @argument_definitions.last
+            existing_type = @variables[node.name.to_sym]
 
             if existing_type && existing_type.unwrap != definition.type.unwrap
               raise GraphQL::Client::ValidationError, "$#{node.name} was already declared as #{existing_type.unwrap}, but was #{definition.type.unwrap}"
             elsif !(existing_type && existing_type.kind.non_null?)
-              variables[node.name.to_sym] = definition.type
+              @variables[node.name.to_sym] = definition.type
             end
           end
+          super
         end
-
-        visitor.visit
-
-        variables
       end
 
       # Internal: Detect all variables used in a given operation or fragment
