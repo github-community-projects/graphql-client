@@ -2,7 +2,7 @@
 require "graphql/client/hash_with_indifferent_access"
 require "minitest/autorun"
 
-class TestHashWithIndifferentAccess < MiniTest::Test
+class TestHashWithIndifferentAccess < Minitest::Test
   def test_string_access
     hash = GraphQL::Client::HashWithIndifferentAccess.new("foo" => 42)
     assert_equal 42, hash["foo"]

@@ -2,6 +2,7 @@
 require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
+require "graphql/client/type_stack"
 require "graphql/client/collocated_enforcement"
 require "graphql/client/definition_variables"
 require "graphql/client/definition"

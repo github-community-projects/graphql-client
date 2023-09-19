@@ -3,7 +3,7 @@ require "graphql"
 require "graphql/client"
 require "minitest/autorun"
 
-class TestClientFetch < MiniTest::Test
+class TestClientFetch < Minitest::Test
   class QueryType < GraphQL::Schema::Object
     field :version, Integer, null: false
     def version

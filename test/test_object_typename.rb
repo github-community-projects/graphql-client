@@ -4,7 +4,7 @@ require "graphql/client"
 require "minitest/autorun"
 require "ostruct"
 
-class TestObjectTypename < MiniTest::Test
+class TestObjectTypename < Minitest::Test
   class PersonType < GraphQL::Schema::Object
     field :id, Integer, null: true
     def id; 42; end

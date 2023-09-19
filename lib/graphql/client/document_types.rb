@@ -5,6 +5,36 @@ module GraphQL
   class Client
     # Internal: Use schema to detect definition and field types.
     module DocumentTypes
+      class AnalyzeTypesVisitor < GraphQL::Language::Visitor
+        include GraphQL::Client::TypeStack
+        attr_reader :fields
+
+        def initialize(*a, **kw)
+          @fields = {}
+          super
+        end
+
+        def on_operation_definition(node, _parent)
+          @fields[node] = @object_types.last
+          super
+        end
+
+        def on_fragment_definition(node, _parent)
+          @fields[node] = @object_types.last
+          super
+        end
+
+        def on_inline_fragment(node, _parent)
+          @fields[node] = @object_types.last
+          super
+        end
+
+        def on_field(node, _parent)
+          @fields[node] = @object_field_definitions.last.type
+          super
+        end
+      end
+
       # Internal: Detect all types used in a given document
       #
       # schema - A GraphQL::Schema
@@ -20,32 +50,15 @@ module GraphQL
           raise TypeError, "expected schema to be a GraphQL::Language::Nodes::Document, but was #{document.class}"
         end
 
-        visitor = GraphQL::Language::Visitor.new(document)
-        type_stack = GraphQL::StaticValidation::TypeStack.new(schema, visitor)
-
-        fields = {}
-
-        visitor[GraphQL::Language::Nodes::OperationDefinition] << ->(node, _parent) do
-          fields[node] = type_stack.object_types.last
-        end
-        visitor[GraphQL::Language::Nodes::FragmentDefinition] << ->(node, _parent) do
-          fields[node] = type_stack.object_types.last
-        end
-        visitor[GraphQL::Language::Nodes::InlineFragment] << ->(node, _parent) do
-          fields[node] = type_stack.object_types.last
-        end
-        visitor[GraphQL::Language::Nodes::Field] << ->(node, _parent) do
-          fields[node] = type_stack.field_definitions.last.type
-        end
+        visitor = AnalyzeTypesVisitor.new(document, schema: schema)
         visitor.visit
-
-        fields
+        visitor.fields
       rescue StandardError => err
         if err.is_a?(TypeError)
           raise
         end
         # FIXME: TypeStack my crash on invalid documents
-        fields
+        visitor.fields
       end
     end
   end

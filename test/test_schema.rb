@@ -4,7 +4,7 @@ require "graphql/client/schema"
 require "minitest/autorun"
 require "time"
 
-class TestSchemaType < MiniTest::Test
+class TestSchemaType < Minitest::Test
   GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
 
   DateTime = GraphQL::ScalarType.define do

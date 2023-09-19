@@ -3,7 +3,7 @@ require "graphql/client/collocated_enforcement"
 require "minitest/autorun"
 require_relative "foo_helper"
 
-class TestCollocatedEnforcement < MiniTest::Test
+class TestCollocatedEnforcement < Minitest::Test
   include FooHelper
 
   class Person

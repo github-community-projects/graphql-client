@@ -147,41 +147,58 @@ module GraphQL
       # Internal: Nodes AST indexes.
       def indexes
         @indexes ||= begin
-          visitor = GraphQL::Language::Visitor.new(document)
-          definitions = index_node_definitions(visitor)
-          spreads = index_spreads(visitor)
+          visitor = DefinitionVisitor.new(document)
           visitor.visit
-          { definitions: definitions, spreads: spreads }
+          { definitions: visitor.definitions, spreads: visitor.spreads }
         end
       end
 
-      private
+      class DefinitionVisitor < GraphQL::Language::Visitor
+        attr_reader :spreads, :definitions
 
-        def cast_object(obj)
-          if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
-            unless obj._spreads.include?(definition_node.name)
-              raise TypeError, "#{definition_node.name} is not included in #{obj.source_definition.name}"
-            end
-            schema_class.cast(obj.to_h, obj.errors)
-          else
-            raise TypeError, "unexpected #{obj.class}"
-          end
+        def initialize(doc)
+          super
+          @spreads = {}
+          @definitions = {}
+          @current_definition = nil
         end
+
+        def on_field(node, parent)
+          @definitions[node] = @current_definition
+          @spreads[node] = get_spreads(node)
+          super
+        end
+
+        def on_fragment_definition(node, parent)
+          @current_definition = node
+          @definitions[node] = @current_definition
+          @spreads[node] = get_spreads(node)
+          super
+        ensure
+          @current_definition = nil
+        end
+
+        def on_operation_definition(node, parent)
+          @current_definition = node
+          @definitions[node] = @current_definition
+          @spreads[node] = get_spreads(node)
+          super
+        ensure
+          @current_definition = nil
+        end
+
+        def on_inline_fragment(node, parent)
+          @definitions[node] = @current_definition
+          super
+        end
+
+        private
 
         EMPTY_SET = Set.new.freeze
 
-        def index_spreads(visitor)
-          spreads = {}
-          on_node = ->(node, _parent) do
-            node_spreads = flatten_spreads(node).map(&:name)
-            spreads[node] = node_spreads.empty? ? EMPTY_SET : Set.new(node_spreads).freeze
-          end
-
-          visitor[GraphQL::Language::Nodes::Field] << on_node
-          visitor[GraphQL::Language::Nodes::FragmentDefinition] << on_node
-          visitor[GraphQL::Language::Nodes::OperationDefinition] << on_node
-
-          spreads
+        def get_spreads(node)
+          node_spreads = flatten_spreads(node).map(&:name)
+          node_spreads.empty? ? EMPTY_SET : Set.new(node_spreads).freeze
         end
 
         def flatten_spreads(node)
@@ -198,24 +215,19 @@ module GraphQL
           end
           spreads
         end
+      end
 
-        def index_node_definitions(visitor)
-          current_definition = nil
-          enter_definition = ->(node, _parent) { current_definition = node }
-          leave_definition = ->(node, _parent) { current_definition = nil }
+      private
 
-          visitor[GraphQL::Language::Nodes::FragmentDefinition].enter << enter_definition
-          visitor[GraphQL::Language::Nodes::FragmentDefinition].leave << leave_definition
-          visitor[GraphQL::Language::Nodes::OperationDefinition].enter << enter_definition
-          visitor[GraphQL::Language::Nodes::OperationDefinition].leave << leave_definition
-
-          definitions = {}
-          on_node = ->(node, _parent) { definitions[node] = current_definition }
-          visitor[GraphQL::Language::Nodes::Field] << on_node
-          visitor[GraphQL::Language::Nodes::FragmentDefinition] << on_node
-          visitor[GraphQL::Language::Nodes::InlineFragment] << on_node
-          visitor[GraphQL::Language::Nodes::OperationDefinition] << on_node
-          definitions
+        def cast_object(obj)
+          if obj.class.is_a?(GraphQL::Client::Schema::ObjectType)
+            unless obj._spreads.include?(definition_node.name)
+              raise TypeError, "#{definition_node.name} is not included in #{obj.source_definition.name}"
+            end
+            schema_class.cast(obj.to_h, obj.errors)
+          else
+            raise TypeError, "unexpected #{obj.class}"
+          end
         end
     end
   end

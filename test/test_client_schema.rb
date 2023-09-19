@@ -4,7 +4,7 @@ require "graphql/client"
 require "json"
 require "minitest/autorun"
 
-class TestClientSchema < MiniTest::Test
+class TestClientSchema < Minitest::Test
   FakeConn = Class.new do
     attr_reader :context
 
