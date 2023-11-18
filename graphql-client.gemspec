@@ -16,9 +16,9 @@ Gem::Specification.new do |s|
   s.add_development_dependency "erubi", "~> 1.6"
   s.add_development_dependency "erubis", "~> 2.7"
   s.add_development_dependency "minitest", "~> 5.9"
-  s.add_development_dependency "rake", "~> 11.2"
-  s.add_development_dependency "rubocop-github", "~> 0.10", "<= 0.16.0"
-  s.add_development_dependency "rubocop", "~> 0.55"
+  s.add_development_dependency "rake", "~> 13.1.0"
+  s.add_development_dependency "rubocop-github"
+  s.add_development_dependency "rubocop", "~> 1.57.0"
 
   s.required_ruby_version = ">= 2.1.0"
 

@@ -101,10 +101,10 @@ module GraphQL
 
       def on_inline_fragment(node, parent)
         object_type = if node.type
-          @schema.get_type(node.type.name)
-        else
-          @object_types.last
-        end
+                        @schema.get_type(node.type.name)
+                      else
+                        @object_types.last
+                      end
         if !object_type.nil?
           object_type = object_type.unwrap
         end
@@ -118,10 +118,10 @@ module GraphQL
 
       def on_fragment_definition(node, parent)
         object_type = if node.type
-          @schema.get_type(node.type.name)
-        else
-          @object_types.last
-        end
+                        @schema.get_type(node.type.name)
+                      else
+                        @object_types.last
+                      end
         if !object_type.nil?
           object_type = object_type.unwrap
         end

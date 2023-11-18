@@ -160,9 +160,7 @@ class TestQueryResult < Minitest::Test
       )
     end
 
-    field :users, PersonConnection, null: true do
-      argument :first, Integer, required: false
-    end
+    field :users, PersonConnection, null: true
 
     def users
       [
@@ -349,7 +347,7 @@ class TestQueryResult < Minitest::Test
       person.nickname
       flunk
     rescue GraphQL::Client::UnimplementedFieldError => e
-      assert_equal "undefined field `nickname' on Person type. https://git.io/v1y3m", e.to_s
+      assert_match "undefined field `nickname' on Person type. https://git.io/v1y3m", e.to_s
     end
   end
 

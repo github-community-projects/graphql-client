@@ -29,7 +29,7 @@ class TestRubocopOverfetch < Minitest::Test
     investigate(@cop, "#{Root}/views/users/overfetch.html.erb")
 
     assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL field 'birthday' query but was not used in template.", @cop.offenses.first.message
+    assert_equal "GraphQL/Overfetch: GraphQL field 'birthday' query but was not used in template.", @cop.offenses.first.message
   end
 
   private

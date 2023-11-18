@@ -38,7 +38,7 @@ class TestERB < Minitest::Test
     output_buffer = @output_buffer = ActionView::OutputBuffer.new
     # rubocop:disable Security/Eval
     eval(erb.src, binding, "(erb)")
-    assert_equal "42", output_buffer.strip
+    assert_equal "42", output_buffer.to_s.strip
 
     expected_query = <<-ERB
         query {
