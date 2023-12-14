@@ -58,8 +58,10 @@ module Tapioca
                    sub_type = type_for(definition.of_klass, nilable: nilable)
                    "T::Array[#{sub_type}]" if sub_type
                  when GraphQL::Client::Schema::ScalarType, GraphQL::Client::Schema::EnumType
-                   Helpers::GraphqlTypeHelper
-                     .type_for(GraphQL::Schema::NonNull.new(definition.type))
+                   argument = GraphQL::Schema::Argument.new(owner: nil)
+                   argument.type = GraphQL::Schema::NonNull.new(definition.type)
+                   Tapioca::Dsl::Helpers::GraphqlTypeHelper
+                     .type_for(argument)
                  when GraphQL::Client::Schema::UnionType, GraphQL::Client::Schema::InterfaceType
                    nil
                  when Class
