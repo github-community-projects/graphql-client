@@ -8,7 +8,7 @@ require "graphql/client/erubis_enhancer"
 require "graphql/client/view_module"
 require "minitest/autorun"
 
-class TestERB < MiniTest::Test
+class TestERB < Minitest::Test
   class ErubiEngine < Erubi::Engine
     include GraphQL::Client::ErubiEnhancer
   end

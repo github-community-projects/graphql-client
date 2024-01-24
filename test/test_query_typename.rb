@@ -3,7 +3,7 @@ require "graphql"
 require "graphql/client/query_typename"
 require "minitest/autorun"
 
-class TestQueryTypename < MiniTest::Test
+class TestQueryTypename < Minitest::Test
   class PersonType < GraphQL::Schema::Object
     field :id, Integer, null: true
     def id; 42; end

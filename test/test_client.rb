@@ -4,9 +4,7 @@ require "graphql/client"
 require "json"
 require "minitest/autorun"
 
-class TestClient < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
+class TestClient < Minitest::Test
   module NodeType
     include GraphQL::Schema::Interface
     field :id, ID, null: false
@@ -79,17 +77,13 @@ class TestClient < MiniTest::Test
   class Schema < GraphQL::Schema
     query(QueryType)
     mutation(MutationType)
-    if defined?(GraphQL::Execution::Interpreter)
-      use GraphQL::Execution::Interpreter
-      use GraphQL::Analysis::AST
-    end
   end
 
   module Temp
   end
 
   def setup
-    @client = GraphQL::Client.new(schema: Schema.graphql_definition)
+    @client = GraphQL::Client.new(schema: Schema)
     @client.document_tracking_enabled = true
   end
 

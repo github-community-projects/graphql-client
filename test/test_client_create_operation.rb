@@ -3,7 +3,7 @@ require "graphql"
 require "graphql/client"
 require "minitest/autorun"
 
-class TestClientCreateOperation < MiniTest::Test
+class TestClientCreateOperation < Minitest::Test
   class UserType < GraphQL::Schema::Object
     field :id, ID, null: false
   end
@@ -32,11 +32,6 @@ class TestClientCreateOperation < MiniTest::Test
   class Schema < GraphQL::Schema
     query(QueryType)
     mutation(MutationType)
-
-    if defined?(GraphQL::Execution::Interpreter)
-      use GraphQL::Execution::Interpreter
-      use GraphQL::Analysis::AST
-    end
   end
 
   module Temp

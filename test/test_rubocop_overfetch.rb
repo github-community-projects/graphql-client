@@ -3,7 +3,7 @@ require "graphql/client/erb"
 require "rubocop/cop/graphql/overfetch"
 require "minitest/autorun"
 
-class TestRubocopOverfetch < MiniTest::Test
+class TestRubocopOverfetch < Minitest::Test
   Root = File.expand_path("..", __FILE__)
 
   def setup

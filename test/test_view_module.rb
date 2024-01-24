@@ -4,7 +4,7 @@ require "graphql/client"
 require "graphql/client/view_module"
 require "minitest/autorun"
 
-class TestViewModule < MiniTest::Test
+class TestViewModule < Minitest::Test
   Root = File.expand_path("..", __FILE__)
 
   class UserType < GraphQL::Schema::Object

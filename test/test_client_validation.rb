@@ -3,7 +3,7 @@ require "graphql"
 require "graphql/client"
 require "minitest/autorun"
 
-class TestClientValidation < MiniTest::Test
+class TestClientValidation < Minitest::Test
   class UserType < GraphQL::Schema::Object
     field :name, String, null: false
   end

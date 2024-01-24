@@ -6,7 +6,7 @@ require "time" # required for Time#iso8601
 require "ostruct"
 require_relative "foo_helper"
 
-class TestQueryResult < MiniTest::Test
+class TestQueryResult < Minitest::Test
   class DateTimeType < GraphQL::Schema::Scalar
     def self.coerce_input(value, ctx)
       Time.iso8601(value)

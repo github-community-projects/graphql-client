@@ -2,7 +2,7 @@
 require "rubocop/cop/graphql/heredoc"
 require "minitest/autorun"
 
-class TestRubocopHeredoc < MiniTest::Test
+class TestRubocopHeredoc < Minitest::Test
   def setup
     config = RuboCop::Config.new
     @cop = RuboCop::Cop::GraphQL::Heredoc.new(config)
