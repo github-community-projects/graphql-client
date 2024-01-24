@@ -9,11 +9,11 @@ class TestClientSchema < Minitest::Test
     attr_reader :context
 
     def headers(_)
-     {}
+      {}
     end
 
     def execute(document:, operation_name: nil, variables: {}, context: {})
-     @context = context
+      @context = context
     end
   end
 

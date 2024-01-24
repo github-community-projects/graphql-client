@@ -46,7 +46,7 @@ GRAPHQL
     RUBY
 
     assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
   end
 
   def test_bad_graphql_dash_heredoc
@@ -57,7 +57,7 @@ GRAPHQL
     RUBY
 
     assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
   end
 
   def test_bad_graphql_squiggly_heredoc
@@ -70,7 +70,7 @@ GRAPHQL
     RUBY
 
     assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
   end
 
   def test_bad_graphql_heredoc_with_interpolation
@@ -82,8 +82,8 @@ GRAPHQL
     RUBY
 
     assert_equal 2, @cop.offenses.count
-    assert_equal "Do not interpolate variables into GraphQL queries, used variables instead.", @cop.offenses[0].message
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[1].message
+    assert_equal "GraphQL/Heredoc: Do not interpolate variables into GraphQL queries, used variables instead.", @cop.offenses[0].message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[1].message
   end
 
   def test_bad_graphql_multiline_heredoc
@@ -96,7 +96,7 @@ GRAPHQL
     RUBY
 
     assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
   end
 
   def test_bad_graphql_multiline_dash_heredoc
@@ -109,7 +109,7 @@ GRAPHQL
     RUBY
 
     assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
   end
 
   def test_bad_graphql_multiline_squiggly_heredoc
@@ -124,7 +124,7 @@ GRAPHQL
     RUBY
 
     assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
   end
 
   def test_bad_graphql_multiline_heredoc_with_interpolation
@@ -138,8 +138,8 @@ GRAPHQL
     RUBY
 
     assert_equal 2, @cop.offenses.count
-    assert_equal "Do not interpolate variables into GraphQL queries, used variables instead.", @cop.offenses[0].message
-    assert_equal "GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[1].message
+    assert_equal "GraphQL/Heredoc: Do not interpolate variables into GraphQL queries, used variables instead.", @cop.offenses[0].message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[1].message
   end
 
   private
