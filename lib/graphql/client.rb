@@ -2,6 +2,7 @@
 require "active_support/inflector"
 require "active_support/notifications"
 require "graphql"
+require "graphql/client/type_stack"
 require "graphql/client/collocated_enforcement"
 require "graphql/client/definition_variables"
 require "graphql/client/definition"
@@ -49,12 +50,12 @@ module GraphQL
       when GraphQL::Schema, Class
         schema
       when Hash
-        GraphQL::Schema::Loader.load(schema)
+        GraphQL::Schema.from_introspection(schema)
       when String
         if schema.end_with?(".json") && File.exist?(schema)
           load_schema(File.read(schema))
         elsif schema =~ /\A\s*{/
-          load_schema(JSON.parse(schema))
+          load_schema(JSON.parse(schema, freeze: true))
         end
       else
         if schema.respond_to?(:execute)
@@ -97,8 +98,29 @@ module GraphQL
       @document_tracking_enabled = false
       @allow_dynamic_queries = false
       @enforce_collocated_callers = enforce_collocated_callers
-
+      if schema.is_a?(Class)
+        @possible_types = schema.possible_types
+      end
       @types = Schema.generate(@schema)
+    end
+
+    # A cache of the schema's merged possible types
+    # @param type_condition [Class, String] a type definition or type name
+    def possible_types(type_condition = nil)
+      if type_condition
+        if defined?(@possible_types)
+          if type_condition.respond_to?(:graphql_name)
+            type_condition = type_condition.graphql_name
+          end
+          @possible_types[type_condition]
+        else
+          @schema.possible_types(type_condition)
+        end
+      elsif defined?(@possible_types)
+        @possible_types
+      else
+        @schema.possible_types(type_condition)
+      end
     end
 
     def parse(str, filename = nil, lineno = nil)
@@ -169,12 +191,8 @@ module GraphQL
 
       doc.definitions.each do |node|
         if node.name.nil?
-          if node.respond_to?(:merge) # GraphQL 1.9 +
-            node_with_name = node.merge(name: "__anonymous__")
-            doc = doc.replace_child(node, node_with_name)
-          else
-            node.name = "__anonymous__"
-          end
+          node_with_name = node.merge(name: "__anonymous__")
+          doc = doc.replace_child(node, node_with_name)
         end
       end
 
@@ -198,24 +216,11 @@ module GraphQL
 
       definitions = sliced_definitions(document_dependencies, doc, source_location: source_location)
 
-      if @document.respond_to?(:merge) # GraphQL 1.9+
-        visitor = RenameNodeVisitor.new(document_dependencies, definitions: definitions)
-        visitor.visit
-      else
-        name_hook = RenameNodeHook.new(definitions)
-        visitor = Language::Visitor.new(document_dependencies)
-        visitor[Language::Nodes::FragmentDefinition].leave << name_hook.method(:rename_node)
-        visitor[Language::Nodes::OperationDefinition].leave << name_hook.method(:rename_node)
-        visitor[Language::Nodes::FragmentSpread].leave << name_hook.method(:rename_node)
-        visitor.visit
-      end
+      visitor = RenameNodeVisitor.new(document_dependencies, definitions: definitions)
+      visitor.visit
 
       if document_tracking_enabled
-        if @document.respond_to?(:merge) # GraphQL 1.9+
-          @document = @document.merge(definitions: @document.definitions + doc.definitions)
-        else
-          @document.definitions.concat(doc.definitions)
-        end
+        @document = @document.merge(definitions: @document.definitions + doc.definitions)
       end
 
       if definitions["__anonymous__"]
@@ -261,27 +266,9 @@ module GraphQL
       end
     end
 
-    class RenameNodeHook
-      def initialize(definitions)
-        @definitions = definitions
-      end
-
-      def rename_node(node, _parent)
-        definition = @definitions[node.name]
-        if definition
-          node.extend(LazyName)
-          node._definition = definition
-        end
-      end
-    end
-
     # Public: A wrapper to use the more-efficient `.get_type` when it's available from GraphQL-Ruby (1.10+)
     def get_type(type_name)
-      if @schema.respond_to?(:get_type)
-        @schema.get_type(type_name)
-      else
-        @schema.types[type_name]
-      end
+      @schema.get_type(type_name)
     end
 
     # Public: Create operation definition from a fragment definition.
@@ -439,12 +426,26 @@ module GraphQL
       end.to_h
     end
 
+    class GatherNamesVisitor < GraphQL::Language::Visitor
+      def initialize(node)
+        @names = []
+        super
+      end
+
+      attr_reader :names
+
+      def on_fragment_spread(node, parent)
+        @names << node.name
+        super
+      end
+    end
+
     def find_definition_dependencies(node)
-      names = []
-      visitor = Language::Visitor.new(node)
-      visitor[Language::Nodes::FragmentSpread] << -> (node, parent) { names << node.name }
+      visitor = GatherNamesVisitor.new(node)
       visitor.visit
-      names.uniq
+      names = visitor.names
+      names.uniq!
+      names
     end
 
     def deep_freeze_json_object(obj)

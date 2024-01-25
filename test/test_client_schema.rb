@@ -4,16 +4,16 @@ require "graphql/client"
 require "json"
 require "minitest/autorun"
 
-class TestClientSchema < MiniTest::Test
+class TestClientSchema < Minitest::Test
   FakeConn = Class.new do
     attr_reader :context
 
     def headers(_)
-     {}
+      {}
     end
 
     def execute(document:, operation_name: nil, variables: {}, context: {})
-     @context = context
+      @context = context
     end
   end
 
@@ -33,13 +33,13 @@ class TestClientSchema < MiniTest::Test
   def test_load_schema_from_introspection_query_result
     result = Schema.execute(GraphQL::Introspection::INTROSPECTION_QUERY)
     schema = GraphQL::Client.load_schema(result)
-    assert_equal "AwesomeQuery", schema.query.name
+    assert_equal "AwesomeQuery", schema.query.graphql_name
   end
 
   def test_load_schema_from_json_string
     json = JSON.generate(Schema.execute(GraphQL::Introspection::INTROSPECTION_QUERY))
     schema = GraphQL::Client.load_schema(json)
-    assert_equal "AwesomeQuery", schema.query.name
+    assert_equal "AwesomeQuery", schema.query.graphql_name
   end
 
   def test_load_schema_ignores_missing_path

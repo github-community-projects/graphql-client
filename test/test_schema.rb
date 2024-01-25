@@ -4,71 +4,73 @@ require "graphql/client/schema"
 require "minitest/autorun"
 require "time"
 
-class TestSchemaType < MiniTest::Test
-  GraphQL::DeprecatedDSL.activate if GraphQL::VERSION > "1.8"
-
-  DateTime = GraphQL::ScalarType.define do
-    name "DateTime"
-    coerce_input ->(value, ctx) do
+class TestSchemaType < Minitest::Test
+  class DateTime < GraphQL::Schema::Scalar
+    graphql_name "DateTime"
+    def self.coerce_input(value, ctx)
       Time.iso8601(value)
     end
-    coerce_result ->(value, ctx) do
+    def self.coerce_result(value, ctx)
       value.utc.iso8601
     end
   end
 
-  NodeArgInput = GraphQL::InputObjectType.define do
-    name "NodeInput"
-    argument :id, !types.String
+  class NodeArgInput < GraphQL::Schema::InputObject
+    graphql_name "NodeInput"
+    argument :id, GraphQL::Types::String
   end
 
-  NodeType = GraphQL::InterfaceType.define do
-    name "Node"
-    field :id, !types.ID do
+  module NodeType
+    include GraphQL::Schema::Interface
+    graphql_name "Node"
+    field :id, GraphQL::Types::ID, null: false do
       argument :input, NodeArgInput
     end
   end
 
-  PlanEnum = GraphQL::EnumType.define do
-    name "Plan"
+  class PlanEnum < GraphQL::Schema::Enum
+    graphql_name "Plan"
     value "FREE"
     value "SMALL"
     value "LARGE"
     value "other"
   end
 
-  PersonType = GraphQL::ObjectType.define do
-    name "Person"
-    interfaces [NodeType]
-    field :name, !types.String
-    field :firstName, !types.String
-    field :lastName, !types.String
-    field :age, !types.Int
-    field :birthday, !DateTime
-    field :friends, !types[!PersonType]
-    field :plan, !PlanEnum
+  class PersonType < GraphQL::Schema::Object
+    graphql_name "Person"
+    implements NodeType
+    field :name, GraphQL::Types::String, null: false
+    field :firstName, GraphQL::Types::String, null: false
+    field :lastName, GraphQL::Types::String, null: false
+    field :age, GraphQL::Types::Int, null: false
+    field :birthday, DateTime, null: false
+    field :friends, [PersonType], null: false
+    field :plan, PlanEnum, null: false
   end
 
-  PhotoType = GraphQL::ObjectType.define do
-    name "Photo"
-    field :height, !types.Int
-    field :width, !types.Int
+  class PhotoType < GraphQL::Schema::Object
+    graphql_name "Photo"
+    field :height, GraphQL::Types::Int, null: false
+    field :width, GraphQL::Types::Int, null: false
   end
 
-  SearchResultUnion = GraphQL::UnionType.define do
-    name "SearchResult"
-    possible_types [PersonType, PhotoType]
+  class SearchResultUnion < GraphQL::Schema::Union
+    graphql_name "SearchResult"
+    possible_types PersonType, PhotoType
   end
 
-  QueryType = GraphQL::ObjectType.define do
-    name "Query"
-    field :me, !PersonType
+  class QueryType < GraphQL::Schema::Object
+    graphql_name "Query"
+    field :me, PersonType, null: false
     field :node, NodeType
-    field :firstSearchResult, !SearchResultUnion
+    field :firstSearchResult, SearchResultUnion, null: false
   end
 
-  Schema = GraphQL::Schema.define(query: QueryType) do
-    resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
+  class Schema < GraphQL::Schema
+    query QueryType
+    def self.resolve_type(_type, _obj, _ctx)
+      raise NotImplementedError
+    end
   end
 
   Types = GraphQL::Client::Schema.generate(Schema)
@@ -93,16 +95,16 @@ class TestSchemaType < MiniTest::Test
   end
 
   def test_id_scalar_object
-    assert_equal GraphQL::ID_TYPE, Types::ID.type
+    assert_equal GraphQL::Types::ID, Types::ID.type
     assert_kind_of GraphQL::Client::Schema::ScalarType, Types::ID
   end
 
   def test_string_scalar_object
-    assert_equal GraphQL::STRING_TYPE, Types::String.type
+    assert_equal GraphQL::Types::String, Types::String.type
   end
 
   def test_int_scalar_object
-    assert_equal GraphQL::INT_TYPE, Types::Int.type
+    assert_equal GraphQL::Types::Int, Types::Int.type
   end
 
   def test_datetime_scalar_object
@@ -111,7 +113,7 @@ class TestSchemaType < MiniTest::Test
   end
 
   def test_boolean_scalar_object
-    assert_equal GraphQL::BOOLEAN_TYPE, Types::Boolean.type
+    assert_equal GraphQL::Types::Boolean, Types::Boolean.type
   end
 
   def test_node_interface_module
@@ -296,7 +298,7 @@ class TestSchemaType < MiniTest::Test
 
     refute person.respond_to?(:missing)
 
-    assert_equal "Person", person.class.type.name
+    assert_equal "Person", person.class.type.graphql_name
 
     assert person.is_a?(Types::Person)
     assert person.is_a?(Types::Node)
@@ -306,27 +308,33 @@ class TestSchemaType < MiniTest::Test
   end
 
   def test_transform_lowercase_type_name
-    person_type = GraphQL::ObjectType.define do
-      name "person"
+    person_type = Class.new(GraphQL::Schema::Object) do
+      graphql_name "person"
+      field :name, GraphQL::Types::String, null: false
     end
 
-    photo_type = GraphQL::ObjectType.define do
-      name "photo"
+    photo_type = Class.new(GraphQL::Schema::Object) do
+      graphql_name "photo"
+      field :height, GraphQL::Types::Int, null: false
+      field :width, GraphQL::Types::Int, null: false
     end
 
-    search_result_union = GraphQL::UnionType.define do
-      name "search_result"
-      possible_types [person_type, photo_type]
+    search_result_union = Class.new(GraphQL::Schema::Union) do
+      graphql_name "search_result"
+      possible_types person_type, photo_type
     end
 
-    query_type = GraphQL::ObjectType.define do
-      name "query"
-      field :me, !person_type
-      field :first_search_result, !search_result_union
+    query_type = Class.new(GraphQL::Schema::Object) do
+      graphql_name "query"
+      field :me, person_type, null: false
+      field :first_search_result, search_result_union, null: false
     end
 
-    schema = GraphQL::Schema.define(query: query_type) do
-      resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
+    schema = Class.new(GraphQL::Schema) do
+      query query_type
+      def self.resolve_type(_type, _obj, _ctx)
+        raise NotImplementedError
+      end
     end
 
     types = GraphQL::Client::Schema.generate(schema)
@@ -337,22 +345,27 @@ class TestSchemaType < MiniTest::Test
   end
 
   def test_reject_colliding_type_names
-    underscored_type = GraphQL::ObjectType.define do
-      name "search_result"
+    underscored_type = Class.new(GraphQL::Schema::Object) do
+      graphql_name "search_result"
+      field :title, GraphQL::Types::String, null: false
     end
 
-    camelcase_type = GraphQL::ObjectType.define do
-      name "SearchResult"
+    camelcase_type = Class.new(GraphQL::Schema::Object) do
+      graphql_name "SearchResult"
+      field :title, GraphQL::Types::String, null: false
     end
 
-    query_type = GraphQL::ObjectType.define do
-      name "query"
-      field :result, !underscored_type
-      field :other_result, !camelcase_type
+    query_type = Class.new(GraphQL::Schema::Object) do
+      graphql_name "query"
+      field :result, underscored_type, null: false
+      field :other_result, camelcase_type, null: false
     end
 
-    schema = GraphQL::Schema.define(query: query_type) do
-      resolve_type ->(_type, _obj, _ctx) { raise NotImplementedError }
+    schema = Class.new(GraphQL::Schema) do
+      query query_type
+      def self.resolve_type(_type, _obj, _ctx)
+        raise NotImplementedError
+      end
     end
 
     assert_raises ArgumentError do

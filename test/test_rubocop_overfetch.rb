@@ -3,7 +3,7 @@ require "graphql/client/erb"
 require "rubocop/cop/graphql/overfetch"
 require "minitest/autorun"
 
-class TestRubocopOverfetch < MiniTest::Test
+class TestRubocopOverfetch < Minitest::Test
   Root = File.expand_path("..", __FILE__)
 
   def setup
@@ -29,7 +29,7 @@ class TestRubocopOverfetch < MiniTest::Test
     investigate(@cop, "#{Root}/views/users/overfetch.html.erb")
 
     assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL field 'birthday' query but was not used in template.", @cop.offenses.first.message
+    assert_equal "GraphQL/Overfetch: GraphQL field 'birthday' query but was not used in template.", @cop.offenses.first.message
   end
 
   private

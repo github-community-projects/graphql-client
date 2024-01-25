@@ -133,7 +133,7 @@ module GraphQL
 
         remove_const(name) if placeholder
         const_set(name, mod)
-        mod.unloadable
+        mod.unloadable if mod.respond_to?(:unloadable)
         mod
       end
 

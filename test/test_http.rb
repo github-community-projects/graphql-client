@@ -3,7 +3,7 @@ require "graphql"
 require "graphql/client/http"
 require "minitest/autorun"
 
-class TestHTTP < MiniTest::Test
+class TestHTTP < Minitest::Test
   SWAPI = GraphQL::Client::HTTP.new("https://mpjk0plp9.lp.gql.zone/graphql") do
     def headers(_context)
       { "User-Agent" => "GraphQL/1.0" }

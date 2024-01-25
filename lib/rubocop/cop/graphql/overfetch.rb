@@ -21,19 +21,12 @@ module RuboCop
           query, = ::GraphQL::Client::ViewModule.extract_graphql_section(erb)
           return unless query
 
-          aliases = {}
-          fields = {}
-          ranges = {}
-
           # TODO: Use GraphQL client parser
           document = ::GraphQL.parse(query.gsub(/::/, "__"))
-
-          visitor = ::GraphQL::Language::Visitor.new(document)
-          visitor[::GraphQL::Language::Nodes::Field] << ->(node, _parent) do
-            name = node.alias || node.name
-            fields[name] ||= 0
-            field_aliases(name).each { |n| (aliases[n] ||= []) << name }
-            ranges[name] ||= source_range(processed_source.buffer, node.line, 0)
+          visitor = OverfetchVisitor.new(document) do |line_num|
+            # `source_range` is private to this object,
+            # so yield back out to it to get this info:
+            source_range(processed_source.buffer, line_num, 0)
           end
           visitor.visit
 
@@ -41,29 +34,52 @@ module RuboCop
             method_names = method_names_for(*node)
 
             method_names.each do |method_name|
-              aliases.fetch(method_name, []).each do |field_name|
-                fields[field_name] += 1
+              visitor.aliases.fetch(method_name, []).each do |field_name|
+                visitor.fields[field_name] += 1
               end
             end
           end
 
-          fields.each do |field, count|
+          visitor.fields.each do |field, count|
             next if count > 0
-            add_offense(nil, location: ranges[field], message: "GraphQL field '#{field}' query but was not used in template.")
+            add_offense(nil, location: visitor.ranges[field], message: "GraphQL field '#{field}' query but was not used in template.")
           end
         end
 
-        def field_aliases(name)
-          names = Set.new
+        class OverfetchVisitor < ::GraphQL::Language::Visitor
+          def initialize(doc, &range_for_line)
+            super(doc)
+            @range_for_line = range_for_line
+            @fields = {}
+            @aliases = {}
+            @ranges = {}
+          end
 
-          names << name
-          names << "#{name}?"
+          attr_reader :fields, :aliases, :ranges
 
-          names << underscore_name = ActiveSupport::Inflector.underscore(name)
-          names << "#{underscore_name}?"
+          def on_field(node, parent)
+            name = node.alias || node.name
+            fields[name] ||= 0
+            field_aliases(name).each { |n| (aliases[n] ||= []) << name }
+            ranges[name] ||= @range_for_line.call(node.line)
+            super
+          end
 
-          names
+          private
+
+          def field_aliases(name)
+            names = Set.new
+
+            names << name
+            names << "#{name}?"
+
+            names << underscore_name = ActiveSupport::Inflector.underscore(name)
+            names << "#{underscore_name}?"
+
+            names
+          end
         end
+
 
         def method_names_for(*node)
           receiver, method_name, *_args = node

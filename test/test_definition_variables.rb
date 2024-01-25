@@ -4,7 +4,7 @@ require "graphql/client"
 require "graphql/client/definition_variables"
 require "minitest/autorun"
 
-class TestDefinitionVariables < MiniTest::Test
+class TestDefinitionVariables < Minitest::Test
   class QueryType < GraphQL::Schema::Object
     field :version, Integer, null: false
     field :user, String, null: false do

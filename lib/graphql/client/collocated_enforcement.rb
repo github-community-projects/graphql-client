@@ -12,12 +12,31 @@ module GraphQL
 
     # Enforcements collocated object access best practices.
     module CollocatedEnforcement
+      extend self
+
       # Public: Ignore collocated caller enforcement for the scope of the block.
       def allow_noncollocated_callers
         Thread.current[:query_result_caller_location_ignore] = true
         yield
       ensure
         Thread.current[:query_result_caller_location_ignore] = nil
+      end
+
+      def verify_collocated_path(location, path, method = "method")
+        return yield if Thread.current[:query_result_caller_location_ignore]
+
+        if (location.path != path) && !(WHITELISTED_GEM_NAMES.any? { |g| location.path.include?("gems/#{g}") })
+          error = NonCollocatedCallerError.new("#{method} was called outside of '#{path}' https://git.io/v1syX")
+          error.set_backtrace(caller(2))
+          raise error
+        end
+
+        begin
+          Thread.current[:query_result_caller_location_ignore] = true
+          yield
+        ensure
+          Thread.current[:query_result_caller_location_ignore] = nil
+        end
       end
 
       # Internal: Decorate method with collocated caller enforcement.
@@ -31,21 +50,9 @@ module GraphQL
         mod.prepend(Module.new do
           methods.each do |method|
             define_method(method) do |*args, &block|
-              return super(*args, &block) if Thread.current[:query_result_caller_location_ignore]
-
-              locations = caller_locations(1, 1)
-
-              if (locations.first.path != path) && !(caller_locations.any? { |cl| WHITELISTED_GEM_NAMES.any? { |g| cl.path.include?("gems/#{g}") } })
-                error = NonCollocatedCallerError.new("#{method} was called outside of '#{path}' https://git.io/v1syX")
-                error.set_backtrace(caller(1))
-                raise error
-              end
-
-              begin
-                Thread.current[:query_result_caller_location_ignore] = true
+              location = caller_locations(1, 1)[0]
+              CollocatedEnforcement.verify_collocated_path(location, path, method) do
                 super(*args, &block)
-              ensure
-                Thread.current[:query_result_caller_location_ignore] = nil
               end
             end
           end

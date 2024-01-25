@@ -8,7 +8,7 @@ require "graphql/client/erubis_enhancer"
 require "graphql/client/view_module"
 require "minitest/autorun"
 
-class TestERB < MiniTest::Test
+class TestERB < Minitest::Test
   class ErubiEngine < Erubi::Engine
     include GraphQL::Client::ErubiEnhancer
   end
@@ -38,7 +38,7 @@ class TestERB < MiniTest::Test
     output_buffer = @output_buffer = ActionView::OutputBuffer.new
     # rubocop:disable Security/Eval
     eval(erb.src, binding, "(erb)")
-    assert_equal "42", output_buffer.strip
+    assert_equal "42", output_buffer.to_s.strip
 
     expected_query = <<-ERB
         query {

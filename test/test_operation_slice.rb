@@ -2,7 +2,7 @@
 require "graphql"
 require "minitest/autorun"
 
-class TestDefinitionSlice < MiniTest::Test
+class TestDefinitionSlice < Minitest::Test
   def test_slice_simple_query_operation
     document = GraphQL.parse(<<-'GRAPHQL')
       query FooQuery {

@@ -3,7 +3,7 @@ require "graphql"
 require "graphql/client"
 require "minitest/autorun"
 
-class TestClientErrors < MiniTest::Test
+class TestClientErrors < Minitest::Test
   class FooType < GraphQL::Schema::Object
     field :nullable_error, String, null: true
     def nullable_error
@@ -55,11 +55,6 @@ class TestClientErrors < MiniTest::Test
 
   class Schema < GraphQL::Schema
     query(QueryType)
-
-    if defined?(GraphQL::Execution::Interpreter)
-      use GraphQL::Execution::Interpreter
-      use GraphQL::Analysis::AST
-    end
   end
 
   module Temp
