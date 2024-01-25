@@ -4,7 +4,7 @@ Gem::Specification.new do |s|
   s.version = "0.19.0"
   s.summary = "GraphQL Client"
   s.description = "A Ruby library for declaring, composing and executing GraphQL queries"
-  s.homepage = "https://github.com/github/graphql-client"
+  s.homepage = "https://github.com/github-community-projects/graphql-client"
   s.license = "MIT"
 
   s.files = Dir["README.md", "LICENSE", "lib/**/*.rb"]
