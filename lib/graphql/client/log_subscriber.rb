@@ -16,11 +16,18 @@ module GraphQL
     #   GraphQL::Client::LogSubscriber.attach_to :graphql
     #
     class LogSubscriber < ActiveSupport::LogSubscriber
+      SHOULD_USE_KWARGS = private_instance_methods.include?(:mode_from)
+
       def query(event)
         logger.info do
           name = event.payload[:operation_name].gsub("__", "::")
           type = event.payload[:operation_type].upcase
-          color("#{name} #{type} (#{event.duration.round(1)}ms)", nil, true)
+
+          if SHOULD_USE_KWARGS
+            color("#{name} #{type} (#{event.duration.round(1)}ms)", nil, bold: true)
+          else
+            color("#{name} #{type} (#{event.duration.round(1)}ms)", nil, true)
+          end
         end
 
         logger.debug do
@@ -32,7 +39,12 @@ module GraphQL
         logger.error do
           name = event.payload[:operation_name].gsub("__", "::")
           message = event.payload[:message]
-          color("#{name} ERROR: #{message}", nil, true)
+
+          if SHOULD_USE_KWARGS
+            color("#{name} ERROR: #{message}", nil, bold: true)
+          else
+            color("#{name} ERROR: #{message}", nil, true)
+          end
         end
       end
     end
