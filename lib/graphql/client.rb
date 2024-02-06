@@ -338,7 +338,7 @@ module GraphQL
       end
 
       if allow_dynamic_queries == false && definition.name.nil?
-        raise DynamicQueryError, "expected definition to be assigned to a static constant https://git.io/vXXSE"
+        raise DynamicQueryError, "expected definition to be assigned to a static constant https://github.com/github-community-projects/graphql-client/blob/master/guides/dynamic-query-error.md"
       end
 
       variables = deep_stringify_keys(variables)

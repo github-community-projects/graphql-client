@@ -347,7 +347,7 @@ class TestQueryResult < Minitest::Test
       person.nickname
       flunk
     rescue GraphQL::Client::UnimplementedFieldError => e
-      assert_match "undefined field `nickname' on Person type. https://git.io/v1y3m", e.to_s
+      assert_match "undefined field `nickname' on Person type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unimplemented-field-error.md", e.to_s
     end
   end
 
@@ -362,7 +362,7 @@ class TestQueryResult < Minitest::Test
 
     person = @client.query(Temp::Query).data.me
 
-    assert_raises GraphQL::Client::UnfetchedFieldError, "unfetched field `name' on Person type. https://git.io/v1y3U" do
+    assert_raises GraphQL::Client::UnfetchedFieldError, "unfetched field `name' on Person type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unfetched-field-error.md" do
       person.name
     end
   end
@@ -378,7 +378,7 @@ class TestQueryResult < Minitest::Test
 
     person = @client.query(Temp::Query).data.me
 
-    assert_raises GraphQL::Client::UnfetchedFieldError, "unfetched field `firstName' on Person type. https://git.io/v1y3U" do
+    assert_raises GraphQL::Client::UnfetchedFieldError, "unfetched field `firstName' on Person type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unfetched-field-error.md" do
       person.first_name
     end
   end
@@ -401,7 +401,7 @@ class TestQueryResult < Minitest::Test
 
     person = Temp::Person.new(@client.query(Temp::Query).data.me)
 
-    assert_raises GraphQL::Client::ImplicitlyFetchedFieldError, "implicitly fetched field `name' on Person type. https://git.io/v1yGL" do
+    assert_raises GraphQL::Client::ImplicitlyFetchedFieldError, "implicitly fetched field `name' on Person type. https://github.com/github-community-projects/graphql-client/blob/master/guides/implicitly-fetched-field-error.md" do
       person.name
     end
   end
@@ -424,7 +424,7 @@ class TestQueryResult < Minitest::Test
 
     person = Temp::Person.new(@client.query(Temp::Query).data.me)
 
-    assert_raises GraphQL::Client::ImplicitlyFetchedFieldError, "implicitly fetched field `firstName' on Person type. https://git.io/v1yGL" do
+    assert_raises GraphQL::Client::ImplicitlyFetchedFieldError, "implicitly fetched field `firstName' on Person type. https://github.com/github-community-projects/graphql-client/blob/master/guides/implicitly-fetched-field-error.md" do
       person.first_name
     end
   end
@@ -446,7 +446,7 @@ class TestQueryResult < Minitest::Test
 
     person = @client.query(Temp::Query).data.me
 
-    assert_raises GraphQL::Client::ImplicitlyFetchedFieldError, "implicitly fetched field `name' on Person type. https://git.io/v1yGL" do
+    assert_raises GraphQL::Client::ImplicitlyFetchedFieldError, "implicitly fetched field `name' on Person type. https://github.com/github-community-projects/graphql-client/blob/master/guides/implicitly-fetched-field-error.md" do
       person.name
     end
   end
