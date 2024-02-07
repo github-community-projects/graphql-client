@@ -43,7 +43,7 @@ module GraphQL
         def set_class(type_name, klass)
           class_name = normalize_type_name(type_name)
 
-          if constants.include?(class_name.to_sym)
+          if const_defined?(class_name, false)
             raise ArgumentError,
               "Can't define #{class_name} to represent type #{type_name} " \
               "because it's already defined"
@@ -66,9 +66,10 @@ module GraphQL
         end
       end
 
-      def self.generate(schema)
+      def self.generate(schema, raise_on_unknown_enum_value: true)
         mod = Module.new
         mod.extend ClassMethods
+        mod.define_singleton_method(:raise_on_unknown_enum_value) { raise_on_unknown_enum_value }
 
         cache = {}
         schema.types.each do |name, type|

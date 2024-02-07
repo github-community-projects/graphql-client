@@ -16,6 +16,10 @@ module GraphQL
             @enum = enum
           end
 
+          def unknown_enum_value?
+            false
+          end
+
           def respond_to_missing?(method_name, include_private = false)
             if method_name[-1] == "?" && @enum.include?(method_name[0..-2])
               true
@@ -34,6 +38,12 @@ module GraphQL
             end
 
             super
+          end
+        end
+
+        class UnexpectedEnumValue < String
+          def unknown_enum_value?
+            true
           end
         end
 
@@ -78,8 +88,13 @@ module GraphQL
         def cast(value, _errors = nil)
           case value
           when String
-            raise Error, "unexpected enum value #{value}" unless @values.key?(value)
-            @values[value]
+            if @values.key?(value)
+              @values[value]
+            elsif schema_module.raise_on_unknown_enum_value
+              raise Error, "unexpected enum value #{value}"
+            else
+              UnexpectedEnumValue.new(value).freeze
+            end
           when NilClass
             value
           else
