@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.description = "A Ruby library for declaring, composing and executing GraphQL queries"
   s.homepage = "https://github.com/github-community-projects/graphql-client"
   s.license = "MIT"
-
+  s.metadata = { "rubygems_mfa_required" => "true" }
   s.files = Dir["README.md", "LICENSE", "lib/**/*.rb"]
 
   s.add_dependency "activesupport", ">= 3.0"
