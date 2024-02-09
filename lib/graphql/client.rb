@@ -403,7 +403,6 @@ module GraphQL
 
       doc.definitions.map do |node|
         deps = Set.new
-        definitions = document_dependencies.definitions.map { |x| [x.name, x] }.to_h
 
         queue = [node.name]
         while name = queue.shift
