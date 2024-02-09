@@ -26,7 +26,7 @@ module GraphQL
         return yield if Thread.current[:query_result_caller_location_ignore]
 
         if (location.path != path) && !(WHITELISTED_GEM_NAMES.any? { |g| location.path.include?("gems/#{g}") })
-          error = NonCollocatedCallerError.new("#{method} was called outside of '#{path}' https://git.io/v1syX")
+          error = NonCollocatedCallerError.new("#{method} was called outside of '#{path}' https://github.com/github-community-projects/graphql-client/blob/master/guides/collocated-call-sites.md")
           error.set_backtrace(caller(2))
           raise error
         end

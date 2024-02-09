@@ -255,13 +255,13 @@ module GraphQL
               end
 
               unless field
-                raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://git.io/v1y3m"
+                raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unimplemented-field-error.md"
               end
 
               if @data.key?(field.name)
-                raise ImplicitlyFetchedFieldError, "implicitly fetched field `#{field.name}' on #{type} type. https://git.io/v1yGL"
+                raise ImplicitlyFetchedFieldError, "implicitly fetched field `#{field.name}' on #{type} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/implicitly-fetched-field-error.md"
               else
-                raise UnfetchedFieldError, "unfetched field `#{field.name}' on #{type} type. https://git.io/v1y3U"
+                raise UnfetchedFieldError, "unfetched field `#{field.name}' on #{type} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unfetched-field-error.md"
               end
             end
           end
