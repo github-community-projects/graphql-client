@@ -6,7 +6,7 @@ require "time" # required for Time#iso8601
 require "ostruct"
 require_relative "foo_helper"
 
-class TestQueryResult < MiniTest::Test
+class TestQueryResult < Minitest::Test
   module NodeType
     include GraphQL::Schema::Interface
     field :id, ID, null: false
