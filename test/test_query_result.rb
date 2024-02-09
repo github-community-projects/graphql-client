@@ -7,16 +7,6 @@ require "ostruct"
 require_relative "foo_helper"
 
 class TestQueryResult < Minitest::Test
-  class DateTimeType < GraphQL::Schema::Scalar
-    def self.coerce_input(value, ctx)
-      Time.iso8601(value)
-    end
-
-    def self.coerce_result(value, ctx)
-      value.utc.iso8601
-    end
-  end
-
   module NodeType
     include GraphQL::Schema::Interface
     field :id, ID, null: false
@@ -58,7 +48,7 @@ class TestQueryResult < Minitest::Test
 
   module HumanLike
     include GraphQL::Schema::Interface
-    field :updated_at, DateTimeType, null: false
+    field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
   end
 
   class PersonType < GraphQL::Schema::Object
@@ -69,7 +59,8 @@ class TestQueryResult < Minitest::Test
     field :last_name, String, null: true
     field :company, String, null: true
     field :homepageURL, String, null: true, method: :homepage_url, camelize: false
-    field :created_at, DateTimeType, null: false
+    field :created_at, GraphQL::Types::ISO8601DateTime, null: false
+    field :created_on, GraphQL::Types::ISO8601Date, null: false
     field :hobbies, [String], null: true
     field :plan, PlanType, null: false
   end
@@ -113,6 +104,7 @@ class TestQueryResult < Minitest::Test
         last_name: "Peek",
         company: "GitHub",
         created_at: Time.at(0),
+        created_on: Date.new(1970, 1, 1),
         updated_at: Time.at(1),
         hobbies: ["soccer", "coding"],
         homepage_url: nil,
@@ -133,6 +125,7 @@ class TestQueryResult < Minitest::Test
             last_name: "Peek",
             company: "GitHub",
             created_at: Time.at(0),
+            created_on: Date.new(1970, 1, 1),
             updated_at: Time.at(1),
             hobbies: ["soccer", "coding"],
             plan: "LARGE"
@@ -596,7 +589,7 @@ class TestQueryResult < Minitest::Test
     assert_equal Time.at(1).utc, actor.updated_at
   end
 
-  def test_date_scalar_casting
+  def test_datetime_scalar_casting
     Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
       {
         me {
@@ -613,6 +606,23 @@ class TestQueryResult < Minitest::Test
     assert_equal "Josh", person.name
     assert_equal Time.at(0), person.created_at
     assert_equal Time.at(1), person.updated_at
+  end
+
+  def test_date_scalar_casting
+    Temp.const_set :Query, @client.parse(<<-'GRAPHQL')
+      {
+        me {
+          name
+          createdOn
+        }
+      }
+    GRAPHQL
+
+    response = @client.query(Temp::Query)
+
+    person = response.data.me
+    assert_equal "Josh", person.name
+    assert_equal Date.new(1970, 1, 1), person.created_on
   end
 
   include FooHelper
