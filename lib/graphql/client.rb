@@ -91,7 +91,7 @@ module GraphQL
       result
     end
 
-    def initialize(schema:, execute: nil, enforce_collocated_callers: false)
+    def initialize(schema:, execute: nil, enforce_collocated_callers: false, raise_on_unknown_enum_value: true)
       @schema = self.class.load_schema(schema)
       @execute = execute
       @document = GraphQL::Language::Nodes::Document.new(definitions: [])
@@ -101,7 +101,7 @@ module GraphQL
       if schema.is_a?(Class)
         @possible_types = schema.possible_types
       end
-      @types = Schema.generate(@schema)
+      @types = Schema.generate(@schema, raise_on_unknown_enum_value: raise_on_unknown_enum_value)
     end
 
     # A cache of the schema's merged possible types

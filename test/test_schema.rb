@@ -73,7 +73,7 @@ class TestSchemaType < Minitest::Test
     end
   end
 
-  Types = GraphQL::Client::Schema.generate(Schema)
+  Types = GraphQL::Client::Schema.generate(Schema, raise_on_unknown_enum_value: true)
 
   def test_query_object_class
     assert_equal QueryType, Types::Query.type
@@ -149,6 +149,34 @@ class TestSchemaType < Minitest::Test
     refute Types::Plan::SMALL.free?
     assert Types::Plan::SMALL.small?
     refute Types::Plan::SMALL.large?
+
+    assert_raises GraphQL::Client::Error do
+      Types::Plan.cast("unknown_value")
+    end
+  end
+
+  def test_unknown_enum_values
+    size = Class.new(GraphQL::Schema::Enum) do
+      graphql_name "Size"
+      value "SMALL"
+      value "MEDIUM"
+      value "LARGE"
+    end
+
+    query_type = Class.new(GraphQL::Schema::Object) do
+      graphql_name "Query"
+      field :size, size, null: false
+    end
+
+    schema = Class.new(GraphQL::Schema) do
+      query query_type
+    end
+
+    types = GraphQL::Client::Schema.generate(schema, raise_on_unknown_enum_value: false)
+
+    assert_equal "unknown_value", types::Size.cast("unknown_value")
+    assert types::Size.cast("unknown_value").unknown_enum_value?
+    refute types::Size.cast("SMALL").unknown_enum_value?
   end
 
   def test_to_non_null_type
