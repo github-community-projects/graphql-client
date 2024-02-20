@@ -365,7 +365,7 @@ class TestSchemaType < Minitest::Test
       end
     end
 
-    types = GraphQL::Client::Schema.generate(schema, raise_on_unknown_enum_value: true)
+    types = GraphQL::Client::Schema.generate(schema)
 
     assert_equal person_type, types::Person.type
     assert_equal photo_type, types::Photo.type
@@ -397,7 +397,7 @@ class TestSchemaType < Minitest::Test
     end
 
     assert_raises ArgumentError do
-      GraphQL::Client::Schema.generate(schema, raise_on_unknown_enum_value: true)
+      GraphQL::Client::Schema.generate(schema)
     end
   end
 
