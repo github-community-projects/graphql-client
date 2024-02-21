@@ -19,7 +19,7 @@ module GraphQL
 
             const_set(:READERS, {})
             const_set(:PREDICATES, {})
-            const_set(:DANGEROUS_FIELD_NAMES, {})
+            const_set(:FIELDS_CONFLICTING_WITH_BASE_RUBY_METHODS, {})
           end
         end
 
@@ -28,15 +28,9 @@ module GraphQL
           include ObjectType
 
           EMPTY_SET = Set.new.freeze
-          DANGEROUS_FIELDS_ALLOWLIST = ["test", "method"].freeze
-          # This client makes use of `BasicObject#method_missing` method to read field values from the response object.
-          # For a response to query { user { name } }, calling `response.user` will send a message to
-          # `ObjectClass#method_missing` with the name `:user`. This method will then look up the field name in the
-          # response and return the value. If the field name matches Ruby's built-in methods that is defined in the
-          # ancestor chain such as `Object#method` or `Kernel#test`, `method_missing` will not be called and we get an
-          # error or an incorrect response. To avoid this, add the field name to the `DANGEROUS_FIELD_NAMES` constant.
-          # This defines a method that overrides the ancestor method. Alternatively, consider renaming the field or
-          # accessing the field on the response hash by calling `response.to_hash["<field name>"]`.
+          POSSIBLE_FIELDS_CONFLICTING_WITH_BASE_RUBY_METHODS =
+            (Object.methods + Kernel.methods).uniq.filter { |m| m.to_s =~ /^[a-zA-Z_][a-zA-Z_0-9]*$/ }
+            .map(&:to_s).to_set.freeze
 
           attr_reader :klass, :defined_fields, :definition
 
@@ -68,7 +62,9 @@ module GraphQL
               name = ActiveSupport::Inflector.underscore(attr)
               @klass::READERS[:"#{name}"] ||= attr
               @klass::PREDICATES[:"#{name}?"] ||= attr
-              @klass::DANGEROUS_FIELD_NAMES[:"#{name}"] ||= attr if DANGEROUS_FIELDS_ALLOWLIST.include?(name)
+              if POSSIBLE_FIELDS_CONFLICTING_WITH_BASE_RUBY_METHODS.include?(name)
+                @klass::FIELDS_CONFLICTING_WITH_BASE_RUBY_METHODS[:"#{name}"] ||= attr
+              end
             end
           end
 
@@ -195,7 +191,7 @@ module GraphQL
 
           @definer = definer
           @enforce_collocated_callers = source_definition && source_definition.client.enforce_collocated_callers
-          define_accessor_methods unless self.class::DANGEROUS_FIELD_NAMES.empty?
+          define_accessor_methods
         end
 
         # Public: Returns the raw response data
@@ -242,42 +238,9 @@ module GraphQL
         end
 
         def method_missing(name, *args)
-          if (attr = self.class::READERS[name]) && (type = @definer.defined_fields[attr])
-            if @enforce_collocated_callers
-              verify_collocated_path do
-                read_attribute(attr, type)
-              end
-            else
-              read_attribute(attr, type)
-            end
-          elsif (attr = self.class::PREDICATES[name]) && @definer.defined_fields[attr]
-            has_attribute?(attr)
-          else
-            begin
-              super
-            rescue NoMethodError => e
-              type = self.class.type
-
-              if ActiveSupport::Inflector.underscore(e.name.to_s) != e.name.to_s
-                raise e
-              end
-
-              all_fields = type.respond_to?(:all_fields) ? type.all_fields : type.fields.values
-              field = all_fields.find do |f|
-                f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
-              end
-
-              unless field
-                raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unimplemented-field-error.md"
-              end
-
-              if @data.key?(field.name)
-                raise ImplicitlyFetchedFieldError, "implicitly fetched field `#{field.name}' on #{type} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/implicitly-fetched-field-error.md"
-              else
-                raise UnfetchedFieldError, "unfetched field `#{field.name}' on #{type} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unfetched-field-error.md"
-              end
-            end
-          end
+          try_fetch_attribute(name, args)
+        rescue NoMethodError => e
+          handle_no_method_error(e)
         end
 
         def inspect
@@ -303,7 +266,7 @@ module GraphQL
         private
 
         def verify_collocated_path
-          location = caller_locations(2, 1)[0]
+          location = caller_locations(3, 1)[0]
 
           CollocatedEnforcement.verify_collocated_path(location, source_definition.source_location[0]) do
             yield
@@ -311,9 +274,11 @@ module GraphQL
         end
 
         def define_accessor_methods
-          self.class::DANGEROUS_FIELD_NAMES.each do |k, v|
+          self.class::FIELDS_CONFLICTING_WITH_BASE_RUBY_METHODS.each do |k, v|
             define_singleton_method(k) do
-              read_attribute(v, @definer.defined_fields[v])
+              try_fetch_attribute(k, [])
+            rescue NoMethodError => e
+              handle_no_method_error(e)
             end
           end
         end
@@ -326,6 +291,45 @@ module GraphQL
 
         def has_attribute?(attr)
           !!@data[attr]
+        end
+
+        def try_fetch_attribute(name, args)
+          if (attr = self.class::READERS[name]) && (type = @definer.defined_fields[attr])
+            if @enforce_collocated_callers
+              verify_collocated_path do
+                read_attribute(attr, type)
+              end
+            else
+              read_attribute(attr, type)
+            end
+          elsif (attr = self.class::PREDICATES[name]) && @definer.defined_fields[attr]
+            has_attribute?(attr)
+          else
+            raise NoMethodError.new("undefined method `#{name}` for #{self.class}", name, *args)
+          end
+        end
+
+        def handle_no_method_error(e)
+          type = self.class.type
+
+          if ActiveSupport::Inflector.underscore(e.name.to_s) != e.name.to_s
+            raise e
+          end
+
+          all_fields = type.respond_to?(:all_fields) ? type.all_fields : type.fields.values
+          field = all_fields.find do |f|
+            f.name == e.name.to_s || ActiveSupport::Inflector.underscore(f.name) == e.name.to_s
+          end
+
+          unless field
+            raise UnimplementedFieldError, "undefined field `#{e.name}' on #{type.graphql_name} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unimplemented-field-error.md"
+          end
+
+          if @data.key?(field.name)
+            raise ImplicitlyFetchedFieldError, "implicitly fetched field `#{field.name}' on #{type} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/implicitly-fetched-field-error.md"
+          else
+            raise UnfetchedFieldError, "unfetched field `#{field.name}' on #{type} type. https://github.com/github-community-projects/graphql-client/blob/master/guides/unfetched-field-error.md"
+          end
         end
       end
     end

@@ -243,7 +243,7 @@ class TestQueryResult < Minitest::Test
     GRAPHQL
 
     response = @client.query(Temp::Query)
-    refute response.data.me.respond_to?(:name)
+    assert response.data.me.respond_to?(:name)
     refute response.data.me.respond_to?(:company)
 
     person = Temp::Person.new(response.data.me)
