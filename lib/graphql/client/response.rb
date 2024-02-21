@@ -12,6 +12,7 @@ module GraphQL
       # Returns Hash.
       attr_reader :original_hash
       alias_method :to_h, :original_hash
+      alias_method :to_hash, :original_hash
 
       # Public: Wrapped ObjectType of data returned from the server.
       #

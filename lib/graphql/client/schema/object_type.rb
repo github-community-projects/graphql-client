@@ -192,6 +192,7 @@ module GraphQL
         def to_h
           @data
         end
+        alias :to_hash :to_h
 
         def _definer
           @definer
