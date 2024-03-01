@@ -856,6 +856,11 @@ class TestClient < Minitest::Test
       def equal
         "equal"
       end
+
+      field :test, String, null: false
+      def test
+        "test"
+      end
     end
 
     schema = Class.new(GraphQL::Schema) do
@@ -864,12 +869,14 @@ class TestClient < Minitest::Test
 
     @client = ::GraphQL::Client.new(schema: schema, execute: schema)
 
-    Temp.const_set :Query, @client.parse("{ method things equal }")
+    Temp.const_set :Query, @client.parse("{ method things equal test }")
 
     result = @client.query(Temp::Query)
+
     assert_equal "method", result.data.method
     assert_equal "things", result.data.things
     assert_equal "equal", result.data.equal
     assert_predicate result.data, :equal?
+    assert_equal "test", result.data.test
   end
 end

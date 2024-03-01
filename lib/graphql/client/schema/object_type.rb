@@ -19,6 +19,7 @@ module GraphQL
 
             const_set(:READERS, {})
             const_set(:PREDICATES, {})
+            const_set(:METHODS_TO_UNDEF, [])
           end
         end
 
@@ -27,8 +28,7 @@ module GraphQL
           include ObjectType
 
           EMPTY_SET = Set.new.freeze
-          BASE_RUBY_METHODS =
-            (Object.methods + Kernel.methods).uniq.filter { |m| m.to_s =~ /^[a-z_][a-z_0-9?]*$/ }
+          BASE_RUBY_METHODS = (Object.methods + Kernel.methods).uniq.filter { |m| m.to_s =~ /^[a-z_][a-z_0-9?]*$/ }
             .map(&:to_s).to_set.freeze
 
           attr_reader :klass, :defined_fields, :definition
@@ -62,8 +62,8 @@ module GraphQL
               @klass::READERS[:"#{name}"] ||= attr
               @klass::PREDICATES[:"#{name}?"] ||= attr
 
-              @klass.undef_method(name) if BASE_RUBY_METHODS.include?(name) && @klass.method_defined?(name)
-              @klass.undef_method("#{name}?") if BASE_RUBY_METHODS.include?("#{name}?") && @klass.method_defined?("#{name}?")
+              @klass::METHODS_TO_UNDEF << name if BASE_RUBY_METHODS.include?(name)
+              @klass::METHODS_TO_UNDEF << "#{name}?" if BASE_RUBY_METHODS.include?("#{name}?")
             end
           end
 
@@ -190,6 +190,12 @@ module GraphQL
 
           @definer = definer
           @enforce_collocated_callers = source_definition && source_definition.client.enforce_collocated_callers
+
+          self.class::METHODS_TO_UNDEF.each do |method_name|
+            begin
+              singleton_class.undef_method(method_name)
+            rescue; end
+          end
         end
 
         # Public: Returns the raw response data
