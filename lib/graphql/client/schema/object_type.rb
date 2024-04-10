@@ -3,7 +3,6 @@ require "active_support/inflector"
 require "graphql/client/error"
 require "graphql/client/errors"
 require "graphql/client/schema/base_type"
-require "graphql/client/schema/possible_types"
 
 module GraphQL
   class Client
