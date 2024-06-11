@@ -1,7 +1,5 @@
 name: CI
-
 on: [push, pull_request]
-
 jobs:
   build:
     name: Test on Ruby ${{ matrix.ruby_version }}, Rails ${{ matrix.rails_version }}, graphql-ruby ${{ matrix.graphql_version }}
@@ -26,29 +24,28 @@ jobs:
           - "~> 7.0.0"
           - "~> 7.1.0"
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Ruby ${{ matrix.ruby_version }}
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby_version }}
-    - name: Build and test
-      run: |
-        bundle install --jobs 4 --retry 3
-        bundle exec rake test
-      env:
-        RAILS_VERSION: ${{ matrix.rails_version }}
-        GRAPHQL_VERSION: ${{ matrix.graphql_version }}
-
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - name: Set up Ruby ${{ matrix.ruby_version }}
+        uses: ruby/setup-ruby@d5fb7a202fc07872cb44f00ba8e6197b70cb0c55 # v1
+        with:
+          ruby-version: ${{ matrix.ruby_version }}
+      - name: Build and test
+        run: |
+          bundle install --jobs 4 --retry 3
+          bundle exec rake test
+        env:
+          RAILS_VERSION: ${{ matrix.rails_version }}
+          GRAPHQL_VERSION: ${{ matrix.graphql_version }}
   rubocop:
     name: Rubocop
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.2
-    - name: Build and test
-      run: |
-        bundle install --jobs 4 --retry 3
-        bundle exec rake rubocop
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@d5fb7a202fc07872cb44f00ba8e6197b70cb0c55 # v1
+        with:
+          ruby-version: 3.2
+      - name: Build and test
+        run: |-
+          bundle install --jobs 4 --retry 3
+          bundle exec rake rubocop
