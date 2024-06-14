@@ -100,6 +100,11 @@ module GraphQL
       @enforce_collocated_callers = enforce_collocated_callers
       if schema.is_a?(Class)
         @possible_types = schema.possible_types
+        key, _types = @possible_types.first
+        # GraphQL-Ruby 2.3.5+ has classes here instead of strings
+        if key.is_a?(Module)
+          @possible_types = @possible_types.transform_keys(&:graphql_name)
+        end
       end
       @types = Schema.generate(@schema, raise_on_unknown_enum_value: raise_on_unknown_enum_value)
     end
