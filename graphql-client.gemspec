@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "minitest", "~> 5.9"
   s.add_development_dependency "rake", "~> 13.1.0"
   s.add_development_dependency "rubocop-github"
-  s.add_development_dependency "rubocop", "~> 1.64.1"
+  s.add_development_dependency "rubocop", "~> 1.66.0"
 
   s.required_ruby_version = ">= 2.1.0"
 
