@@ -31,12 +31,18 @@ module GraphQL
       # Public: Hash of server specific extension metadata.
       attr_reader :extensions
 
+      # Public: Complete response hash returned from server.
+      #
+      # Returns Hash
+      attr_reader :full_response
+
       # Internal: Initialize base class.
-      def initialize(hash, data: nil, errors: Errors.new, extensions: {})
+      def initialize(hash, data: nil, errors: Errors.new, extensions: {}, full_response: nil)
         @original_hash = hash
         @data = data
         @errors = errors
         @extensions = extensions
+        @full_response = full_response
       end
     end
   end

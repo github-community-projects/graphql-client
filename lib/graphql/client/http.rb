@@ -45,6 +45,11 @@ module GraphQL
         {}
       end
 
+      # Public: full reponse from last request
+      #
+      # Returns Hash.
+      attr_reader :last_response
+
       # Public: Make an HTTP request for GraphQL query.
       #
       # Implements Client's "execute" adapter interface.
@@ -71,6 +76,7 @@ module GraphQL
         request.body = JSON.generate(body)
 
         response = connection.request(request)
+        @last_response = response.to_hash
         case response
         when Net::HTTPOK, Net::HTTPBadRequest
           JSON.parse(response.body)

@@ -380,12 +380,12 @@ module GraphQL
         error_payload = payload.merge(message: error["message"], error: error)
         ActiveSupport::Notifications.instrument("error.graphql", error_payload)
       end
-
       Response.new(
         result,
         data: definition.new(data, Errors.new(errors, ["data"])),
         errors: Errors.new(errors),
-        extensions: extensions
+        extensions: extensions,
+        full_response: execute.respond_to?("last_response") ? execute.last_response : nil
       )
     end
 
