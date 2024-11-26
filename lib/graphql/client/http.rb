@@ -14,7 +14,7 @@ module GraphQL
     # Assumes GraphQL endpoint follows the express-graphql endpoint conventions.
     #   https://github.com/graphql/express-graphql#http-usage
     #
-    # Production applications should consider implementing there own network
+    # Production applications should consider implementing their own network
     # adapter. This class exists for trivial stock usage and allows for minimal
     # request header configuration.
     class HTTP
