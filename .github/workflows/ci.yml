@@ -24,9 +24,9 @@ jobs:
           - "~> 7.0.0"
           - "~> 7.1.0"
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Set up Ruby ${{ matrix.ruby_version }}
-        uses: ruby/setup-ruby@52753b7da854d5c07df37391a986c76ab4615999 # v1
+        uses: ruby/setup-ruby@1287d2b408066abada82d5ad1c63652e758428d9 # v1
         with:
           ruby-version: ${{ matrix.ruby_version }}
       - name: Build and test
@@ -40,9 +40,9 @@ jobs:
     name: Rubocop
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Set up Ruby
-        uses: ruby/setup-ruby@52753b7da854d5c07df37391a986c76ab4615999 # v1
+        uses: ruby/setup-ruby@1287d2b408066abada82d5ad1c63652e758428d9 # v1
         with:
           ruby-version: 3.2
       - name: Build and test
