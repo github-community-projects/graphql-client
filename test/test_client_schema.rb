@@ -42,6 +42,22 @@ class TestClientSchema < Minitest::Test
     assert_equal "AwesomeQuery", schema.query.graphql_name
   end
 
+  def test_load_schema_from_definition_string
+    definition = Schema.to_definition
+    schema = GraphQL::Client.load_schema(definition)
+    assert_equal "AwesomeQuery", schema.query.graphql_name
+  end
+
+  def test_load_schema_from_definition_file
+    definition = Schema.to_definition
+    Tempfile.create(["schema", ".graphql"]) do |file|
+      file.write(definition)
+      file.close
+      schema = GraphQL::Client.load_schema(file.path)
+      assert_equal "AwesomeQuery", schema.query.graphql_name
+    end
+  end
+
   def test_load_schema_ignores_missing_path
     refute GraphQL::Client.load_schema("#{__dir__}/missing-schema.json")
   end
