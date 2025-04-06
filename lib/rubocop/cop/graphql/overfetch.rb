@@ -42,7 +42,7 @@ module RuboCop
 
           visitor.fields.each do |field, count|
             next if count > 0
-            add_offense(nil, location: visitor.ranges[field], message: "GraphQL field '#{field}' query but was not used in template.")
+            add_offense(nil, message: "GraphQL field '#{field}' query but was not used in template.")
           end
         end
 
