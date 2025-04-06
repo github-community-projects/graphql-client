@@ -8,7 +8,7 @@ module RuboCop
   module Cop
     module GraphQL
       # Public: Rubocop for catching overfetched fields in ERB templates.
-      class Overfetch < Cop
+      class Overfetch < Base
         if defined?(RangeHelp)
           # rubocop 0.53 moved the #source_range method into this module
           include RangeHelp

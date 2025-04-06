@@ -5,7 +5,7 @@ module RuboCop
   module Cop
     module GraphQL
       # Public: Cop for enforcing non-interpolated GRAPHQL heredocs.
-      class Heredoc < Cop
+      class Heredoc < Base
         def on_dstr(node)
           check_str(node)
         end
