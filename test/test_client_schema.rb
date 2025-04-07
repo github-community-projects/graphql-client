@@ -61,7 +61,7 @@ class TestClientSchema < Minitest::Test
 
   def test_dump_schema_context
     conn = FakeConn.new
-    GraphQL::Client.dump_schema(conn, StringIO.new, context: { user_id: 1})
+    GraphQL::Client.dump_schema(conn, StringIO.new, context: { user_id: 1 })
     assert_equal({ user_id: 1 }, conn.context)
   end
 end

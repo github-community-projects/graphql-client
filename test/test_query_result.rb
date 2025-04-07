@@ -270,7 +270,7 @@ class TestQueryResult < Minitest::Test
     GRAPHQL
 
     person = Temp::Person.new(@client.query(Temp::Query).data.me)
-    raw_result = {"firstName"=>"Joshua", "lastName"=>"Peek"}
+    raw_result = { "firstName" => "Joshua", "lastName" => "Peek" }
     assert_equal raw_result, person.to_h
     assert_equal raw_result, person.to_hash
 
