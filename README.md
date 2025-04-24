@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repo has been archived. The newer version of it now lives under https://github.com/github-community-projects/graphql-client
+
 # graphql-client [![Gem Version](https://badge.fury.io/rb/graphql-client.svg)](https://badge.fury.io/rb/graphql-client) [![CI](https://github.com/github-community-projects/graphql-client/workflows/CI/badge.svg)](https://github.com/github-community-projects/graphql-client/actions?query=workflow)
 
 GraphQL Client is a Ruby library for declaring, composing and executing GraphQL queries.
