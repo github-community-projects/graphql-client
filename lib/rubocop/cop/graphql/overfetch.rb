@@ -8,7 +8,7 @@ module RuboCop
   module Cop
     module GraphQL
       # Public: Rubocop for catching overfetched fields in ERB templates.
-      class Overfetch < Cop
+      class Overfetch < Base
         if defined?(RangeHelp)
           # rubocop 0.53 moved the #source_range method into this module
           include RangeHelp
@@ -42,7 +42,7 @@ module RuboCop
 
           visitor.fields.each do |field, count|
             next if count > 0
-            add_offense(nil, location: visitor.ranges[field], message: "GraphQL field '#{field}' query but was not used in template.")
+            add_offense(nil, message: "GraphQL field '#{field}' query but was not used in template.")
           end
         end
 
