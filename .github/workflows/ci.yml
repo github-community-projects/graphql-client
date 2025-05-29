@@ -1,5 +1,7 @@
 name: CI
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   build:
     name: Test on Ruby ${{ matrix.ruby_version }}, Rails ${{ matrix.rails_version }}, graphql-ruby ${{ matrix.graphql_version }}
