@@ -79,10 +79,10 @@ class TestClientFetch < Minitest::Test
     refute response.data
 
     refute_empty response.errors
-    assert_equal "Field 'err' doesn't exist on type 'Query'", response.errors[:data][0]
+    assert_equal "Field 'err' doesn't exist on type 'Query' (Did you mean `error`?)", response.errors[:data][0]
 
     refute_empty response.errors.all
-    assert_equal "Field 'err' doesn't exist on type 'Query'", response.errors[:data][0]
+    assert_equal "Field 'err' doesn't exist on type 'Query' (Did you mean `error`?)", response.errors[:data][0]
   end
 
   def test_failed_response

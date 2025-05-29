@@ -9,85 +9,85 @@ class TestRubocopHeredoc < Minitest::Test
   end
 
   def test_good_graphql_heredoc
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<'GRAPHQL'
         { version }
 GRAPHQL
     RUBY
 
-    assert_empty @cop.offenses.map(&:message)
+    assert_empty result.offenses.map(&:message)
   end
 
   def test_good_graphql_dash_heredoc
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<-'GRAPHQL'
         { version }
       GRAPHQL
     RUBY
 
-    assert_empty @cop.offenses.map(&:message)
+    assert_empty result.offenses.map(&:message)
   end
 
   def test_good_graphql_squiggly_heredoc
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<~'GRAPHQL'
         { version }
       GRAPHQL
     RUBY
 
-    assert_empty @cop.offenses.map(&:message)
+    assert_empty result.offenses.map(&:message)
   end
 
   def test_bad_graphql_heredoc
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<GRAPHQL
         { version }
 GRAPHQL
     RUBY
 
-    assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+    assert_equal 1, result.offenses.count
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", result.offenses.first.message
   end
 
   def test_bad_graphql_dash_heredoc
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<-GRAPHQL
         { version }
       GRAPHQL
     RUBY
 
-    assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+    assert_equal 1, result.offenses.count
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", result.offenses.first.message
   end
 
   def test_bad_graphql_squiggly_heredoc
     skip if RUBY_VERSION < "2.3"
 
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<~GRAPHQL
         { version }
       GRAPHQL
     RUBY
 
-    assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses.first.message
+    assert_equal 1, result.offenses.count
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", result.offenses.first.message
   end
 
   def test_bad_graphql_heredoc_with_interpolation
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       field = "version"
       Query = Client.parse <<-GRAPHQL
         { \#{field} }
       GRAPHQL
     RUBY
 
-    assert_equal 2, @cop.offenses.count
-    assert_equal "GraphQL/Heredoc: Do not interpolate variables into GraphQL queries, used variables instead.", @cop.offenses[0].message
-    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[1].message
+    assert_equal 2, result.offenses.count
+    assert_equal "GraphQL/Heredoc: Do not interpolate variables into GraphQL queries, used variables instead.", result.offenses[0].message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", result.offenses[1].message
   end
 
   def test_bad_graphql_multiline_heredoc
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<GRAPHQL
         {
           version
@@ -95,12 +95,12 @@ GRAPHQL
 GRAPHQL
     RUBY
 
-    assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+    assert_equal 1, result.offenses.count
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", result.offenses[0].message
   end
 
   def test_bad_graphql_multiline_dash_heredoc
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<-GRAPHQL
         {
           version
@@ -108,14 +108,14 @@ GRAPHQL
       GRAPHQL
     RUBY
 
-    assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+    assert_equal 1, result.offenses.count
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", result.offenses[0].message
   end
 
   def test_bad_graphql_multiline_squiggly_heredoc
     skip if RUBY_VERSION < "2.3"
 
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       Query = Client.parse <<~GRAPHQL
         {
           version
@@ -123,12 +123,12 @@ GRAPHQL
       GRAPHQL
     RUBY
 
-    assert_equal 1, @cop.offenses.count
-    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[0].message
+    assert_equal 1, result.offenses.count
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", result.offenses[0].message
   end
 
   def test_bad_graphql_multiline_heredoc_with_interpolation
-    investigate(@cop, <<-RUBY)
+    result = investigate(@cop, <<-RUBY)
       field = "version"
       Query = Client.parse <<-GRAPHQL
         {
@@ -137,9 +137,9 @@ GRAPHQL
       GRAPHQL
     RUBY
 
-    assert_equal 2, @cop.offenses.count
-    assert_equal "GraphQL/Heredoc: Do not interpolate variables into GraphQL queries, used variables instead.", @cop.offenses[0].message
-    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", @cop.offenses[1].message
+    assert_equal 2, result.offenses.count
+    assert_equal "GraphQL/Heredoc: Do not interpolate variables into GraphQL queries, used variables instead.", result.offenses[0].message
+    assert_equal "GraphQL/Heredoc: GraphQL heredocs should be quoted. <<-'GRAPHQL'", result.offenses[1].message
   end
 
   private
@@ -148,6 +148,5 @@ GRAPHQL
     processed_source = RuboCop::ProcessedSource.new(src, RUBY_VERSION.to_f)
     commissioner = RuboCop::Cop::Commissioner.new([cop], [], raise_error: true)
     commissioner.investigate(processed_source)
-    commissioner
   end
 end
