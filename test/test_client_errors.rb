@@ -310,7 +310,7 @@ class TestClientErrors < Minitest::Test
       "errors" => [
         {
           "message" => "b00m",
-          "locations" => [{"line" => 1, "column" => 3}],
+          "locations" => [{ "line" => 1, "column" => 3 }],
           "path" => ["nullableError"]
         }
       ]
