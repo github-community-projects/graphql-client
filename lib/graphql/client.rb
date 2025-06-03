@@ -54,6 +54,8 @@ module GraphQL
       when String
         if schema.end_with?(".json") && File.exist?(schema)
           load_schema(File.read(schema))
+        elsif (schema.end_with?(".graphql", ".graphqls")) && File.exist?(schema)
+          GraphQL::Schema.from_definition(schema)
         elsif schema =~ /\A\s*{/
           load_schema(JSON.parse(schema, freeze: true))
         end
