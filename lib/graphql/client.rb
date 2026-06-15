@@ -158,8 +158,17 @@ module GraphQL
         match = Regexp.last_match
         const_name = match[1]
 
-        if str.match(/fragment\s*#{const_name}/)
-          # It's a fragment _definition_, not a fragment usage
+        if str.match(/fragment\s+#{Regexp.escape(const_name)}\s+on\b/)
+          # It's a named fragment _definition_ in this same document
+          # (`fragment Name on Type { ... }`), not a fragment spread that has
+          # to be resolved to a Ruby constant. Leave the spread untouched so
+          # graphql-ruby resolves it locally.
+          #
+          # The match is anchored to `fragment <Name> on` (mandatory whitespace
+          # on both sides, `on` word boundary) so that a spread whose name is a
+          # prefix of a definition's name — e.g. `...UserFields` alongside
+          # `fragment UserFieldsExtended on User` — is NOT mistaken for that
+          # definition and is still resolved as a constant spread.
           match[0]
         else
           # It's a fragment spread, so we should load the fragment
