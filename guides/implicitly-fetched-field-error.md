@@ -85,6 +85,31 @@ user.full_name
 
 The raw flattened data will include `fullName` just like the previous example. But again, we should depend on our `UserQuery` always having `fullName` available show the subview be modified.
 
+## When isolation does not apply
+
+If a fragment is defined **inline in the same `parse` string** as the operation that uses it (a standard named GraphQL fragment, not a separate Ruby constant), the fragment fields are directly accessible on the operation result — no `ImplicitlyFetchedFieldError`, no re-wrapping needed.
+
+```ruby
+Queries = Client.parse <<-'GRAPHQL'
+  fragment UserDetails on User {
+    fullName
+    location
+  }
+
+  query UserQuery {
+    user(name: "Josh") {
+      ...UserDetails
+    }
+  }
+GRAPHQL
+
+result = Client.query(Queries::UserQuery)
+result.data.user.full_name  # works — inline fragment, no isolation enforced
+result.data.user.location   # works
+```
+
+Use this style when fragments serve code reuse within a single query document and component isolation is not a requirement.
+
 ## See Also
 
 * [Over-fetching and under-fetching](over-under-fetching.md)

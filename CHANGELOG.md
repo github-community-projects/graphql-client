@@ -8,6 +8,7 @@ reconstructed from the merged pull requests and release tags and may be incomple
 ## Unreleased
 
 * [#60](https://github.com/github-community-projects/graphql-client/pull/60): Allow loading the schema from an SDL definition file (`.graphql` / `.graphqls`) in addition to JSON - [@Tabby](https://github.com/Tabby).
+* [#76](https://github.com/github-community-projects/graphql-client/issues/76): Document support for inline (colocated) named fragments — fragments defined in the same `parse` string as the operation, whose fields are directly accessible on the result without enforced component isolation - [@rellampec](https://github.com/rellampec).
 * Your contribution here.
 
 ## 0.26.0 (2025-05-29)
