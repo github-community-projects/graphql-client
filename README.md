@@ -118,6 +118,38 @@ end
 
 `::` is invalid in regular GraphQL syntax, but `#parse` makes an initial pass on the query string and resolves all the fragment spreads with [`constantize`](http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html#method-i-constantize).
 
+#### Named fragments defined inline
+
+Standard GraphQL named fragment definitions can also be included directly in the same `parse` string alongside the operation that uses them. This is the simplest approach when you don't need component-isolation across Ruby modules.
+
+This follows the same convention as Apollo Client's [colocating fragments](https://www.apollographql.com/docs/react/data/fragments#colocating-fragments) (see Apollo's [fragments guide](https://www.apollographql.com/docs/react/data/fragments)): a fragment is defined next to the operation that consumes it, and its fields are directly accessible on the result — fragments used purely for reuse, without forcing a parent–child component hierarchy. This addresses the use case raised in [#76](https://github.com/github-community-projects/graphql-client/issues/76).
+
+```ruby
+Queries = SWAPI::Client.parse <<-'GRAPHQL'
+  fragment HumanFields on Human {
+    name
+    homePlanet
+  }
+
+  query HeroQuery {
+    luke: human(id: "1000") {
+      ...HumanFields
+    }
+    leia: human(id: "1003") {
+      ...HumanFields
+    }
+  }
+GRAPHQL
+
+result = SWAPI::Client.query(Queries::HeroQuery)
+result.data.luke.name        # directly accessible — no re-wrapping needed
+result.data.luke.home_planet # directly accessible
+```
+
+The fragment and its sub-constant (`Queries::HumanFields`) are available for re-wrapping if needed, but all fields from the inline fragment spread are directly accessible on the operation result.
+
+The difference from the constant style: inline named fragments are scoped to the same `parse` call and do not enforce cross-component data isolation. Use the constant style (`fragment on Type { ... }`) when you want `ImplicitlyFetchedFieldError` to guard against accidental field access across module boundaries.
+
 ### Executing queries
 
 Pass the reference of a parsed query definition to `GraphQL::Client#query`. Data is returned back in a wrapped `GraphQL::Client::Schema::ObjectType` struct that provides Ruby-ish accessors.
