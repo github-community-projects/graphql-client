@@ -159,6 +159,40 @@ class TestClient < Minitest::Test
     assert_equal(query_string, Temp::UserQuery.document.to_query_string)
   end
 
+  def test_client_parse_inline_fragment_without_space_before_on
+    Temp.const_set :NodeQuery, @client.parse(<<-'GRAPHQL')
+      query {
+        node(id: "1") {
+          id
+          ...on User {
+            name
+          }
+          ... on Organization {
+            name
+          }
+        }
+      }
+    GRAPHQL
+
+    query_string = <<-'GRAPHQL'.gsub(/^      /, "").chomp
+      query TestClient__Temp__NodeQuery {
+        node(id: "1") {
+          __typename
+          id
+          ... on User {
+            name
+          }
+          ... on Organization {
+            name
+          }
+        }
+      }
+    GRAPHQL
+
+    assert_equal(query_string, @client.document.to_query_string)
+    assert_equal(query_string, Temp::NodeQuery.document.to_query_string)
+  end
+
   def test_client_parse_query_document
     Temp.const_set :UserDocument, @client.parse(<<-'GRAPHQL')
       query GetUser {

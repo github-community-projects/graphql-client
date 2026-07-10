@@ -153,8 +153,12 @@ module GraphQL
 
       # Replace Ruby constant reference with GraphQL fragment names,
       # while populating `definition_dependencies` with
-      # GraphQL Fragment ASTs which this operation depends on
-      str = str.gsub(/\.\.\.([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)*)/) do
+      # GraphQL Fragment ASTs which this operation depends on.
+      #
+      # GraphQL forbids naming a fragment "on", so "...on" followed by a word
+      # boundary is unambiguously an inline fragment, never a spread
+      # referencing constant "On".
+      str = str.gsub(/\.\.\.(?!on\b)([a-zA-Z0-9_]+(::[a-zA-Z0-9_]+)*)/) do
         match = Regexp.last_match
         const_name = match[1]
 
