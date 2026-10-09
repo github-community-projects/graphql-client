@@ -121,6 +121,30 @@ The list could also be partial populated and truncated because of a timeout.
 <% end %>
 ```
 
+## HTTP errors
+
+By default, `GraphQL::Client::HTTP` turns HTTP statuses other than 200 and 400
+into a GraphQL-style error, so a `503` shows up in `response.errors` like any
+other error. Override `parse_response` to handle the HTTP response yourself,
+for example to raise your own errors:
+
+```ruby
+HTTP = GraphQL::Client::HTTP.new("https://example.com/graphql") do
+  def parse_response(response)
+    case response
+    when Net::HTTPOK, Net::HTTPBadRequest
+      super
+    else
+      raise MyApp::UpstreamError, "HTTP #{response.code} #{response.message}"
+    end
+  end
+end
+```
+
+`parse_response` receives the `Net::HTTPResponse` with status, headers and body
+and returns the GraphQL result hash. Network and timeout errors are raised by
+`Net::HTTP` before it is called.
+
 ## See also
 
 * [graphql-js "path" field](https://github.com/graphql/graphql-js/blob/23592ad16868e06b1c003629759f905a77ab81a0/src/error/GraphQLError.js#L42-L48)

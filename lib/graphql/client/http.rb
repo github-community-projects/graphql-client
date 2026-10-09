@@ -77,6 +77,16 @@ module GraphQL
 
         response = connection.request(request)
         @last_response = response.to_hash
+        parse_response(response)
+      end
+
+      # Public: Extension point for subclasses to turn the HTTP response into a
+      # GraphQL result, e.g. to raise on unexpected statuses.
+      #
+      # response - The Net::HTTPResponse
+      #
+      # Returns { "data" => ... , "errors" => ... } Hash.
+      def parse_response(response)
         case response
         when Net::HTTPOK, Net::HTTPBadRequest
           JSON.parse(response.body)
